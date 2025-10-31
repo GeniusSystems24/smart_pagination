@@ -1,6 +1,6 @@
 # Custom Pagination 📄
 
-[![Pub Version](https://img.shields.io/badge/pub-v0.0.1-blue)](https://pub.dev/packages/custom_pagination)
+[![Pub Version](https://img.shields.io/badge/pub-v0.0.4-blue)](https://pub.dev/packages/custom_pagination)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Flutter](https://img.shields.io/badge/flutter-3.9.0+-02569B?logo=flutter)](https://flutter.dev)
 
@@ -11,6 +11,8 @@ A comprehensive Flutter pagination library with BLoC pattern support. Provides f
 - **🎨 Multiple Layout Support**: ListView, GridView, PageView, StaggeredGridView, Column, Row
 - **🏗️ BLoC Pattern**: Clean state management using flutter_bloc
 - **🔄 Dual Pagination Strategies**: Cursor-based and Offset-based pagination
+- **📊 Grouped Pagination**: Organize items by keys (e.g., messages by date, products by category)
+- **🔁 Retry Mechanism**: Automatic retry with exponential backoff for failed requests
 - **📡 Stream Support**: Real-time updates via stream providers
 - **💾 Memory Management**: Configurable page caching (maxPagesInMemory)
 - **🔍 Filtering & Search**: Built-in filter listeners with type-safe callbacks
@@ -18,6 +20,7 @@ A comprehensive Flutter pagination library with BLoC pattern support. Provides f
 - **📍 Scroll Control**: Programmatic scrolling to items or indices
 - **🎯 Type-Safe**: Full generic type support
 - **⚡ Performance Optimized**: Efficient rendering and data loading
+- **🛠️ Convenience Widgets**: Ready-to-use widgets for common pagination scenarios
 
 ## 📦 Installation
 
@@ -25,7 +28,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  custom_pagination: ^0.0.1
+  custom_pagination: ^0.0.4
 ```
 
 Then run:
@@ -42,28 +45,57 @@ flutter pub get
 
 ## Quick Start
 
-```dart
-final controller = SinglePaginationController.of(
-  request: const PaginationRequest(pageSize: 20),
-  dataProvider: (request) => clubsRepository
-      .getRows(ClubFilter(page: request.page, limit: request.pageSize ?? 20))
-      .then((response) => response.items),
-  streamProvider: (request) => clubsRepository.watchRows(
-    ClubFilter(page: request.page, limit: request.pageSize ?? 20),
-  ),
-);
+### Simple ListView Pagination
 
-SinglePagination<Club>(
-  request: const PaginationRequest(pageSize: 20),
-  dataProvider: (request) => clubsRepository
-      .getRows(ClubFilter(page: request.page, limit: request.pageSize ?? 20))
-      .then((response) => response.items),
-  streamProvider: (request) => clubsRepository.watchRows(
-    ClubFilter(page: request.page, limit: request.pageSize ?? 20),
+```dart
+SinglePaginatedListView<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  dataProvider: (request) => apiService.fetchProducts(request),
+  childBuilder: (context, product, index) {
+    return ListTile(
+      title: Text(product.name),
+      subtitle: Text('\$${product.price}'),
+    );
+  },
+)
+```
+
+### GridView Pagination
+
+```dart
+SinglePaginatedGridView<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  dataProvider: (request) => apiService.fetchProducts(request),
+  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 2,
+    childAspectRatio: 0.75,
   ),
-  itemBuilder: (context, items, index) => ClubTile(items[index]),
-  controller: controller,
-);
+  childBuilder: (context, product, index) {
+    return ProductCard(product: product);
+  },
+)
+```
+
+### Grouped Pagination (Messages by Date)
+
+```dart
+DualPaginatedListView<String, Message>(
+  request: PaginationRequest(page: 1, pageSize: 50),
+  dataProvider: (request) => apiService.fetchMessages(request),
+  groupKeyGenerator: (message) {
+    return DateFormat('yyyy-MM-dd').format(message.timestamp);
+  },
+  groupHeaderBuilder: (context, dateKey, messages) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      color: Colors.grey[200],
+      child: Text(dateKey, style: TextStyle(fontWeight: FontWeight.bold)),
+    );
+  },
+  childBuilder: (context, message, index) {
+    return MessageTile(message: message);
+  },
+)
 ```
 
 ## Data Provider Contract
@@ -333,13 +365,65 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 💬 Start a discussion in [Discussions](https://github.com/GeniusSystems24/custom_pagination/discussions)
 - ⭐ Star the repo if you find it useful!
 
+## 🎨 Example App
+
+The library includes a comprehensive example app demonstrating all features:
+
+```bash
+cd example
+flutter pub get
+flutter run
+```
+
+The example app includes:
+- **Basic ListView**: Simple paginated product list
+- **GridView**: Product grid with pagination
+- **Retry Mechanism**: Demonstrates automatic retry on network errors
+- **Filter & Search**: Real-time filtering and search with pagination
+- **Grouped Messages**: Messages grouped by date using DualPagination
+
+## 🔁 Retry Mechanism
+
+The library includes a powerful retry mechanism with exponential backoff:
+
+```dart
+SinglePaginatedListView<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  dataProvider: (request) => apiService.fetchProducts(request),
+  retryConfig: RetryConfig(
+    maxAttempts: 3,
+    initialDelay: Duration(seconds: 1),
+    maxDelay: Duration(seconds: 10),
+    timeoutDuration: Duration(seconds: 30),
+    shouldRetry: (error) {
+      // Custom retry logic
+      return error is NetworkException;
+    },
+  ),
+  childBuilder: (context, product, index) {
+    return ProductCard(product: product);
+  },
+)
+```
+
+Features:
+- Automatic retry with exponential backoff
+- Configurable max attempts and delays
+- Timeout support
+- Custom retry conditions
+- Specialized exceptions (TimeoutException, NetworkException, etc.)
+
 ## 🗺️ Roadmap
 
-- [ ] Dual Pagination implementation
-- [ ] Unit and integration tests
+- [x] Single Pagination implementation
+- [x] Dual Pagination (grouped) implementation
+- [x] Retry mechanism with exponential backoff
+- [x] Comprehensive unit tests (60+ tests)
+- [x] Convenience widgets (SinglePaginatedListView, etc.)
+- [x] Example app with multiple demos
+- [ ] Widget and integration tests
 - [ ] Performance benchmarks
 - [ ] Video tutorials
-- [ ] More examples and templates
 - [ ] CI/CD setup
 - [ ] pub.dev publication
 

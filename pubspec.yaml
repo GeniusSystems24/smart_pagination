@@ -5,7 +5,7 @@ description: >
   (ListView, GridView, PageView, StaggeredGridView) and advanced features
   like filtering, refresh, stream updates, grouped pagination, retry mechanism,
   and memory management.
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/GeniusSystems24/custom_pagination
 repository: https://github.com/GeniusSystems24/custom_pagination
 issue_tracker: https://github.com/GeniusSystems24/custom_pagination/issues
