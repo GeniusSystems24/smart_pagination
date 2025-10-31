@@ -1,6 +1,40 @@
 import 'package:meta/meta.dart';
 
 /// Metadata describing the state of a paginated response.
+///
+/// [PaginationMeta] contains information about the current state of pagination,
+/// including page numbers, cursors, and availability of additional pages.
+/// This class supports both offset-based and cursor-based pagination strategies.
+///
+/// ## Offset-based pagination example:
+///
+/// ```dart
+/// final meta = PaginationMeta(
+///   page: 2,
+///   pageSize: 20,
+///   hasNext: true,
+///   hasPrevious: true,
+///   totalCount: 100,
+/// );
+///
+/// print('Current page: ${meta.page}');
+/// print('Items per page: ${meta.pageSize}');
+/// print('Can load more: ${meta.hasNext}');
+/// ```
+///
+/// ## Cursor-based pagination example:
+///
+/// ```dart
+/// final meta = PaginationMeta(
+///   nextCursor: 'eyJpZCI6MTIzfQ==',
+///   previousCursor: 'eyJpZCI6MTAwfQ==',
+///   hasNext: true,
+///   pageSize: 20,
+/// );
+///
+/// // Use nextCursor for the next request
+/// final nextRequest = PaginationRequest(cursor: meta.nextCursor);
+/// ```
 @immutable
 class PaginationMeta {
   PaginationMeta({

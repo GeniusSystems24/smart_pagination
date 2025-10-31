@@ -1,7 +1,13 @@
 name: custom_pagination
-description: "A new Flutter package project."
+description: >
+  A comprehensive Flutter pagination library with BLoC pattern support.
+  Provides flexible pagination for REST APIs with multiple view types
+  (ListView, GridView, PageView, StaggeredGridView) and advanced features
+  like filtering, refresh, stream updates, and memory management.
 version: 0.0.1
-homepage: null
+homepage: https://github.com/GeniusSystems24/custom_pagination
+repository: https://github.com/GeniusSystems24/custom_pagination
+issue_tracker: https://github.com/GeniusSystems24/custom_pagination/issues
 
 environment:
   sdk: ^3.9.0
