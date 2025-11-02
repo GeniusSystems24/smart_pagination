@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2025-11-02
+
+### Removed
+
+#### DualPagination (Grouped Pagination) - Complete Removal
+- **Removed all DualPagination functionality**:
+  - Deleted `lib/dual_pagination/` directory and all its contents
+  - Removed `DualPaginationCubit`, `DualPaginationState`, `DualPaginationController`
+  - Removed `DualPagination` widget
+  - Removed `PaginateGroupedView` widget
+  - Removed `DualPaginatedListView` convenience widget
+  - Removed `KeyGenerator<Key, T>` typedef from core
+
+- **Removed DualPagination tests**:
+  - Deleted `test/unit/dual_pagination/` directory
+  - Removed all DualPagination cubit tests
+
+- **Removed DualPagination examples**:
+  - Deleted `example/lib/screens/dual_pagination/` directory
+  - Removed grouped messages example screen
+  - Updated home screen to remove DualPagination navigation
+
+### Changed
+
+- **Library Structure**:
+  - Updated `lib/pagination.dart` to remove DualPagination exports
+  - Simplified core library to focus on single pagination only
+  - Updated package description to remove grouped pagination references
+
+- **Documentation**:
+  - Updated README.md to remove all DualPagination examples
+  - Removed grouped pagination from features list
+  - Updated Quick Start to remove DualPagination example
+  - Updated example app description
+  - Updated roadmap to reflect removed features
+
+- **Version**: Bumped to 0.0.5
+
+### Benefits of This Change
+
+- **Simplified API**: Library now focuses on doing one thing well - single pagination
+- **Reduced Complexity**: Fewer concepts for users to learn
+- **Smaller Package Size**: Removed unused code
+- **Easier Maintenance**: Less code to maintain and test
+- **Clearer Purpose**: Library has a more focused scope
+
+### Migration Guide
+
+If you were using DualPagination, you have two options:
+
+1. **Stay on v0.0.4**: Continue using the version with DualPagination
+2. **Migrate to custom solution**: Implement your own grouping logic on top of SinglePagination
+
+Example of manual grouping:
+```dart
+// Fetch all items with SinglePagination
+// Then group them manually in your widget
+final groupedItems = <String, List<Message>>{};
+for (var message in allMessages) {
+  final date = DateFormat('yyyy-MM-dd').format(message.timestamp);
+  groupedItems.putIfAbsent(date, () => []).add(message);
+}
+```
+
 ## [0.0.1] - 2025-10-31
 
 ### Added

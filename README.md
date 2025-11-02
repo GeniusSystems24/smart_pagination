@@ -1,6 +1,6 @@
 # Custom Pagination 📄
 
-[![Pub Version](https://img.shields.io/badge/pub-v0.0.4-blue)](https://pub.dev/packages/custom_pagination)
+[![Pub Version](https://img.shields.io/badge/pub-v0.0.5-blue)](https://pub.dev/packages/custom_pagination)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Flutter](https://img.shields.io/badge/flutter-3.9.0+-02569B?logo=flutter)](https://flutter.dev)
 
@@ -11,7 +11,6 @@ A comprehensive Flutter pagination library with BLoC pattern support. Provides f
 - **🎨 Multiple Layout Support**: ListView, GridView, PageView, StaggeredGridView, Column, Row
 - **🏗️ BLoC Pattern**: Clean state management using flutter_bloc
 - **🔄 Dual Pagination Strategies**: Cursor-based and Offset-based pagination
-- **📊 Grouped Pagination**: Organize items by keys (e.g., messages by date, products by category)
 - **🔁 Retry Mechanism**: Automatic retry with exponential backoff for failed requests
 - **📡 Stream Support**: Real-time updates via stream providers
 - **💾 Memory Management**: Configurable page caching (maxPagesInMemory)
@@ -28,7 +27,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  custom_pagination: ^0.0.4
+  custom_pagination: ^0.0.5
 ```
 
 Then run:
@@ -72,28 +71,6 @@ SinglePaginatedGridView<Product>(
   ),
   childBuilder: (context, product, index) {
     return ProductCard(product: product);
-  },
-)
-```
-
-### Grouped Pagination (Messages by Date)
-
-```dart
-DualPaginatedListView<String, Message>(
-  request: PaginationRequest(page: 1, pageSize: 50),
-  dataProvider: (request) => apiService.fetchMessages(request),
-  groupKeyGenerator: (message) {
-    return DateFormat('yyyy-MM-dd').format(message.timestamp);
-  },
-  groupHeaderBuilder: (context, dateKey, messages) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      color: Colors.grey[200],
-      child: Text(dateKey, style: TextStyle(fontWeight: FontWeight.bold)),
-    );
-  },
-  childBuilder: (context, message, index) {
-    return MessageTile(message: message);
   },
 )
 ```
@@ -380,7 +357,6 @@ The example app includes:
 - **GridView**: Product grid with pagination
 - **Retry Mechanism**: Demonstrates automatic retry on network errors
 - **Filter & Search**: Real-time filtering and search with pagination
-- **Grouped Messages**: Messages grouped by date using DualPagination
 
 ## 🔁 Retry Mechanism
 
@@ -416,7 +392,6 @@ Features:
 ## 🗺️ Roadmap
 
 - [x] Single Pagination implementation
-- [x] Dual Pagination (grouped) implementation
 - [x] Retry mechanism with exponential backoff
 - [x] Comprehensive unit tests (60+ tests)
 - [x] Convenience widgets (SinglePaginatedListView, etc.)

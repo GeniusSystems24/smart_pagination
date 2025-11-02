@@ -50,8 +50,3 @@ export 'single_pagination/pagination.dart';
 export 'single_pagination/widgets/single_paginated_list_view.dart';
 export 'single_pagination/widgets/single_paginated_grid_view.dart';
 
-// Dual pagination (grouped)
-export 'dual_pagination/pagination.dart';
-
-// Dual pagination convenience widgets
-export 'dual_pagination/widgets/dual_paginated_list_view.dart';

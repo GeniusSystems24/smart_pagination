@@ -42,10 +42,6 @@ typedef PaginationScrollToIndex =
 /// Signature for a function that builds a list from fetched items.
 typedef ListBuilder<T> = List<T> Function(List<T> list);
 
-/// Signature for a function that generates keys for grouping items.
-typedef KeyGenerator<Key, T> =
-    List<MapEntry<Key, List<T>>> Function(List<T> list);
-
 /// Signature for a callback function that is called when items are inserted.
 typedef InsertAllCallback<T> =
     void Function(List<T> currentItems, Iterable<T> newItems);

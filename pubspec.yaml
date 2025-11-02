@@ -3,9 +3,9 @@ description: >
   A comprehensive Flutter pagination library with BLoC pattern support.
   Provides flexible pagination for REST APIs with multiple view types
   (ListView, GridView, PageView, StaggeredGridView) and advanced features
-  like filtering, refresh, stream updates, grouped pagination, retry mechanism,
+  like filtering, refresh, stream updates, retry mechanism,
   and memory management.
-version: 0.0.4
+version: 0.0.5
 homepage: https://github.com/GeniusSystems24/custom_pagination
 repository: https://github.com/GeniusSystems24/custom_pagination
 issue_tracker: https://github.com/GeniusSystems24/custom_pagination/issues
