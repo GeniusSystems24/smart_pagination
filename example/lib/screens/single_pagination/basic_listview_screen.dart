@@ -10,9 +10,7 @@ class BasicListViewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Basic ListView'),
-      ),
+      appBar: AppBar(title: const Text('Basic ListView')),
       body: SinglePaginatedListView<Product>(
         request: const PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(
@@ -60,16 +58,12 @@ class BasicListViewScreen extends StatelessWidget {
           );
         },
         initialLoadingBuilder: (context) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         },
         bottomLoadingBuilder: (context) {
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: Center(child: CircularProgressIndicator()),
           );
         },
       ),
@@ -98,10 +92,7 @@ class BasicListViewScreen extends StatelessWidget {
       ),
       title: Text(
         product.name,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,10 +102,7 @@ class BasicListViewScreen extends StatelessWidget {
             product.description,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
           const SizedBox(height: 4),
           Row(

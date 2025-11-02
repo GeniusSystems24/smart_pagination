@@ -13,9 +13,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Custom Pagination Examples'),
-      ),
+      appBar: AppBar(title: const Text('Custom Pagination Examples')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -136,10 +134,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -153,9 +148,6 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _navigate(BuildContext context, Widget screen) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => screen),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 }
