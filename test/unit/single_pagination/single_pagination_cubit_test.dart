@@ -51,9 +51,9 @@ void main() {
         dataProvider: dataProvider,
       ),
       act: (cubit) async {
-        await cubit.fetchPaginatedList();
+        cubit.fetchPaginatedList();
         await Future.delayed(Duration(milliseconds: 50));
-        await cubit.fetchPaginatedList();
+        cubit.fetchPaginatedList();
       },
       expect: () => [
         // First page
@@ -89,9 +89,9 @@ void main() {
         dataProvider: dataProvider,
       ),
       act: (cubit) async {
-        await cubit.fetchPaginatedList(); // Load first page
+        cubit.fetchPaginatedList(); // Load first page
         await Future.delayed(Duration(milliseconds: 50));
-        await cubit.refreshPaginatedList(); // Refresh
+        cubit.refreshPaginatedList(); // Refresh
       },
       expect: () => [
         // First fetch
@@ -111,7 +111,7 @@ void main() {
         dataProvider: dataProvider,
       ),
       act: (cubit) async {
-        await cubit.fetchPaginatedList();
+        cubit.fetchPaginatedList();
         await Future.delayed(Duration(milliseconds: 50));
         cubit.filterPaginatedList((item) => item.value < 10);
       },
@@ -130,7 +130,7 @@ void main() {
         dataProvider: dataProvider,
       ),
       act: (cubit) async {
-        await cubit.fetchPaginatedList();
+        cubit.fetchPaginatedList();
         await Future.delayed(Duration(milliseconds: 50));
         cubit.insertEmit(TestItem(id: '999', name: 'Inserted', value: 999), index: 2);
       },
@@ -150,7 +150,7 @@ void main() {
         dataProvider: dataProvider,
       ),
       act: (cubit) async {
-        await cubit.fetchPaginatedList();
+        cubit.fetchPaginatedList();
         await Future.delayed(Duration(milliseconds: 50));
         final existingItem = (cubit.state as SinglePaginationLoaded<TestItem>).items[0];
         final updatedItem = TestItem(
@@ -179,7 +179,7 @@ void main() {
         },
       );
 
-      await cubit.fetchPaginatedList();
+      cubit.fetchPaginatedList();
       await Future.delayed(Duration(milliseconds: 50));
 
       final state = cubit.state as SinglePaginationLoaded<TestItem>;
@@ -197,11 +197,11 @@ void main() {
       );
 
       // Load 3 pages
-      await cubit.fetchPaginatedList(); // Page 1
+      cubit.fetchPaginatedList(); // Page 1
       await Future.delayed(Duration(milliseconds: 50));
-      await cubit.fetchPaginatedList(); // Page 2
+      cubit.fetchPaginatedList(); // Page 2
       await Future.delayed(Duration(milliseconds: 50));
-      await cubit.fetchPaginatedList(); // Page 3 (should evict page 1)
+      cubit.fetchPaginatedList(); // Page 3 (should evict page 1)
       await Future.delayed(Duration(milliseconds: 50));
 
       final state = cubit.state as SinglePaginationLoaded<TestItem>;
@@ -243,7 +243,7 @@ void main() {
         },
       );
 
-      await cubit.fetchPaginatedList();
+      cubit.fetchPaginatedList();
       await Future.delayed(Duration(milliseconds: 50));
 
       final state = cubit.state as SinglePaginationLoaded<TestItem>;

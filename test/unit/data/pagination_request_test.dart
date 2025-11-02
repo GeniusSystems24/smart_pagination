@@ -31,12 +31,12 @@ void main() {
 
     test('should assert page > 0', () {
       expect(
-        () => const PaginationRequest(page: 0),
+        () => PaginationRequest(page: 0),
         throwsA(isA<AssertionError>()),
       );
 
       expect(
-        () => const PaginationRequest(page: -1),
+        () => PaginationRequest(page: -1),
         throwsA(isA<AssertionError>()),
       );
     });

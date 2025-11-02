@@ -44,28 +44,3 @@ abstract class IPaginationListCubit<T, StateType extends IPaginationState<T>>
   /// Adds or updates an item in the list.
   void addOrUpdateEmit(T item, {int index = 0});
 }
-
-/// Base interface for dual pagination cubits with grouping capabilities.
-abstract class IDualPaginationCubit<
-  T,
-  Key,
-  StateType extends IPaginationState<T>
->
-    extends IPaginationCubit<T, StateType> {
-  IDualPaginationCubit(super.initialState);
-
-  /// The function to generate keys for grouping items.
-  KeyGenerator<Key, T>? get groupKeyGenerator;
-
-  /// The function to sort items.
-  List<T> Function(List<T> list)? get sort;
-
-  /// The function to build local streams.
-  Stream<List<T>> Function()? get localStreamBuilder;
-
-  /// The callback to be called when items are inserted.
-  InsertAllCallback<T>? get insertionCallback;
-
-  /// Inserts multiple items and emits the updated state.
-  void insertEmitState({required List<T> newItems});
-}

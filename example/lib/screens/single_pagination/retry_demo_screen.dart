@@ -10,9 +10,7 @@ class RetryDemoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Retry Mechanism Demo'),
-      ),
+      appBar: AppBar(title: const Text('Retry Mechanism Demo')),
       body: Column(
         children: [
           Container(
@@ -140,9 +138,7 @@ class RetryDemoScreen extends StatelessWidget {
               bottomLoadingBuilder: (context) {
                 return const Padding(
                   padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: Center(child: CircularProgressIndicator()),
                 );
               },
             ),
@@ -166,17 +162,11 @@ class RetryDemoScreen extends StatelessWidget {
       ),
       title: Text(
         product.name,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
       ),
       subtitle: Text(
         'Loaded successfully - ${product.category}',
-        style: TextStyle(
-          fontSize: 13,
-          color: Colors.grey[600],
-        ),
+        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
       ),
       trailing: Text(
         '\$${product.price.toStringAsFixed(2)}',

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/core.dart';
+import '../../data/data.dart';
 import '../pagination.dart';
 
 /// A convenience widget for creating a paginated GridView.

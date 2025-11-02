@@ -209,7 +209,7 @@ class RetryHandler {
       attempts: config.maxAttempts,
       message: 'Failed after ${config.maxAttempts} attempts',
       originalError: lastError,
-      stackTrace: lastError?.stackTrace,
+      // stackTrace: lastError?.stackTrace,
     );
   }
 }

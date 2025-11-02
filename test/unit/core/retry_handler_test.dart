@@ -31,12 +31,12 @@ void main() {
 
     test('should assert maxAttempts > 0', () {
       expect(
-        () => const RetryConfig(maxAttempts: 0),
+        () => RetryConfig(maxAttempts: 0),
         throwsA(isA<AssertionError>()),
       );
 
       expect(
-        () => const RetryConfig(maxAttempts: -1),
+        () => RetryConfig(maxAttempts: -1),
         throwsA(isA<AssertionError>()),
       );
     });
