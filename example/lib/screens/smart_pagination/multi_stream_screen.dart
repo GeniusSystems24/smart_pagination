@@ -244,7 +244,6 @@ class _MultiStreamScreenState extends State<MultiStreamScreen> {
   }
 
   Widget _buildProductCard(Product product) {
-    final isRegular = product.id.startsWith('regular_');
     final isFeatured = product.id.startsWith('featured_');
     final isSale = product.id.startsWith('sale_');
 

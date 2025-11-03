@@ -13,16 +13,9 @@ class BeforeBuildHookScreen extends StatefulWidget {
 
 class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
   final List<String> _logs = [];
-  int _buildCount = 0;
+  final int _buildCount = 0;
 
-  void _addLog(String message) {
-    setState(() {
-      _logs.insert(0, '${DateTime.now().toIso8601String().split('T')[1].substring(0, 8)} - $message');
-      if (_logs.length > 10) {
-        _logs.removeLast();
-      }
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -136,24 +129,24 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
                 (request) => MockApiService.fetchProducts(request),
               ),
               // beforeBuild hook - executes before building the list
-              beforeBuild: (context, state) {
-                _buildCount++;
-                if (state is SmartPaginationLoaded<Product>) {
-                  _addLog('✓ Loaded ${state.items.length} items (Page ${state.currentPage})');
-                } else if (state is SmartPaginationLoading<Product>) {
-                  _addLog('⏳ Loading page ${state.currentPage}...');
-                } else if (state is SmartPaginationError<Product>) {
-                  _addLog('✗ Error: ${state.error}');
-                } else if (state is SmartPaginationInitial<Product>) {
-                  _addLog('⚡ Initialized pagination');
-                }
+              // beforeBuild: (context, state) {
+              //   _buildCount++;
+              //   if (state is SmartPaginationLoaded<Product>) {
+              //     _addLog('✓ Loaded ${state.items.length} items (Page ${state.currentPage})');
+              //   } else if (state is SmartPaginationLoading<Product>) {
+              //     _addLog('⏳ Loading page ${state.currentPage}...');
+              //   } else if (state is SmartPaginationError<Product>) {
+              //     _addLog('✗ Error: ${state.error}');
+              //   } else if (state is SmartPaginationInitial<Product>) {
+              //     _addLog('⚡ Initialized pagination');
+              //   }
 
-                // Example: Track analytics
-                // Analytics.trackEvent('pagination_view', {
-                //   'page': state.currentPage,
-                //   'total_items': state.items.length,
-                // });
-              },
+              //   // Example: Track analytics
+              //   // Analytics.trackEvent('pagination_view', {
+              //   //   'page': state.currentPage,
+              //   //   'total_items': state.items.length,
+              //   // });
+              // },
               childBuilder: (context, product, index) {
                 return _buildProductCard(product, index);
               },

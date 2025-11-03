@@ -44,7 +44,7 @@ class CustomStatesScreen extends StatelessWidget {
               },
               separatorBuilder: (context, index) => const Divider(height: 1),
               // Custom Loading State
-              loadingBuilder: (context) {
+              bottomLoadingBuilder: (context) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -137,7 +137,7 @@ class CustomStatesScreen extends StatelessWidget {
                 );
               },
               // Custom Error State
-              errorBuilder: (context, error) {
+              errorBuilder: (context, error,_) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

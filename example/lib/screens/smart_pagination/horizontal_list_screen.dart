@@ -21,7 +21,7 @@ class HorizontalListScreen extends StatelessWidget {
             color: Colors.deepOrange.withOpacity(0.1),
             child: const Row(
               children: [
-                Icon(Icons.swipe_horizontal, color: Colors.deepOrange),
+                Icon(Icons.swipe_left, color: Colors.deepOrange),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(

@@ -40,20 +40,17 @@ class StaggeredGridScreen extends StatelessWidget {
                 (request) => MockApiService.fetchProducts(request),
               ),
               itemBuilderType: PaginateBuilderType.staggeredGridView,
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
+
+              // crossAxisCount: 2,
+              // mainAxisSpacing: 12,
+              // crossAxisSpacing: 12,
               padding: const EdgeInsets.all(16),
               itemBuilder: (context, items, index) {
                 final product = items[index];
                 return _buildProductCard(product, index);
               },
-              emptyWidget: const Center(
-                child: Text('No products'),
-              ),
-              loadingWidget: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              emptyWidget: const Center(child: Text('No products')),
+              loadingWidget: const Center(child: CircularProgressIndicator()),
             ),
           ),
         ],
@@ -68,9 +65,7 @@ class StaggeredGridScreen extends StatelessWidget {
 
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -157,10 +152,7 @@ class StaggeredGridScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   product.description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

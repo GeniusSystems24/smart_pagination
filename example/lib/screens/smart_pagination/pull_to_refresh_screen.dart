@@ -69,7 +69,7 @@ class PullToRefreshScreen extends StatelessWidget {
                   ),
                 );
               },
-              loadingBuilder: (context) {
+              bottomLoadingBuilder: (context) {
                 return const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

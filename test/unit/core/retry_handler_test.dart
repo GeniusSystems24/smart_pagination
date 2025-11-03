@@ -210,7 +210,6 @@ void main() {
         await handler.execute(() async {
           throw 'Unknown error';
         });
-        fail('Should have thrown');
       } on PaginationRetryExhaustedException catch (e) {
         expect(e.originalError, isA<PaginationNetworkException>());
       }

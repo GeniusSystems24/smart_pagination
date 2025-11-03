@@ -1,5 +1,5 @@
 /// Test models and helpers for pagination tests
-library test_models;
+library;
 
 /// Simple test model for pagination
 class TestItem {

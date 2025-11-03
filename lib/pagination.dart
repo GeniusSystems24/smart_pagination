@@ -35,7 +35,7 @@
 /// ```
 ///
 /// For advanced usage and examples, see the documentation.
-library custom_pagination;
+library;
 
 // Core exports
 export 'core/core.dart';

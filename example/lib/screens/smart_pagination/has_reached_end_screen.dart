@@ -12,7 +12,7 @@ class HasReachedEndScreen extends StatefulWidget {
 }
 
 class _HasReachedEndScreenState extends State<HasReachedEndScreen> {
-  bool _hasReachedEnd = false;
+  final bool _hasReachedEnd = false;
   int _totalItemsLoaded = 0;
 
   @override

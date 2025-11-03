@@ -113,7 +113,7 @@ class SmartPaginationCubit<T>
       // Fetch data based on provider type
       final pageItems = await switch (_provider) {
         FuturePaginationProvider<T>(:final dataProvider) => _retryHandler != null
-            ? _retryHandler!.execute(
+            ? _retryHandler.execute(
                 () => dataProvider(request),
                 onRetry: (attempt, error) {
                   _logger.w('Retry attempt $attempt after error: $error');
@@ -165,10 +165,10 @@ class SmartPaginationCubit<T>
       // Attach stream if it's a stream provider and this is initial load
       if (reset) {
         if (_provider is StreamPaginationProvider<T>) {
-          final streamProvider = _provider as StreamPaginationProvider<T>;
+          final streamProvider = _provider;
           _attachStream(streamProvider.streamProvider(request), request);
         } else if (_provider is MergedStreamPaginationProvider<T>) {
-          final mergedProvider = _provider as MergedStreamPaginationProvider<T>;
+          final mergedProvider = _provider;
           _attachStream(mergedProvider.getMergedStream(request), request);
         }
       }

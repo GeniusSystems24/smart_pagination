@@ -1,5 +1,5 @@
 /// Data models for pagination
-library custom_pagination.data;
+library;
 
 import 'package:meta/meta.dart';
 

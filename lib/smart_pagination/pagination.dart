@@ -199,7 +199,7 @@ class SmartPagination<T> extends StatefulWidget {
        onPageChanged = null,
        cacheExtent = null,
        customViewBuilder = null,
-       customViewBuilder = null,
+      //  customViewBuilder = null,
        internalCubit = false,
        listeners = refreshListener != null || filterListeners?.isNotEmpty == true
            ? [if (refreshListener != null) refreshListener, ...?filterListeners]

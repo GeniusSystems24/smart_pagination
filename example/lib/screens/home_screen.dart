@@ -119,7 +119,7 @@ class HomeScreen extends StatelessWidget {
             context,
             title: 'Horizontal Scroll',
             description: 'Horizontal scrolling list with pagination',
-            icon: Icons.swipe_horizontal,
+            icon: Icons.swipe_left,
             color: Colors.deepOrange,
             onTap: () => _navigate(context, const HorizontalListScreen()),
           ),

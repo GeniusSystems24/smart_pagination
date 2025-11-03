@@ -17,8 +17,7 @@ class SmartPaginationController<T>
 
   factory SmartPaginationController.of({
     required PaginationRequest request,
-    required PaginationDataProvider<T> dataProvider,
-    PaginationStreamProvider<T>? streamProvider,
+    required PaginationProvider<T> provider,
     ListBuilder<T>? listBuilder,
     OnInsertionCallback<T>? onInsertionCallback,
     VoidCallback? onClear,
@@ -33,8 +32,7 @@ class SmartPaginationController<T>
   }) {
     final cubit = SmartPaginationCubit<T>(
       request: request,
-      dataProvider: dataProvider,
-      streamProvider: streamProvider,
+      provider: provider,
       listBuilder: listBuilder,
       onInsertionCallback: onInsertionCallback,
       onClear: onClear,
