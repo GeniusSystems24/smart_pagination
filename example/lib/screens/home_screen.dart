@@ -14,6 +14,8 @@ import 'smart_pagination/staggered_grid_screen.dart';
 import 'smart_pagination/custom_states_screen.dart';
 import 'smart_pagination/before_build_hook_screen.dart';
 import 'smart_pagination/scroll_control_screen.dart';
+import 'smart_pagination/has_reached_end_screen.dart';
+import 'smart_pagination/custom_view_builder_screen.dart';
 
 /// Home screen with navigation to all example screens
 class HomeScreen extends StatelessWidget {
@@ -165,6 +167,24 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.build,
             color: Colors.brown,
             onTap: () => _navigate(context, const BeforeBuildHookScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'hasReachedEnd',
+            description: 'Detect when pagination reaches the end',
+            icon: Icons.check_circle,
+            color: Colors.orange,
+            onTap: () => _navigate(context, const HasReachedEndScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Custom View Builder',
+            description: 'Complete control with custom view builder',
+            icon: Icons.dashboard_customize,
+            color: Colors.teal,
+            onTap: () => _navigate(context, const CustomViewBuilderScreen()),
           ),
         ],
       ),

@@ -14,6 +14,9 @@ enum PaginateBuilderType {
   ///
   /// [flutter_staggered_grid_view](https://pub.dev/packages/flutter_staggered_grid_view)
   staggeredGridView,
+
+  /// Use a custom view builder
+  custom,
 }
 
 class PaginateApiView<T> extends StatelessWidget {
@@ -43,6 +46,7 @@ class PaginateApiView<T> extends StatelessWidget {
     this.bottomLoader,
     this.fetchPaginatedList,
     this.cacheExtent,
+    this.customViewBuilder,
   });
 
   final SmartPaginationLoaded<T> loadedState;
@@ -71,6 +75,19 @@ class PaginateApiView<T> extends StatelessWidget {
   final void Function()? fetchPaginatedList;
   final Widget? bottomLoader;
 
+  /// Custom view builder for complete control over the view
+  /// When using PaginateBuilderType.custom, this builder is called with:
+  /// - context: BuildContext
+  /// - items: List of items
+  /// - hasReachedEnd: Whether pagination has reached the end
+  /// - fetchMore: Callback to trigger loading more items
+  final Widget Function(
+    BuildContext context,
+    List<T> items,
+    bool hasReachedEnd,
+    VoidCallback? fetchMore,
+  )? customViewBuilder;
+
   List<T> get _items => loadedState.items;
 
   @override
@@ -80,7 +97,22 @@ class PaginateApiView<T> extends StatelessWidget {
       PaginateBuilderType.gridView => _buildGridView(context),
       PaginateBuilderType.pageView => _buildPageView(context),
       PaginateBuilderType.staggeredGridView => _buildStaggeredGridView(context),
+      PaginateBuilderType.custom => _buildCustomView(context),
     };
+  }
+
+  Widget _buildCustomView(BuildContext context) {
+    if (customViewBuilder == null) {
+      throw FlutterError(
+        'customViewBuilder must be provided when using PaginateBuilderType.custom',
+      );
+    }
+    return customViewBuilder!(
+      context,
+      _items,
+      loadedState.hasReachedEnd,
+      fetchPaginatedList,
+    );
   }
 
   Widget _buildGridView(BuildContext context) {

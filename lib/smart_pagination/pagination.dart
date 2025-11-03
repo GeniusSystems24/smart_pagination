@@ -60,6 +60,15 @@ class SmartPagination<T> extends StatefulWidget {
 
   final bool internalCubit;
 
+  /// Custom view builder for complete control over the view
+  /// Only used when itemBuilderType is PaginateBuilderType.custom
+  final Widget Function(
+    BuildContext context,
+    List<T> items,
+    bool hasReachedEnd,
+    VoidCallback? fetchMore,
+  )? customViewBuilder;
+
   SmartPagination({
     super.key,
     required PaginationRequest request,
@@ -91,6 +100,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.beforeBuild,
     this.listBuilder,
     this.cacheExtent,
+    this.customViewBuilder,
     OnInsertionCallback<T>? onInsertionCallback,
     VoidCallback? onClear,
     Logger? logger,
@@ -144,6 +154,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.beforeBuild,
     this.listBuilder,
     this.cacheExtent,
+    this.customViewBuilder,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : internalCubit = false,
@@ -187,6 +198,8 @@ class SmartPagination<T> extends StatefulWidget {
        pageController = null,
        onPageChanged = null,
        cacheExtent = null,
+       customViewBuilder = null,
+       customViewBuilder = null,
        internalCubit = false,
        listeners = refreshListener != null || filterListeners?.isNotEmpty == true
            ? [if (refreshListener != null) refreshListener, ...?filterListeners]
@@ -228,6 +241,7 @@ class SmartPagination<T> extends StatefulWidget {
        staggeredAxisDirection = null,
        pageController = null,
        onPageChanged = null,
+       customViewBuilder = null,
        internalCubit = false,
        listeners = refreshListener != null || filterListeners?.isNotEmpty == true
            ? [if (refreshListener != null) refreshListener, ...?filterListeners]
@@ -269,6 +283,7 @@ class SmartPagination<T> extends StatefulWidget {
        staggeredAxisDirection = null,
        pageController = null,
        onPageChanged = null,
+       customViewBuilder = null,
        internalCubit = false,
        listeners = refreshListener != null || filterListeners?.isNotEmpty == true
            ? [if (refreshListener != null) refreshListener, ...?filterListeners]
@@ -310,6 +325,7 @@ class SmartPagination<T> extends StatefulWidget {
        staggeredAxisDirection = null,
        scrollController = null,
        cacheExtent = null,
+       customViewBuilder = null,
        internalCubit = false,
        listeners = refreshListener != null || filterListeners?.isNotEmpty == true
            ? [if (refreshListener != null) refreshListener, ...?filterListeners]
@@ -358,6 +374,7 @@ class SmartPagination<T> extends StatefulWidget {
        pageController = null,
        onPageChanged = null,
        cacheExtent = null,
+       customViewBuilder = null,
        internalCubit = false,
        listeners = refreshListener != null || filterListeners?.isNotEmpty == true
            ? [if (refreshListener != null) refreshListener, ...?filterListeners]
@@ -399,6 +416,7 @@ class SmartPagination<T> extends StatefulWidget {
        scrollController = null,
        pageController = null,
        onPageChanged = null,
+       customViewBuilder = null,
        internalCubit = false,
        listeners = refreshListener != null || filterListeners?.isNotEmpty == true
            ? [if (refreshListener != null) refreshListener, ...?filterListeners]
@@ -460,6 +478,7 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
             bottomLoader: widget.bottomLoader,
             fetchPaginatedList: widget.cubit.fetchPaginatedList,
             cacheExtent: widget.cacheExtent,
+            customViewBuilder: widget.customViewBuilder,
           );
 
           if (widget.listeners != null && widget.listeners!.isNotEmpty) {
