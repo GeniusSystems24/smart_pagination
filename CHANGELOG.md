@@ -13,9 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PaginationProvider Sealed Class**: Type-safe unified provider pattern
   - `PaginationProvider.future()` for REST API pagination
   - `PaginationProvider.stream()` for real-time updates
+  - **`PaginationProvider.mergeStreams()`** for combining multiple streams into one
   - Single provider parameter replaces separate `dataProvider` and `streamProvider`
   - Pattern matching with switch expressions for type safety
   - Legacy typedefs maintained for backward compatibility
+
+#### Merged Streams Support 🔀
+- **MergedStreamPaginationProvider**: New provider for merging multiple data streams
+  - Combines multiple streams into a single unified stream
+  - Emits data whenever any source stream emits
+  - Perfect for aggregating data from multiple sources
+  - Automatic stream lifecycle management
+- **Example Implementation**: Added merged streams demo screen
+  - Shows real-time updates from 3 different streams
+  - Visual indicators for each stream source
+  - Demonstrates practical use case
 
 ### Changed
 
@@ -46,8 +58,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Filter & Search screen
   - Single Stream screen (now uses `PaginationProvider.stream()`)
   - Multi Stream screen (now uses `PaginationProvider.stream()`)
+  - **NEW**: Merged Streams screen (uses `PaginationProvider.mergeStreams()`)
 - Removed obsolete `_getDataProvider` methods from stream examples
 - Cleaner, more consistent example code
+
+#### Tests Updates
+- Updated all SinglePaginationCubit tests to use `PaginationProvider.future()`
+- All 14 tests passing with new API
+- Maintained 100% backward compatibility with legacy code
 
 #### Documentation Updates
 - **README.md**: Comprehensive updates for unified provider pattern
@@ -91,6 +109,20 @@ SinglePagination<Product>(
 SinglePagination<Product>(
   provider: PaginationProvider.stream(
     (request) => apiService.productsStream(request),
+  ),
+  ...
+)
+```
+
+**For Merged Streams** (NEW - Multiple data sources):
+```dart
+SinglePagination<Product>(
+  provider: PaginationProvider.mergeStreams(
+    (request) => [
+      apiService.regularProductsStream(request),
+      apiService.featuredProductsStream(request),
+      apiService.saleProductsStream(request),
+    ],
   ),
   ...
 )

@@ -6,10 +6,10 @@ import '../../helpers/test_models.dart';
 
 void main() {
   group('SinglePaginationCubit', () {
-    late Future<List<TestItem>> Function(PaginationRequest) dataProvider;
+    late Future<List<TestItem>> Function(PaginationRequest) dataProviderFn;
 
     setUp(() {
-      dataProvider = (request) async {
+      dataProviderFn = (request) async {
         // Simulate API call
         await Future.delayed(Duration(milliseconds: 10));
         final startIndex = (request.page - 1) * (request.pageSize ?? 20);
@@ -20,7 +20,7 @@ void main() {
     test('initial state is SinglePaginationInitial', () {
       final cubit = SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
       );
 
       expect(cubit.state, isA<SinglePaginationInitial<TestItem>>());
@@ -33,7 +33,7 @@ void main() {
       'emits SinglePaginationLoaded when data is fetched successfully',
       build: () => SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
       ),
       act: (cubit) => cubit.fetchPaginatedList(),
       expect: () => [
@@ -48,7 +48,7 @@ void main() {
       'loads multiple pages',
       build: () => SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 10),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
       ),
       act: (cubit) async {
         cubit.fetchPaginatedList();
@@ -71,9 +71,11 @@ void main() {
       'emits error when data provider throws',
       build: () => SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: (request) async {
-          throw Exception('Network error');
-        },
+        provider: PaginationProvider.future(
+          (request) async {
+            throw Exception('Network error');
+          },
+        ),
       ),
       act: (cubit) => cubit.fetchPaginatedList(),
       expect: () => [
@@ -86,7 +88,7 @@ void main() {
       'refreshPaginatedList clears existing data and starts over',
       build: () => SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 10),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
       ),
       act: (cubit) async {
         cubit.fetchPaginatedList(); // Load first page
@@ -108,7 +110,7 @@ void main() {
       'filterPaginatedList filters items',
       build: () => SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
       ),
       act: (cubit) async {
         cubit.fetchPaginatedList();
@@ -127,7 +129,7 @@ void main() {
       'insertEmit adds item at specified index',
       build: () => SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 5),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
       ),
       act: (cubit) async {
         cubit.fetchPaginatedList();
@@ -147,7 +149,7 @@ void main() {
       'addOrUpdateEmit updates existing item',
       build: () => SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 5),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
       ),
       act: (cubit) async {
         cubit.fetchPaginatedList();
@@ -172,7 +174,7 @@ void main() {
     test('listBuilder transforms items', () async {
       final cubit = SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 10),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
         listBuilder: (items) {
           // Reverse the list
           return items.reversed.toList();
@@ -192,7 +194,7 @@ void main() {
     test('maxPagesInMemory limits cached pages', () async {
       final cubit = SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 5),
-        dataProvider: dataProvider,
+        provider: PaginationProvider.future(dataProviderFn),
         maxPagesInMemory: 2,
       );
 
@@ -215,11 +217,13 @@ void main() {
       int fetchCount = 0;
       final cubit = SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 10),
-        dataProvider: (request) async {
-          fetchCount++;
-          await Future.delayed(Duration(milliseconds: 100));
-          return TestItemFactory.createList(10);
-        },
+        provider: PaginationProvider.future(
+          (request) async {
+            fetchCount++;
+            await Future.delayed(Duration(milliseconds: 100));
+            return TestItemFactory.createList(10);
+          },
+        ),
       );
 
       cubit.fetchPaginatedList();
@@ -237,10 +241,12 @@ void main() {
     test('hasReachedEnd is true when no more items', () async {
       final cubit = SinglePaginationCubit<TestItem>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: (request) async {
-          // Return less than pageSize to indicate end
-          return TestItemFactory.createList(5);
-        },
+        provider: PaginationProvider.future(
+          (request) async {
+            // Return less than pageSize to indicate end
+            return TestItemFactory.createList(5);
+          },
+        ),
       );
 
       cubit.fetchPaginatedList();

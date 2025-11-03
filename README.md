@@ -378,6 +378,7 @@ The example app includes:
 - **Filter & Search**: Real-time filtering and search with pagination
 - **Single Stream**: Real-time updates from a single data stream
 - **Multi Stream**: Multiple streams with different update rates
+- **Merged Streams**: Combining multiple streams into one unified stream
 
 ## 📡 Stream Support
 
@@ -436,6 +437,32 @@ class MultiStreamScreen extends StatefulWidget {
   }
 }
 ```
+
+### Merged Streams Example
+
+**NEW**: Merge multiple data streams into one unified stream:
+
+```dart
+SinglePagination<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.mergeStreams(
+    (request) => [
+      apiService.regularProductsStream(request),
+      apiService.featuredProductsStream(request),
+      apiService.saleProductsStream(request),
+    ],
+  ),
+  itemBuilder: (context, items, index) {
+    return ProductCard(items[index]);
+  },
+)
+```
+
+Perfect for:
+- Combining data from multiple sources
+- Aggregating different stream types
+- Real-time updates from multiple APIs
+- Dashboard views with multiple data feeds
 
 ## 🔁 Retry Mechanism
 

@@ -49,6 +49,25 @@ sealed class PaginationProvider<T> {
   const factory PaginationProvider.stream(
     Stream<List<T>> Function(PaginationRequest request) streamProvider,
   ) = StreamPaginationProvider<T>;
+
+  /// Creates a provider that merges multiple streams into a single stream.
+  ///
+  /// When you have multiple data sources (streams) and want to combine them
+  /// into one unified stream, use this provider.
+  ///
+  /// Example:
+  /// ```dart
+  /// final provider = PaginationProvider<Product>.mergeStreams(
+  ///   (request) => [
+  ///     apiService.regularProductsStream(request),
+  ///     apiService.featuredProductsStream(request),
+  ///     apiService.saleProductsStream(request),
+  ///   ],
+  /// );
+  /// ```
+  factory PaginationProvider.mergeStreams(
+    List<Stream<List<T>>> Function(PaginationRequest request) streamsProvider,
+  ) = MergedStreamPaginationProvider<T>;
 }
 
 /// Future-based pagination provider for standard REST APIs.
@@ -65,6 +84,53 @@ final class StreamPaginationProvider<T> extends PaginationProvider<T> {
 
   /// Function that provides a stream of data updates.
   final Stream<List<T>> Function(PaginationRequest request) streamProvider;
+}
+
+/// Merged streams pagination provider that combines multiple streams into one.
+///
+/// This provider takes multiple data streams and merges them into a single
+/// stream, emitting data whenever any of the source streams emit.
+final class MergedStreamPaginationProvider<T> extends PaginationProvider<T> {
+  MergedStreamPaginationProvider(this.streamsProvider);
+
+  /// Function that provides a list of streams to be merged.
+  final List<Stream<List<T>>> Function(PaginationRequest request) streamsProvider;
+
+  /// Gets a merged stream that combines all source streams.
+  Stream<List<T>> getMergedStream(PaginationRequest request) {
+    final streams = streamsProvider(request);
+
+    if (streams.isEmpty) {
+      return Stream.value([]);
+    }
+
+    if (streams.length == 1) {
+      return streams.first;
+    }
+
+    // Create a stream controller to merge all streams
+    late StreamController<List<T>> controller;
+    final subscriptions = <StreamSubscription<List<T>>>[];
+
+    controller = StreamController<List<T>>(
+      onListen: () {
+        for (final stream in streams) {
+          final subscription = stream.listen(
+            (data) => controller.add(data),
+            onError: (error) => controller.addError(error),
+          );
+          subscriptions.add(subscription);
+        }
+      },
+      onCancel: () async {
+        for (final subscription in subscriptions) {
+          await subscription.cancel();
+        }
+      },
+    );
+
+    return controller.stream;
+  }
 }
 
 /// Legacy typedef for backward compatibility (will be deprecated).

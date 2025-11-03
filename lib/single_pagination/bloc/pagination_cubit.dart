@@ -121,6 +121,7 @@ class SinglePaginationCubit<T>
               )
             : dataProvider(request),
         StreamPaginationProvider<T>(:final streamProvider) => streamProvider(request).first,
+        MergedStreamPaginationProvider<T> provider => provider.getMergedStream(request).first,
       };
 
       if (token != _fetchToken) return;
@@ -162,9 +163,14 @@ class SinglePaginationCubit<T>
       );
 
       // Attach stream if it's a stream provider and this is initial load
-      if (_provider is StreamPaginationProvider<T> && reset) {
-        final streamProvider = _provider as StreamPaginationProvider<T>;
-        _attachStream(streamProvider.streamProvider(request), request);
+      if (reset) {
+        if (_provider is StreamPaginationProvider<T>) {
+          final streamProvider = _provider as StreamPaginationProvider<T>;
+          _attachStream(streamProvider.streamProvider(request), request);
+        } else if (_provider is MergedStreamPaginationProvider<T>) {
+          final mergedProvider = _provider as MergedStreamPaginationProvider<T>;
+          _attachStream(mergedProvider.getMergedStream(request), request);
+        }
       }
     } on Exception catch (error, stackTrace) {
       _logger.e(

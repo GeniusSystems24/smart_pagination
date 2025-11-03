@@ -5,6 +5,7 @@ import 'single_pagination/retry_demo_screen.dart';
 import 'single_pagination/filter_search_screen.dart';
 import 'single_pagination/single_stream_screen.dart';
 import 'single_pagination/multi_stream_screen.dart';
+import 'single_pagination/merged_streams_screen.dart';
 
 /// Home screen with navigation to all example screens
 class HomeScreen extends StatelessWidget {
@@ -73,6 +74,15 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.multiline_chart,
             color: Colors.indigo,
             onTap: () => _navigate(context, const MultiStreamScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Merged Streams',
+            description: 'Merge multiple streams into one unified stream',
+            icon: Icons.merge_type,
+            color: Colors.deepPurple,
+            onTap: () => _navigate(context, const MergedStreamsScreen()),
           ),
         ],
       ),
