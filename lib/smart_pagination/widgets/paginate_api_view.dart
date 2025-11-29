@@ -15,6 +15,10 @@ enum PaginateBuilderType {
   /// [flutter_staggered_grid_view](https://pub.dev/packages/flutter_staggered_grid_view)
   staggeredGridView,
 
+  /// Paginate as a ReorderableListView
+  /// Allows users to reorder items by drag and drop
+  reorderableListView,
+
   /// Use a custom view builder
   custom,
 }
@@ -47,6 +51,7 @@ class PaginateApiView<T> extends StatelessWidget {
     this.fetchPaginatedList,
     this.cacheExtent,
     this.customViewBuilder,
+    this.onReorder,
   });
 
   final SmartPaginationLoaded<T> loadedState;
@@ -88,6 +93,10 @@ class PaginateApiView<T> extends StatelessWidget {
     VoidCallback? fetchMore,
   )? customViewBuilder;
 
+  /// Callback for reordering items in ReorderableListView
+  /// Called with the old index and new index when an item is moved
+  final void Function(int oldIndex, int newIndex)? onReorder;
+
   List<T> get _items => loadedState.items;
 
   @override
@@ -97,6 +106,7 @@ class PaginateApiView<T> extends StatelessWidget {
       PaginateBuilderType.gridView => _buildGridView(context),
       PaginateBuilderType.pageView => _buildPageView(context),
       PaginateBuilderType.staggeredGridView => _buildStaggeredGridView(context),
+      PaginateBuilderType.reorderableListView => _buildReorderableListView(context),
       PaginateBuilderType.custom => _buildCustomView(context),
     };
   }
@@ -195,6 +205,51 @@ class PaginateApiView<T> extends StatelessWidget {
         ),
         if (footer != null) footer!,
       ],
+    );
+  }
+
+  Widget _buildReorderableListView(BuildContext context) {
+    if (onReorder == null) {
+      throw FlutterError(
+        'onReorder callback must be provided when using PaginateBuilderType.reorderableListView',
+      );
+    }
+
+    return ReorderableListView.builder(
+      padding: padding,
+      reverse: reverse,
+      scrollController: scrollController,
+      shrinkWrap: shrinkWrap,
+      physics: physics,
+      keyboardDismissBehavior: keyboardDismissBehavior,
+      onReorder: onReorder!,
+      itemCount: _items.length,
+      itemBuilder: (context, index) {
+        final item = itemBuilder(context, _items, index);
+        // Wrap with a key - ReorderableListView requires each child to have a unique key
+        return KeyedSubtree(
+          key: ValueKey('reorderable_item_$index'),
+          child: item,
+        );
+      },
+      proxyDecorator: (child, index, animation) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (BuildContext context, Widget? child) {
+            final double animValue = Curves.easeInOut.transform(animation.value);
+            final double elevation = lerpDouble(0, 6, animValue)!;
+            final double scale = lerpDouble(1, 1.02, animValue)!;
+            return Transform.scale(
+              scale: scale,
+              child: Card(
+                elevation: elevation,
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+      },
     );
   }
 

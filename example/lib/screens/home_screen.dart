@@ -16,6 +16,7 @@ import 'smart_pagination/before_build_hook_screen.dart';
 import 'smart_pagination/scroll_control_screen.dart';
 import 'smart_pagination/has_reached_end_screen.dart';
 import 'smart_pagination/custom_view_builder_screen.dart';
+import 'smart_pagination/reorderable_list_screen.dart';
 
 /// Home screen with navigation to all example screens
 class HomeScreen extends StatelessWidget {
@@ -185,6 +186,15 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.dashboard_customize,
             color: Colors.teal,
             onTap: () => _navigate(context, const CustomViewBuilderScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Reorderable List',
+            description: 'Drag and drop to reorder paginated items',
+            icon: Icons.reorder,
+            color: Colors.purple,
+            onTap: () => _navigate(context, const ReorderableListScreen()),
           ),
         ],
       ),
