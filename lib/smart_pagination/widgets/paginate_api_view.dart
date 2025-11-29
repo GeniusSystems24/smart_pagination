@@ -52,6 +52,13 @@ class PaginateApiView<T> extends StatelessWidget {
     this.cacheExtent,
     this.customViewBuilder,
     this.onReorder,
+    // State Separation Builders
+    this.loadMoreLoadingBuilder,
+    this.loadMoreErrorBuilder,
+    this.loadMoreNoMoreItemsBuilder,
+    // Performance
+    this.invisibleItemsThreshold = 3,
+    this.retryLoadMore,
   });
 
   final SmartPaginationLoaded<T> loadedState;
@@ -97,7 +104,66 @@ class PaginateApiView<T> extends StatelessWidget {
   /// Called with the old index and new index when an item is moved
   final void Function(int oldIndex, int newIndex)? onReorder;
 
+  // ========== State Separation Builders ==========
+
+  /// Builder for load more loading indicator
+  final Widget Function(BuildContext context)? loadMoreLoadingBuilder;
+
+  /// Builder for load more error state with retry capability
+  final Widget Function(BuildContext context, Exception error, VoidCallback retry)? loadMoreErrorBuilder;
+
+  /// Builder for end of list indicator (no more items to load)
+  final Widget Function(BuildContext context)? loadMoreNoMoreItemsBuilder;
+
+  // ========== Performance ==========
+
+  /// Number of items before the end that triggers loading more items
+  final int invisibleItemsThreshold;
+
+  /// Retry callback for load more errors
+  final VoidCallback? retryLoadMore;
+
   List<T> get _items => loadedState.items;
+
+  /// Builds the bottom widget for load more states
+  Widget _buildBottomWidget(BuildContext context) {
+    if (loadedState.hasReachedEnd) {
+      // Use loadMoreNoMoreItemsBuilder if provided
+      if (loadMoreNoMoreItemsBuilder != null) {
+        return loadMoreNoMoreItemsBuilder!(context);
+      }
+      // Otherwise don't show anything (seamless end)
+      return const SizedBox.shrink();
+    } else if (loadedState.isLoadingMore) {
+      // Use loadMoreLoadingBuilder if provided, otherwise fallback to bottomLoader
+      if (loadMoreLoadingBuilder != null) {
+        return loadMoreLoadingBuilder!(context);
+      }
+      return bottomLoader ?? const SizedBox.shrink();
+    } else if (loadedState.loadMoreError != null) {
+      // Use loadMoreErrorBuilder if provided with retry callback
+      if (loadMoreErrorBuilder != null && retryLoadMore != null) {
+        return loadMoreErrorBuilder!(
+          context,
+          loadedState.loadMoreError!,
+          retryLoadMore!,
+        );
+      }
+      // Fallback: simple error display
+      return const SizedBox.shrink();
+    }
+    // Default: show loading indicator
+    return bottomLoader ?? const SizedBox.shrink();
+  }
+
+  /// Checks if we should trigger loading more items
+  bool _shouldLoadMore(int currentIndex) {
+    if (loadedState.hasReachedEnd || loadedState.isLoadingMore) {
+      return false;
+    }
+    // Trigger when we're [invisibleItemsThreshold] items away from the end
+    return currentIndex >= _items.length - invisibleItemsThreshold;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,9 +209,15 @@ class PaginateApiView<T> extends StatelessWidget {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 if (index >= _items.length) {
-                  fetchPaginatedList?.call();
-                  return bottomLoader ?? const SizedBox.shrink();
+                  // Show bottom widget (loading/error/end indicator)
+                  return _buildBottomWidget(context);
                 }
+
+                // Check if we should trigger loading more
+                if (_shouldLoadMore(index)) {
+                  fetchPaginatedList?.call();
+                }
+
                 return itemBuilder(context, _items, index);
               },
               childCount: loadedState.hasReachedEnd
@@ -178,9 +250,15 @@ class PaginateApiView<T> extends StatelessWidget {
                 final itemIndex = index ~/ 2;
                 if (index.isEven) {
                   if (itemIndex >= _items.length) {
-                    fetchPaginatedList?.call();
-                    return bottomLoader ?? const SizedBox.shrink();
+                    // Show bottom widget (loading/error/end indicator)
+                    return _buildBottomWidget(context);
                   }
+
+                  // Check if we should trigger loading more
+                  if (_shouldLoadMore(itemIndex)) {
+                    fetchPaginatedList?.call();
+                  }
+
                   return itemBuilder(context, _items, itemIndex);
                 }
                 return separator;

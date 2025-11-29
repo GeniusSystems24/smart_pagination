@@ -95,6 +95,19 @@ class SmartPaginationCubit<T>
 
     if (_hasReachedEnd) return;
 
+    // Set isLoadingMore = true when loading more items
+    final currentState = state;
+    if (currentState is SmartPaginationLoaded<T>) {
+      if (currentState.isLoadingMore) return; // Already loading
+
+      emit(
+        currentState.copyWith(
+          isLoadingMore: true,
+          loadMoreError: null, // Clear any previous error
+        ),
+      );
+    }
+
     final request = _buildRequest(
       reset: false,
       override: requestOverride,
@@ -159,6 +172,8 @@ class SmartPaginationCubit<T>
           allItems: aggregated,
           meta: meta,
           hasReachedEnd: !hasNext,
+          isLoadingMore: false, // Clear loading flag on success
+          loadMoreError: null, // Clear any previous error
         ),
       );
 
@@ -178,7 +193,19 @@ class SmartPaginationCubit<T>
         error: error,
         stackTrace: stackTrace,
       );
-      emit(SmartPaginationError<T>(error: error));
+
+      // Handle load more errors differently
+      if (!reset && state is SmartPaginationLoaded<T>) {
+        final currentState = state as SmartPaginationLoaded<T>;
+        emit(
+          currentState.copyWith(
+            isLoadingMore: false,
+            loadMoreError: error,
+          ),
+        );
+      } else {
+        emit(SmartPaginationError<T>(error: error));
+      }
     } catch (error, stackTrace) {
       final exception = Exception(error.toString());
       _logger.e(
@@ -186,7 +213,19 @@ class SmartPaginationCubit<T>
         error: exception,
         stackTrace: stackTrace,
       );
-      emit(SmartPaginationError<T>(error: exception));
+
+      // Handle load more errors differently
+      if (!reset && state is SmartPaginationLoaded<T>) {
+        final currentState = state as SmartPaginationLoaded<T>;
+        emit(
+          currentState.copyWith(
+            isLoadingMore: false,
+            loadMoreError: exception,
+          ),
+        );
+      } else {
+        emit(SmartPaginationError<T>(error: exception));
+      }
     }
   }
 
@@ -230,6 +269,8 @@ class SmartPaginationCubit<T>
             allItems: aggregated,
             meta: meta,
             hasReachedEnd: !meta.hasNext,
+            isLoadingMore: false,
+            loadMoreError: null,
           ),
         );
       },

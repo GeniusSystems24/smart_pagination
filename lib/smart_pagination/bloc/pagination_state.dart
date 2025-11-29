@@ -41,6 +41,8 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     required this.meta,
     required this.hasReachedEnd,
     DateTime? lastUpdate,
+    this.isLoadingMore = false,
+    this.loadMoreError,
   }) : lastUpdate = lastUpdate ?? DateTime.now();
 
   final List<T> items;
@@ -53,12 +55,20 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
   @override
   final DateTime lastUpdate;
 
+  /// Whether the pagination is currently loading more items
+  final bool isLoadingMore;
+
+  /// Error that occurred while loading more items (if any)
+  final Exception? loadMoreError;
+
   SmartPaginationLoaded<T> copyWith({
     List<T>? items,
     List<T>? allItems,
     bool? hasReachedEnd,
     PaginationMeta? meta,
     DateTime? lastUpdate,
+    bool? isLoadingMore,
+    Exception? loadMoreError,
   }) {
     final updatedAllItems = allItems ?? this.allItems;
     final updatedItems = items ?? this.items;
@@ -69,6 +79,8 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
       hasReachedEnd: hasReachedEnd ?? this.hasReachedEnd,
       meta: meta ?? this.meta,
       lastUpdate: lastUpdate ?? this.lastUpdate,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      loadMoreError: loadMoreError ?? this.loadMoreError,
     );
   }
 

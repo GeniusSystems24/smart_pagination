@@ -17,6 +17,8 @@ import 'smart_pagination/scroll_control_screen.dart';
 import 'smart_pagination/has_reached_end_screen.dart';
 import 'smart_pagination/custom_view_builder_screen.dart';
 import 'smart_pagination/reorderable_list_screen.dart';
+import 'smart_pagination/state_separation_screen.dart';
+import 'smart_pagination/smart_preloading_screen.dart';
 
 /// Home screen with navigation to all example screens
 class HomeScreen extends StatelessWidget {
@@ -195,6 +197,24 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.reorder,
             color: Colors.purple,
             onTap: () => _navigate(context, const ReorderableListScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'State Separation',
+            description: 'Different UI for first page vs load more states',
+            icon: Icons.splitscreen,
+            color: Colors.indigo,
+            onTap: () => _navigate(context, const StateSeparationScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Smart Preloading',
+            description: 'Load items before reaching the end',
+            icon: Icons.speed,
+            color: Colors.deepPurple,
+            onTap: () => _navigate(context, const SmartPreloadingScreen()),
           ),
         ],
       ),
