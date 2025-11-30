@@ -40,10 +40,11 @@ class StaggeredGridScreen extends StatelessWidget {
                 (request) => MockApiService.fetchProducts(request),
               ),
               itemBuilderType: PaginateBuilderType.staggeredGridView,
-
-              // crossAxisCount: 2,
-              // mainAxisSpacing: 12,
-              // crossAxisSpacing: 12,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+              ),
               padding: const EdgeInsets.all(16),
               itemBuilder: (context, items, index) {
                 final product = items[index];
@@ -51,7 +52,6 @@ class StaggeredGridScreen extends StatelessWidget {
               },
 
               // ========== FIRST PAGE STATES ==========
-
               firstPageLoadingBuilder: (context) {
                 return const Center(
                   child: Column(
@@ -73,10 +73,7 @@ class StaggeredGridScreen extends StatelessWidget {
                       SizedBox(height: 8),
                       Text(
                         'Creating masonry layout...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.black54),
                       ),
                     ],
                   ),
@@ -155,10 +152,7 @@ class StaggeredGridScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'Check back later for new items',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -166,7 +160,6 @@ class StaggeredGridScreen extends StatelessWidget {
               },
 
               // ========== LOAD MORE STATES ==========
-
               loadMoreLoadingBuilder: (context) {
                 return Container(
                   padding: const EdgeInsets.all(16),
@@ -193,7 +186,11 @@ class StaggeredGridScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.red.shade700, size: 20),
+                      Icon(
+                        Icons.warning_amber,
+                        color: Colors.red.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -205,10 +202,7 @@ class StaggeredGridScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: retry,
-                        child: const Text('Retry'),
-                      ),
+                      TextButton(onPressed: retry, child: const Text('Retry')),
                     ],
                   ),
                 );
@@ -221,7 +215,11 @@ class StaggeredGridScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle, size: 18, color: Colors.green.shade600),
+                      Icon(
+                        Icons.check_circle,
+                        size: 18,
+                        color: Colors.green.shade600,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'All items loaded',

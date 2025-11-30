@@ -363,38 +363,44 @@ class PaginateApiView<T> extends StatelessWidget {
     final mainAxisSpacing = delegate.mainAxisSpacing;
     final crossAxisSpacing = delegate.crossAxisSpacing;
 
-    return SingleChildScrollView(
-      reverse: reverse,
-      controller: scrollController,
-      scrollDirection: scrollDirection,
-      physics: physics,
-      keyboardDismissBehavior: keyboardDismissBehavior,
-      padding: padding,
-      child: StaggeredGrid.count(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: mainAxisSpacing,
-        crossAxisSpacing: crossAxisSpacing,
-        children: [
-          for (
-            var index = 0;
-            index < _items.length + (loadedState.hasReachedEnd ? 0 : 1);
-            index++
-          )
-            if (index < _items.length)
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        // Check if we should load more when scrolling near the end
+        if (notification is ScrollUpdateNotification) {
+          final pixels = notification.metrics.pixels;
+          final maxScrollExtent = notification.metrics.maxScrollExtent;
+          // Trigger loading when near the end (80% scrolled)
+          if (pixels >= maxScrollExtent * 0.8 && !loadedState.hasReachedEnd && !loadedState.isLoadingMore) {
+            fetchPaginatedList?.call();
+          }
+        }
+        return false;
+      },
+      child: SingleChildScrollView(
+        reverse: reverse,
+        controller: scrollController,
+        scrollDirection: scrollDirection,
+        physics: physics,
+        keyboardDismissBehavior: keyboardDismissBehavior,
+        padding: padding,
+        child: StaggeredGrid.count(
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: mainAxisSpacing,
+          crossAxisSpacing: crossAxisSpacing,
+          children: [
+            for (var index = 0; index < _items.length; index++)
               StaggeredGridTile.fit(
                 crossAxisCellCount: 1,
                 child: itemBuilder(context, _items, index),
-              )
-            else
-              StaggeredGridTile.fit(
-                crossAxisCellCount: 1,
-                child: GestureDetector(
-                  onTap: fetchPaginatedList,
-                  behavior: HitTestBehavior.opaque,
-                  child: bottomLoader ?? const SizedBox.shrink(),
-                ),
               ),
-        ],
+            // Add bottom widget for loading/error/end states
+            if (!loadedState.hasReachedEnd || loadMoreNoMoreItemsBuilder != null)
+              StaggeredGridTile.fit(
+                crossAxisCellCount: crossAxisCount, // Span full width
+                child: _buildBottomWidget(context),
+              ),
+          ],
+        ),
       ),
     );
   }
