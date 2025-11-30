@@ -25,3 +25,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Error illustration images
+  assets:
+    - assets/images/errors/
