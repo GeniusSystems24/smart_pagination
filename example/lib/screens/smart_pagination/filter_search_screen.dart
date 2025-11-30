@@ -121,7 +121,97 @@ class _FilterSearchScreenState extends State<FilterSearchScreen> {
                 return _buildProductCard(product);
               },
               separatorBuilder: (context, index) => const Divider(height: 1),
-              emptyBuilder: (context) {
+
+              // ========== FIRST PAGE STATES ==========
+
+              // Custom first page loading
+              firstPageLoadingBuilder: (context) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(
+                        strokeWidth: 6,
+                        color: Colors.blue,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Searching Products...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _searchQuery.isNotEmpty
+                            ? 'Searching for "$_searchQuery"'
+                            : 'Loading filtered results',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+
+              // Custom first page error
+              firstPageErrorBuilder: (context, error, retry) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 80,
+                          color: Colors.red.shade300,
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Search Failed',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[800],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          error.toString(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton.icon(
+                          onPressed: retry,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Try Again'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+
+              // Custom empty state
+              firstPageEmptyBuilder: (context) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -130,21 +220,35 @@ class _FilterSearchScreenState extends State<FilterSearchScreen> {
                         _searchQuery.isNotEmpty
                             ? Icons.search_off
                             : Icons.inbox_outlined,
-                        size: 64,
-                        color: Colors.grey,
+                        size: 100,
+                        color: Colors.grey[300],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       Text(
                         _searchQuery.isNotEmpty
-                            ? 'No products found for "$_searchQuery"'
-                            : 'No products found',
-                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                            ? 'No Results Found'
+                            : 'No Products Found',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _searchQuery.isNotEmpty
+                            ? 'No products match "$_searchQuery"'
+                            : 'Try adjusting your filters',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[500],
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       if (_searchQuery.isNotEmpty || _selectedCategory != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: TextButton(
+                          padding: const EdgeInsets.only(top: 24),
+                          child: OutlinedButton.icon(
                             onPressed: () {
                               setState(() {
                                 _searchController.clear();
@@ -152,48 +256,149 @@ class _FilterSearchScreenState extends State<FilterSearchScreen> {
                                 _selectedCategory = null;
                               });
                             },
-                            child: const Text('Clear filters'),
+                            icon: const Icon(Icons.clear),
+                            label: const Text('Clear Filters'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
                           ),
                         ),
                     ],
                   ),
                 );
               },
-              errorBuilder: (context, exception, retryCallback) {
-                return Center(
-                  child: Column(
+
+              // ========== LOAD MORE STATES ==========
+
+              // Custom load more loading
+              loadMoreLoadingBuilder: (context) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error: $exception',
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                        textAlign: TextAlign.center,
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: Colors.blue,
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: retryCallback,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Loading more results...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ],
                   ),
                 );
               },
-              initialLoadingBuilder: (context) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-              bottomLoadingBuilder: (context) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: CircularProgressIndicator(),
+
+              // Custom load more error
+              loadMoreErrorBuilder: (context, error, retry) {
+                return Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.red.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red.shade700,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Failed to load more results',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red.shade900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tap retry to try again',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: retry,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 );
               },
+
+              // Custom "no more items" indicator
+              loadMoreNoMoreItemsBuilder: (context) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 32,
+                        color: Colors.green.shade400,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'All results loaded!',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'No more products to show',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+
+              // Performance: Preload when 3 items from the end
+              invisibleItemsThreshold: 3,
             ),
           ),
         ],

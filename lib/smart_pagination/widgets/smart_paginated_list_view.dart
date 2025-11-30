@@ -56,6 +56,13 @@ class SmartPaginatedListView<T> extends StatelessWidget {
     this.physics,
     this.scrollController,
     this.onReachedEnd,
+    this.firstPageLoadingBuilder,
+    this.firstPageErrorBuilder,
+    this.firstPageEmptyBuilder,
+    this.loadMoreLoadingBuilder,
+    this.loadMoreErrorBuilder,
+    this.loadMoreNoMoreItemsBuilder,
+    this.invisibleItemsThreshold = 3,
   });
 
   /// The initial pagination request configuration.
@@ -89,6 +96,31 @@ class SmartPaginatedListView<T> extends StatelessWidget {
 
   /// Optional retry configuration.
   final RetryConfig? retryConfig;
+
+  // ========== NEW STATE SEPARATION BUILDERS ==========
+
+  /// Custom builder for first page loading state
+  final Widget Function(BuildContext context)? firstPageLoadingBuilder;
+
+  /// Custom builder for first page error state with retry callback
+  final Widget Function(BuildContext context, Exception error, VoidCallback retry)?
+      firstPageErrorBuilder;
+
+  /// Custom builder for first page empty state
+  final Widget Function(BuildContext context)? firstPageEmptyBuilder;
+
+  /// Custom builder for load more loading indicator
+  final Widget Function(BuildContext context)? loadMoreLoadingBuilder;
+
+  /// Custom builder for load more error with retry callback
+  final Widget Function(BuildContext context, Exception error, VoidCallback retry)?
+      loadMoreErrorBuilder;
+
+  /// Custom builder for no more items indicator
+  final Widget Function(BuildContext context)? loadMoreNoMoreItemsBuilder;
+
+  /// Number of items from the end to trigger loading more (default: 3)
+  final int invisibleItemsThreshold;
 
   /// Whether the scroll view should shrink-wrap its contents.
   final bool shrinkWrap;
@@ -136,6 +168,14 @@ class SmartPaginatedListView<T> extends StatelessWidget {
       physics: physics,
       scrollController: scrollController,
       onReachedEnd: onReachedEnd != null ? (_) => onReachedEnd!() : null,
+      // New state separation builders
+      firstPageLoadingBuilder: firstPageLoadingBuilder,
+      firstPageErrorBuilder: firstPageErrorBuilder,
+      firstPageEmptyBuilder: firstPageEmptyBuilder,
+      loadMoreLoadingBuilder: loadMoreLoadingBuilder,
+      loadMoreErrorBuilder: loadMoreErrorBuilder,
+      loadMoreNoMoreItemsBuilder: loadMoreNoMoreItemsBuilder,
+      invisibleItemsThreshold: invisibleItemsThreshold,
     );
   }
 }

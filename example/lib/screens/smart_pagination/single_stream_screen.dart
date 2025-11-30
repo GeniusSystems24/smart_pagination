@@ -44,54 +44,215 @@ class SingleStreamScreen extends StatelessWidget {
                 return _buildProductCard(product);
               },
               separator: const Divider(height: 1),
-              emptyWidget: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      'No products found',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              onError: (exception) {
+
+              // ========== FIRST PAGE STATES ==========
+
+              firstPageLoadingBuilder: (context) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
+                      const CircularProgressIndicator(
+                        strokeWidth: 5,
+                        color: Colors.cyan,
+                      ),
+                      const SizedBox(height: 24),
                       Text(
-                        'Error: $exception',
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                        textAlign: TextAlign.center,
+                        'Connecting to Stream...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.stream, size: 16, color: Colors.cyan),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Real-time updates enabled',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 );
               },
-              loadingWidget: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'Connecting to stream...',
-                      style: TextStyle(color: Colors.grey),
+
+              firstPageErrorBuilder: (context, error, retry) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.cloud_off,
+                          size: 72,
+                          color: Colors.red.shade400,
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Stream Connection Failed',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          error.toString(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton.icon(
+                          onPressed: retry,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reconnect'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.cyan,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              bottomLoader: const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ),
+                  ),
+                );
+              },
+
+              firstPageEmptyBuilder: (context) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.stream_outlined,
+                        size: 80,
+                        color: Colors.grey[300],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'No Stream Data',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Waiting for data from stream...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+
+              // ========== LOAD MORE STATES ==========
+
+              loadMoreLoadingBuilder: (context) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  alignment: Alignment.center,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: Colors.cyan,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Loading more from stream...',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.cyan,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+
+              loadMoreErrorBuilder: (context, error, retry) {
+                return Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber, color: Colors.red.shade700, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Stream error - failed to load more',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.red.shade900,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: retry,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+
+              loadMoreNoMoreItemsBuilder: (context) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.done_all, size: 18, color: Colors.cyan.shade600),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Stream complete - all data loaded',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+
+              invisibleItemsThreshold: 3,
             ),
           ),
         ],
