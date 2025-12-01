@@ -128,13 +128,12 @@ class _MultiStreamScreenState extends State<MultiStreamScreen> {
   }
 
   Widget _buildStreamContent() {
-    return SmartPagination<Product>(
+    return SmartPagination<Product>.listViewWithProvider(
       key: ValueKey(_selectedTabIndex), // Force rebuild when tab changes
       request: const PaginationRequest(page: 1, pageSize: 15),
       provider: PaginationProvider.stream(
         (request) => _getStreamProvider(request),
       ),
-      itemBuilderType: PaginateBuilderType.listView,
       itemBuilder: (context, items, index) {
         final product = items[index];
         return _buildProductCard(product);

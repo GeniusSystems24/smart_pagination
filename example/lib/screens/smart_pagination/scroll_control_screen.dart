@@ -209,7 +209,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
           const Divider(height: 1),
           // Product List
           Expanded(
-            child: SmartPagination<Product>.listView(
+            child: SmartPagination<Product>.listViewWithCubit(
               cubit: _controller.cubit,
               itemBuilder: (context, items, index) {
                 return _buildProductCard(items[index], index);
@@ -217,7 +217,6 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
               separator: const Divider(height: 1),
 
               // ========== FIRST PAGE STATES ==========
-
               firstPageLoadingBuilder: (context) {
                 return const Center(
                   child: Column(
@@ -239,10 +238,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
                       SizedBox(height: 8),
                       Text(
                         'Preparing scroll control...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.black54),
                       ),
                     ],
                   ),
@@ -321,10 +317,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Nothing to scroll to',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -332,7 +325,6 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
               },
 
               // ========== LOAD MORE STATES ==========
-
               loadMoreLoadingBuilder: (context) {
                 return Container(
                   padding: const EdgeInsets.all(16),
@@ -359,7 +351,11 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.red.shade700, size: 20),
+                      Icon(
+                        Icons.warning_amber,
+                        color: Colors.red.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -371,10 +367,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
                           ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: retry,
-                        child: const Text('Retry'),
-                      ),
+                      TextButton(onPressed: retry, child: const Text('Retry')),
                     ],
                   ),
                 );
@@ -387,7 +380,11 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle, size: 18, color: Colors.green.shade600),
+                      Icon(
+                        Icons.check_circle,
+                        size: 18,
+                        color: Colors.green.shade600,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'All products loaded',

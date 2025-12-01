@@ -233,11 +233,12 @@ class _OfflineModeTabState extends State<_OfflineModeTab> {
   }
 
   Widget _buildOnlineView() {
-    return SmartPaginatedListView<Product>(
+    return SmartPagination<Product>.listViewWithProvider(
       key: const Key('online_mode'),
       request: PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(_fetchProducts),
-      childBuilder: (context, product, index) {
+      itemBuilder: (context, products, index) {
+        final product = products[index];
         return ListTile(
           leading: const CircleAvatar(
             backgroundColor: Colors.green,
@@ -279,10 +280,11 @@ class _PlaceholderContentTab extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(title: Text(product.name));
             },
             firstPageErrorBuilder: (context, error, retry) {

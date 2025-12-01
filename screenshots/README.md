@@ -17,6 +17,7 @@ screenshots/
 Use descriptive names matching the example screen names:
 
 ### Basic Examples (5 screenshots)
+
 - `01_basic_listview.png` - Basic ListView pagination
 - `02_gridview.png` - GridView pagination
 - `03_retry_mechanism.png` - Automatic retry demo
@@ -24,11 +25,13 @@ Use descriptive names matching the example screen names:
 - `05_pull_to_refresh.png` - Pull to refresh
 
 ### Stream Examples (3 screenshots)
+
 - `06_single_stream.png` - Single stream real-time updates
 - `07_multi_stream.png` - Multiple streams switching
 - `08_merged_streams.png` - Merged streams
 
 ### Advanced Examples (13 screenshots)
+
 - `09_cursor_pagination.png` - Cursor-based pagination
 - `10_horizontal_scroll.png` - Horizontal scrolling list
 - `11_page_view.png` - PageView pagination
@@ -44,6 +47,7 @@ Use descriptive names matching the example screen names:
 - `21_custom_error_handling.png` - Custom error handling
 
 ### Error Handling Examples (7 screenshots)
+
 - `22_basic_error.png` - Basic error handling
 - `23_network_errors.png` - Network error types
 - `24_retry_patterns.png` - Retry patterns (manual, auto, exponential)
@@ -57,6 +61,7 @@ Use descriptive names matching the example screen names:
 ### Using Flutter DevTools
 
 1. Run the example app:
+
    ```bash
    cd example
    flutter run

@@ -39,7 +39,9 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
     // Show feedback
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Moved item from position ${oldIndex + 1} to ${newIndex + 1}'),
+        content: Text(
+          'Moved item from position ${oldIndex + 1} to ${newIndex + 1}',
+        ),
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
       ),
@@ -128,17 +130,14 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
                 }
 
                 if (_items.isEmpty) {
-                  return const Center(
-                    child: Text('No items to display'),
-                  );
+                  return const Center(child: Text('No items to display'));
                 }
 
-                return SmartPagination<Product>(
+                return SmartPagination<Product>.reorderableListViewWithProvider(
                   request: const PaginationRequest(page: 1, pageSize: 20),
                   provider: PaginationProvider.future(
                     (request) async => _items,
                   ),
-                  itemBuilderType: PaginateBuilderType.reorderableListView,
                   itemBuilder: (context, items, index) {
                     final product = items[index];
                     return _buildProductCard(product, index);
@@ -212,11 +211,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Drag Handle
-            Icon(
-              Icons.drag_handle,
-              color: Colors.grey[400],
-              size: 24,
-            ),
+            Icon(Icons.drag_handle, color: Colors.grey[400], size: 24),
             const SizedBox(width: 12),
             // Order Number
             Container(
@@ -293,10 +288,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
             ),
           ],
         ),
-        trailing: Icon(
-          Icons.more_vert,
-          color: Colors.grey[400],
-        ),
+        trailing: Icon(Icons.more_vert, color: Colors.grey[400]),
       ),
     );
   }
@@ -402,12 +394,11 @@ class _PriorityTasksScreenState extends State<PriorityTasksScreen> {
                   return const Center(child: Text('No tasks'));
                 }
 
-                return SmartPagination<Product>(
+                return SmartPagination<Product>.reorderableListViewWithProvider(
                   request: const PaginationRequest(page: 1, pageSize: 15),
                   provider: PaginationProvider.future(
                     (request) async => _tasks,
                   ),
-                  itemBuilderType: PaginateBuilderType.reorderableListView,
                   itemBuilder: (context, items, index) {
                     final task = items[index];
                     final priorityColor = _getPriorityColor(index);
@@ -437,10 +428,7 @@ class _PriorityTasksScreenState extends State<PriorityTasksScreen> {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(
@@ -460,18 +448,16 @@ class _PriorityTasksScreenState extends State<PriorityTasksScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(color: priorityColor, width: 4),
-        ),
+        border: Border(left: BorderSide(color: priorityColor, width: 4)),
       ),
       child: Card(
         margin: EdgeInsets.zero,
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          leading: Icon(
-            Icons.drag_handle,
-            color: Colors.grey[400],
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
           ),
+          leading: Icon(Icons.drag_handle, color: Colors.grey[400]),
           title: Row(
             children: [
               Container(
@@ -493,7 +479,10 @@ class _PriorityTasksScreenState extends State<PriorityTasksScreen> {
               Expanded(
                 child: Text(
                   task.name,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

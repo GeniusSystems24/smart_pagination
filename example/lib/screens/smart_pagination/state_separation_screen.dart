@@ -35,12 +35,11 @@ class StateSeparationScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
               ),
-              itemBuilderType: PaginateBuilderType.listView,
               itemBuilder: (context, items, index) {
                 final product = items[index];
                 return _buildProductCard(product);

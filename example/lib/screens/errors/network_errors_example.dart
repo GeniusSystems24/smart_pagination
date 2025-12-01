@@ -212,11 +212,12 @@ class _NetworkErrorsExampleState extends State<NetworkErrorsExample> {
 
           // Paginated list
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               key: ValueKey('network_error_$_selectedErrorType'),
               request: PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(_fetchProducts),
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return ListTile(
                   title: Text(product.name),
                   subtitle: Text('\$${product.price.toStringAsFixed(2)}'),

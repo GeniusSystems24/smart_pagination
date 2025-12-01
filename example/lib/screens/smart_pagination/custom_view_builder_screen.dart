@@ -34,7 +34,7 @@ class CustomViewBuilderScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
@@ -392,7 +392,7 @@ class CustomTableViewScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 30),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),

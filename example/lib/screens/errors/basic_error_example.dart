@@ -111,11 +111,12 @@ class _BasicErrorExampleState extends State<BasicErrorExample> {
 
           // Paginated list
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               key: ValueKey('basic_error_$_retryCount'),
               request: PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(_fetchProducts),
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return ListTile(
                   leading: CircleAvatar(
                     child: Text('${index + 1}'),

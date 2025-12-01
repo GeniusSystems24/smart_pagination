@@ -16,6 +16,7 @@ This document provides practical examples of using the Smart Pagination library.
   - [8. Programmatic Scrolling](#8-programmatic-scrolling)
   - [9. Memory Management](#9-memory-management)
   - [10. REST API Integration](#10-rest-api-integration)
+  - [11. Reorderable List](#11-reorderable-list)
   - [Running the Examples](#running-the-examples)
 
 ---
@@ -77,9 +78,9 @@ class ProductListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Products')),
-      body: SinglePagination<Product>(
+      body: SmartPagination.listViewWithProvider<Product>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: fetchProducts,
+        provider: PaginationProvider.future(fetchProducts),
         itemBuilder: (context, items, index) {
           final product = items[index];
           return ListTile(
@@ -125,10 +126,10 @@ class PhotoGalleryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Photo Gallery')),
-      body: SinglePagination.gridView(
-        cubit: SinglePaginationCubit<Photo>(
+      body: SmartPagination.gridViewWithCubit(
+        cubit: SmartPaginationCubit<Photo>(
           request: PaginationRequest(page: 1, pageSize: 20),
-          dataProvider: fetchPhotos,
+          provider: PaginationProvider.future(fetchPhotos),
         ),
         itemBuilder: (context, items, index) {
           final photo = items[index];
@@ -202,10 +203,10 @@ class ArticleViewerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Articles')),
-      body: SinglePagination.pageView(
-        cubit: SinglePaginationCubit<Article>(
+      body: SmartPagination.pageViewWithCubit(
+        cubit: SmartPaginationCubit<Article>(
           request: PaginationRequest(page: 1, pageSize: 1), // One article at a time
-          dataProvider: fetchArticles,
+          provider: PaginationProvider.future(fetchArticles),
         ),
         itemBuilder: (context, items, index) {
           final article = items[index];
@@ -263,7 +264,7 @@ class SearchableProductsPage extends StatefulWidget {
 }
 
 class _SearchableProductsPageState extends State<SearchableProductsPage> {
-  final filterListener = SinglePaginationFilterChangeListener<Product>();
+  final filterListener = SmartPaginationFilterChangeListener<Product>();
   final searchController = TextEditingController();
 
   Future<List<Product>> fetchProducts(PaginationRequest request) async {
@@ -322,9 +323,9 @@ class _SearchableProductsPageState extends State<SearchableProductsPage> {
           ),
         ),
       ),
-      body: SinglePagination<Product>(
+      body: SmartPagination.listViewWithProvider<Product>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: fetchProducts,
+        provider: PaginationProvider.future(fetchProducts),
         filterListeners: [filterListener],
         itemBuilder: (context, items, index) {
           final product = items[index];
@@ -363,15 +364,15 @@ class RefreshableListPage extends StatefulWidget {
 }
 
 class _RefreshableListPageState extends State<RefreshableListPage> {
-  final refreshListener = SinglePaginationRefreshedChangeListener();
-  late final SinglePaginationCubit<Product> cubit;
+  final refreshListener = SmartPaginationRefreshedChangeListener();
+  late final SmartPaginationCubit<Product> cubit;
 
   @override
   void initState() {
     super.initState();
-    cubit = SinglePaginationCubit<Product>(
+    cubit = SmartPaginationCubit<Product>(
       request: PaginationRequest(page: 1, pageSize: 20),
-      dataProvider: fetchProducts,
+      provider: PaginationProvider.future(fetchProducts),
     );
   }
 
@@ -410,7 +411,7 @@ class _RefreshableListPageState extends State<RefreshableListPage> {
           // Wait a bit for the refresh to complete
           await Future.delayed(Duration(milliseconds: 500));
         },
-        child: SinglePagination.cubit(
+        child: SmartPagination.withCubit(
           cubit: cubit,
           itemBuilderType: PaginateBuilderType.listView,
           refreshListener: refreshListener,
@@ -470,9 +471,9 @@ class ErrorHandlingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Error Handling')),
-      body: SinglePagination<Product>(
+      body: SmartPagination.listViewWithProvider<Product>(
         request: PaginationRequest(page: 1, pageSize: 20),
-        dataProvider: fetchProducts,
+        provider: PaginationProvider.future(fetchProducts),
         itemBuilder: (context, items, index) {
           final product = items[index];
           return ListTile(
@@ -558,10 +559,10 @@ class RealtimeMessagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Real-time Messages')),
-      body: SinglePagination<Message>(
+      body: SmartPagination.listViewWithProvider<Message>(
         request: PaginationRequest(page: 1, pageSize: 50),
-        dataProvider: fetchMessages,
-        streamProvider: streamMessages, // Real-time updates
+        provider: PaginationProvider.future(fetchMessages),
+        provider: PaginationProvider.stream(streamMessages), // Real-time updates
         itemBuilder: (context, items, index) {
           final message = items[index];
           return Card(
@@ -608,14 +609,14 @@ class ScrollControlPage extends StatefulWidget {
 }
 
 class _ScrollControlPageState extends State<ScrollControlPage> {
-  late final SinglePaginationController<Product> controller;
+  late final SmartPaginationController<Product> controller;
 
   @override
   void initState() {
     super.initState();
-    controller = SinglePaginationController.of(
+    controller = SmartPaginationController.of(
       request: PaginationRequest(page: 1, pageSize: 50),
-      dataProvider: fetchProducts,
+      provider: PaginationProvider.future(fetchProducts),
     );
   }
 
@@ -655,7 +656,7 @@ class _ScrollControlPageState extends State<ScrollControlPage> {
           ),
         ],
       ),
-      body: SinglePagination.cubit(
+      body: SmartPagination.withCubit(
         cubit: controller.cubit,
         itemBuilderType: PaginateBuilderType.listView,
         itemBuilder: (context, items, index) {
@@ -726,10 +727,10 @@ class MemoryOptimizedPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Memory Optimized')),
-      body: SinglePagination.listView(
-        cubit: SinglePaginationCubit<LargeItem>(
+      body: SmartPagination.listViewWithCubit(
+        cubit: SmartPaginationCubit<LargeItem>(
           request: PaginationRequest(page: 1, pageSize: 20),
-          dataProvider: fetchItems,
+          provider: PaginationProvider.future(fetchItems),
           maxPagesInMemory: 3, // Keep only 3 pages in memory (60 items)
           onClear: () {
             print('Cleared old pages from memory');
@@ -835,9 +836,9 @@ class PostsPage extends StatelessWidget {
         title: Text('Posts'),
         centerTitle: true,
       ),
-      body: SinglePagination<Post>(
+      body: SmartPagination.listViewWithProvider<Post>(
         request: PaginationRequest(page: 1, pageSize: 10),
-        dataProvider: apiService.fetchPosts,
+        provider: PaginationProvider.future(apiService.fetchPosts),
         itemBuilder: (context, items, index) {
           final post = items[index];
           return Card(
@@ -923,6 +924,43 @@ class PostsPage extends StatelessWidget {
 ```
 
 ---
+
+## 11. Reorderable List
+
+Drag and drop to reorder items:
+
+```dart
+class ReorderableListPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Reorderable List')),
+      body: SmartPagination.reorderableListViewWithProvider<Product>(
+        request: PaginationRequest(page: 1, pageSize: 20),
+        provider: PaginationProvider.future(fetchProducts),
+        itemBuilder: (context, items, index) {
+          final product = items[index];
+          return ListTile(
+            key: ValueKey(product.id),
+            leading: Icon(Icons.drag_handle),
+            title: Text(product.name),
+            subtitle: Text('\$${product.price}'),
+          );
+        },
+        onReorder: (oldIndex, newIndex) {
+          // Handle reordering logic
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          // Note: This only updates the UI list.
+          // You should also update your backend/database.
+          // In a real app, you would access the list from your state management solution
+        },
+      ),
+    );
+  }
+}
+```
 
 ## Running the Examples
 

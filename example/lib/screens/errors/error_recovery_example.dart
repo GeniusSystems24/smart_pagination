@@ -194,11 +194,12 @@ class _CachedDataTabState extends State<_CachedDataTab> {
   }
 
   Widget _buildNormalView() {
-    return SmartPaginatedListView<Product>(
+    return SmartPagination<Product>.listViewWithProvider(
       key: ValueKey('cached_data_$_shouldFail'),
       request: PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(_fetchProducts),
-      childBuilder: (context, product, index) {
+      itemBuilder: (context, products, index) {
+        final product = products[index];
         return ListTile(
           leading: const Icon(Icons.cloud_done, color: Colors.green),
           title: Text(product.name),
@@ -325,11 +326,12 @@ class _PartialDataTabState extends State<_PartialDataTab> {
   }
 
   Widget _buildLoadingView() {
-    return SmartPaginatedListView<Product>(
+    return SmartPagination<Product>.listViewWithProvider(
       key: const Key('partial_data_loading'),
       request: PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(_fetchProducts),
-      childBuilder: (context, product, index) {
+      itemBuilder: (context, products, index) {
+        final product = products[index];
         return ListTile(title: Text(product.name));
       },
     );
@@ -384,13 +386,14 @@ class _AlternativeSourceTabState extends State<_AlternativeSourceTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             key: ValueKey('alt_source_$_usePrimarySource'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(
               _usePrimarySource ? _fetchFromPrimary : _fetchFromBackup,
             ),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(
                 leading: Icon(
                   _usePrimarySource ? Icons.cloud : Icons.backup,
@@ -507,11 +510,12 @@ class _UserRecoveryTabState extends State<_UserRecoveryTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             key: ValueKey('user_recovery_$_requiresLogin'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(
                 leading: const Icon(Icons.lock_open, color: Colors.green),
                 title: Text(product.name),

@@ -32,7 +32,7 @@ class RetryDemoScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(
@@ -45,10 +45,11 @@ class RetryDemoScreen extends StatelessWidget {
                 initialDelay: Duration(seconds: 1),
                 maxDelay: Duration(seconds: 5),
               ),
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return _buildProductCard(product);
               },
-              separatorBuilder: (context, index) => const Divider(height: 1),
+              separator: const Divider(height: 1),
 
               // ========== FIRST PAGE STATES ==========
 

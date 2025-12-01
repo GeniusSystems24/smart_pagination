@@ -35,7 +35,7 @@ class MergedStreamsScreen extends StatelessWidget {
           ),
           _buildStreamBadges(),
           Expanded(
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.mergeStreams(
                 (request) => [
@@ -44,7 +44,6 @@ class MergedStreamsScreen extends StatelessWidget {
                   MockApiService.saleProductsStream(request),
                 ],
               ),
-              itemBuilderType: PaginateBuilderType.listView,
               itemBuilder: (context, items, index) {
                 final product = items[index];
                 return _buildProductCard(product);

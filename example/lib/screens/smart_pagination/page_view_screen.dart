@@ -33,12 +33,11 @@ class PageViewScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.pageViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 1),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
               ),
-              itemBuilderType: PaginateBuilderType.pageView,
               itemBuilder: (context, items, index) {
                 final product = items[index];
                 return _buildProductPage(product, index);

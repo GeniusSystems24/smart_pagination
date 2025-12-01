@@ -43,12 +43,11 @@ class HorizontalListScreen extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             height: 250,
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
               ),
-              itemBuilderType: PaginateBuilderType.listView,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemBuilder: (context, items, index) {

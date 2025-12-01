@@ -26,10 +26,10 @@ The Smart Pagination package provides robust error handling with multiple custom
 Used when an error occurs during the initial data load. Provides full screen space for displaying error information.
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product: product),
+  itemBuilder: (context, product, index) => ProductCard(product: product),
   firstPageErrorBuilder: (context, error, retry) {
     return CustomErrorBuilder.material(
       context: context,
@@ -47,10 +47,10 @@ SmartPaginatedListView<Product>(
 Used when an error occurs while loading additional pages. Best suited for compact, inline error displays.
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product: product),
+  itemBuilder: (context, product, index) => ProductCard(product: product),
   loadMoreErrorBuilder: (context, error, retry) {
     return CustomErrorBuilder.compact(
       context: context,
@@ -67,10 +67,10 @@ SmartPaginatedListView<Product>(
 Backwards-compatible error builder. Now automatically maps to `firstPageErrorBuilder` with retry support.
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product: product),
+  itemBuilder: (context, product, index) => ProductCard(product: product),
   errorBuilder: (context, error, retry) {
     // This now works with retry callback
     return ErrorDisplay(
@@ -194,12 +194,12 @@ CustomErrorBuilder.custom(
 ### Basic Error Handling
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(
     (request) => apiService.fetchProducts(request),
   ),
-  childBuilder: (context, product, index) {
+  itemBuilder: (context, product, index) {
     return ListTile(
       title: Text(product.name),
       subtitle: Text('\$${product.price}'),
@@ -218,10 +218,10 @@ SmartPaginatedListView<Product>(
 ### Different Errors for First Page vs Load More
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product: product),
+  itemBuilder: (context, product, index) => ProductCard(product: product),
 
   // Full-screen error for first page
   firstPageErrorBuilder: (context, error, retry) {
@@ -248,14 +248,14 @@ SmartPaginatedListView<Product>(
 ### Grid View with Card Error
 
 ```dart
-SmartPaginatedGridView<Product>(
+SmartPagination.gridViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
     crossAxisCount: 2,
     childAspectRatio: 0.75,
   ),
-  childBuilder: (context, product, index) => ProductCard(product: product),
+  itemBuilder: (context, product, index) => ProductCard(product: product),
 
   firstPageErrorBuilder: (context, error, retry) {
     return CustomErrorBuilder.card(
@@ -272,10 +272,10 @@ SmartPaginatedGridView<Product>(
 ### Completely Custom Error Design
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product: product),
+  itemBuilder: (context, product, index) => ProductCard(product: product),
 
   firstPageErrorBuilder: (context, error, retry) {
     return Container(
@@ -420,7 +420,7 @@ Widget buildStandardError(
 }
 
 // Use it consistently
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   firstPageErrorBuilder: (context, error, retry) {
     return buildStandardError(context, error, retry);
   },
@@ -446,7 +446,7 @@ If you're using the old `onError` parameter without retry support:
 
 ### Before (Legacy)
 ```dart
-SmartPagination<Product>(
+SmartPagination.listViewWithProvider<Product>(
   onError: (exception) => ErrorDisplay(exception: exception),
   // ...
 )
@@ -454,7 +454,7 @@ SmartPagination<Product>(
 
 ### After (Recommended)
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   firstPageErrorBuilder: (context, error, retry) {
     return CustomErrorBuilder.material(
       context: context,

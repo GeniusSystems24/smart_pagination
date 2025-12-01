@@ -80,13 +80,14 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.withProvider(
             key: const Key('material_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
               (request) => _apiService.fetchProductsWithError(request),
             ),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
@@ -131,13 +132,14 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.withProvider(
             key: const Key('compact_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
               (request) => _apiService.fetchProductsWithError(request),
             ),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
@@ -181,7 +183,8 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPaginatedGridView<Product>(
+          child: SmartPagination<Product>.withProvider(
+            itemBuilderType: PaginateBuilderType.gridView,
             key: const Key('card_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
@@ -194,7 +197,8 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
               mainAxisSpacing: 8,
             ),
             padding: const EdgeInsets.all(8),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return Card(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -252,13 +256,14 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.withProvider(
             key: const Key('minimal_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
               (request) => _apiService.fetchProductsWithError(request),
             ),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(
                 dense: true,
                 title: Text(product.name),
@@ -305,13 +310,14 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.withProvider(
             key: const Key('custom_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
               (request) => _apiService.fetchProductsWithError(request),
             ),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
@@ -324,10 +330,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.red[100]!,
-                      Colors.white,
-                    ],
+                    colors: [Colors.red[100]!, Colors.white],
                   ),
                 ),
                 child: Center(
@@ -365,10 +368,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
                       const SizedBox(height: 8),
                       const Text(
                         'Something went wrong',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.black87,
-                        ),
+                        style: TextStyle(fontSize: 18, color: Colors.black87),
                       ),
                       const SizedBox(height: 32),
                       ElevatedButton(

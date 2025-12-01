@@ -63,13 +63,14 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.blue,
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
-            key: const Key('material_error'),
-            request: PaginationRequest(page: 1, pageSize: 20),
-            provider: PaginationProvider.future(_fetchProductsWithError),
-            childBuilder: (context, product, index) {
-              return ListTile(title: Text(product.name));
-            },
+            child: SmartPagination<Product>.listViewWithProvider(
+              key: const Key('material_error'),
+              request: PaginationRequest(page: 1, pageSize: 20),
+              provider: PaginationProvider.future(_fetchProductsWithError),
+              itemBuilder: (context, products, index) {
+                final product = products[index];
+                return ListTile(title: Text(product.name));
+              },
             firstPageErrorBuilder: (context, error, retry) {
               return CustomErrorBuilder.material(
                 context: context,
@@ -99,13 +100,14 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.orange,
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
-            key: const Key('compact_error'),
-            request: PaginationRequest(page: 1, pageSize: 20),
-            provider: PaginationProvider.future(_fetchProductsWithError),
-            childBuilder: (context, product, index) {
-              return ListTile(title: Text(product.name));
-            },
+            child: SmartPagination<Product>.listViewWithProvider(
+              key: const Key('compact_error'),
+              request: PaginationRequest(page: 1, pageSize: 20),
+              provider: PaginationProvider.future(_fetchProductsWithError),
+              itemBuilder: (context, products, index) {
+                final product = products[index];
+                return ListTile(title: Text(product.name));
+              },
             firstPageErrorBuilder: (context, error, retry) {
               return Center(
                 child: CustomErrorBuilder.compact(
@@ -135,13 +137,14 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.green,
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
-            key: const Key('card_error'),
-            request: PaginationRequest(page: 1, pageSize: 20),
-            provider: PaginationProvider.future(_fetchProductsWithError),
-            childBuilder: (context, product, index) {
-              return ListTile(title: Text(product.name));
-            },
+            child: SmartPagination<Product>.listViewWithProvider(
+              key: const Key('card_error'),
+              request: PaginationRequest(page: 1, pageSize: 20),
+              provider: PaginationProvider.future(_fetchProductsWithError),
+              itemBuilder: (context, products, index) {
+                final product = products[index];
+                return ListTile(title: Text(product.name));
+              },
             firstPageErrorBuilder: (context, error, retry) {
               return CustomErrorBuilder.card(
                 context: context,
@@ -169,13 +172,14 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.purple,
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
-            key: const Key('minimal_error'),
-            request: PaginationRequest(page: 1, pageSize: 20),
-            provider: PaginationProvider.future(_fetchProductsWithError),
-            childBuilder: (context, product, index) {
-              return ListTile(title: Text(product.name));
-            },
+            child: SmartPagination<Product>.listViewWithProvider(
+              key: const Key('minimal_error'),
+              request: PaginationRequest(page: 1, pageSize: 20),
+              provider: PaginationProvider.future(_fetchProductsWithError),
+              itemBuilder: (context, products, index) {
+                final product = products[index];
+                return ListTile(title: Text(product.name));
+              },
             firstPageErrorBuilder: (context, error, retry) {
               return Center(
                 child: CustomErrorBuilder.minimal(
@@ -203,13 +207,14 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.indigo,
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
-            key: const Key('snackbar_error'),
-            request: PaginationRequest(page: 1, pageSize: 20),
-            provider: PaginationProvider.future(_fetchProductsWithError),
-            childBuilder: (context, product, index) {
-              return ListTile(title: Text(product.name));
-            },
+            child: SmartPagination<Product>.listViewWithProvider(
+              key: const Key('snackbar_error'),
+              request: PaginationRequest(page: 1, pageSize: 20),
+              provider: PaginationProvider.future(_fetchProductsWithError),
+              itemBuilder: (context, products, index) {
+                final product = products[index];
+                return ListTile(title: Text(product.name));
+              },
             firstPageErrorBuilder: (context, error, retry) {
               return Stack(
                 children: [
@@ -254,13 +259,14 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.red,
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
-            key: const Key('custom_error'),
-            request: PaginationRequest(page: 1, pageSize: 20),
-            provider: PaginationProvider.future(_fetchProductsWithError),
-            childBuilder: (context, product, index) {
-              return ListTile(title: Text(product.name));
-            },
+            child: SmartPagination<Product>.listViewWithProvider(
+              key: const Key('custom_error'),
+              request: PaginationRequest(page: 1, pageSize: 20),
+              provider: PaginationProvider.future(_fetchProductsWithError),
+              itemBuilder: (context, products, index) {
+                final product = products[index];
+                return ListTile(title: Text(product.name));
+              },
             firstPageErrorBuilder: (context, error, retry) {
               return Container(
                 decoration: BoxDecoration(

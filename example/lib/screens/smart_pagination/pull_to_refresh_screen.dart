@@ -40,15 +40,16 @@ class PullToRefreshScreen extends StatelessWidget {
                 // For now, we'll show the pull-to-refresh UI
                 await Future.delayed(const Duration(milliseconds: 500));
               },
-              child: SmartPaginatedListView<Product>(
+              child: SmartPagination<Product>.listViewWithProvider(
                 request: const PaginationRequest(page: 1, pageSize: 15),
                 provider: PaginationProvider.future(
                   (request) => MockApiService.fetchProducts(request),
                 ),
-                childBuilder: (context, product, index) {
+                itemBuilder: (context, products, index) {
+                  final product = products[index];
                   return _buildProductCard(product, index);
                 },
-                separatorBuilder: (context, index) => const Divider(height: 1),
+                separator: const Divider(height: 1),
 
                 // ========== FIRST PAGE STATES ==========
 

@@ -18,7 +18,7 @@ class CustomStatesScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.blueGrey.withOpacity(0.1),
+            color: Colors.blueGrey.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.palette, color: Colors.blueGrey),
@@ -34,110 +34,104 @@ class CustomStatesScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
               ),
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return _buildProductCard(product);
               },
-              separatorBuilder: (context, index) => const Divider(height: 1),
+              separator: const Divider(height: 1),
               // Custom Loading State
-              bottomLoadingBuilder: (context) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.blueGrey.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const CircularProgressIndicator(
-                          color: Colors.blueGrey,
-                          strokeWidth: 3,
-                        ),
+              firstPageLoadingBuilder: (context) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Loading awesome products...',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blueGrey,
-                        ),
+                      child: const CircularProgressIndicator(
+                        color: Colors.blueGrey,
+                        strokeWidth: 3,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'This won\'t take long',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Loading awesome products...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blueGrey,
                       ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This won\'t take long',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
               // Custom Empty State
-              emptyBuilder: (context) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: Colors.blueGrey.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.shopping_bag_outlined,
-                          size: 80,
-                          color: Colors.blueGrey.withOpacity(0.5),
+              firstPageEmptyBuilder: (context) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 80,
+                        color: Colors.blueGrey.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'No Products Found',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'We couldn\'t find any products.\nTry adjusting your filters.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueGrey,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'No Products Found',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueGrey,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'We couldn\'t find any products.\nTry adjusting your filters.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Refresh'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueGrey,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  ],
+                ),
+              ),
               // Custom Error State
-              errorBuilder: (context, error,_) {
+              firstPageErrorBuilder: (context, error, retry) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -145,13 +139,13 @@ class CustomStatesScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.error_outline,
                           size: 80,
-                          color: Colors.red.withOpacity(0.7),
+                          color: Colors.red.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -197,7 +191,7 @@ class CustomStatesScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           ElevatedButton.icon(
-                            onPressed: () {},
+                            onPressed: retry,
                             icon: const Icon(Icons.refresh),
                             label: const Text('Try Again'),
                             style: ElevatedButton.styleFrom(
@@ -229,7 +223,7 @@ class CustomStatesScreen extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.blueGrey.withOpacity(0.1),
+          color: Colors.blueGrey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
@@ -240,10 +234,7 @@ class CustomStatesScreen extends StatelessWidget {
       ),
       title: Text(
         product.name,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

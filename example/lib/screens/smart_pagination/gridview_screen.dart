@@ -13,7 +13,7 @@ class GridViewScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('GridView Pagination'),
       ),
-      body: SmartPaginatedGridView<Product>(
+      body: SmartPagination<Product>.gridViewWithProvider(
         request: const PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(
           (request) => MockApiService.fetchProducts(request),
@@ -25,7 +25,8 @@ class GridViewScreen extends StatelessWidget {
           mainAxisSpacing: 12,
         ),
         padding: const EdgeInsets.all(12),
-        childBuilder: (context, product, index) {
+        itemBuilder: (context, products, index) {
+          final product = products[index];
           return _buildProductCard(product);
         },
 

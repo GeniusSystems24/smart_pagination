@@ -94,11 +94,12 @@ class _ManualRetryTabState extends State<_ManualRetryTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             key: ValueKey('manual_retry_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(title: Text(product.name));
             },
             firstPageErrorBuilder: (context, error, retry) {
@@ -192,11 +193,12 @@ class _AutoRetryTabState extends State<_AutoRetryTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             key: ValueKey('auto_retry_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(
                 title: Text(product.name),
                 subtitle: Text(product.description),
@@ -318,7 +320,7 @@ class _ExponentialBackoffTabState extends State<_ExponentialBackoffTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             key: ValueKey('exponential_backoff_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
@@ -327,7 +329,8 @@ class _ExponentialBackoffTabState extends State<_ExponentialBackoffTab> {
               initialDelay: Duration(seconds: 1),
               maxDelay: Duration(seconds: 8),
             ),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(title: Text(product.name));
             },
             firstPageErrorBuilder: (context, error, retry) {
@@ -385,11 +388,12 @@ class _LimitedAttemptsTabState extends State<_LimitedAttemptsTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             key: ValueKey('limited_attempts_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(title: Text(product.name));
             },
             firstPageErrorBuilder: (context, error, retry) {

@@ -135,13 +135,12 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
 
           // Product List
           Expanded(
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.listViewWithProvider(
               key: ValueKey(_threshold), // Rebuild when threshold changes
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
               ),
-              itemBuilderType: PaginateBuilderType.listView,
               itemBuilder: (context, items, index) {
                 final product = items[index];
                 final itemsFromEnd = items.length - index;

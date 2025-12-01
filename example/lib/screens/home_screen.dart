@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'smart_pagination/basic_listview_screen.dart';
 import 'smart_pagination/gridview_screen.dart';
+import 'smart_pagination/column_example_screen.dart';
+import 'smart_pagination/row_example_screen.dart';
 import 'smart_pagination/retry_demo_screen.dart';
 import 'smart_pagination/filter_search_screen.dart';
 import 'smart_pagination/single_stream_screen.dart';
@@ -59,6 +61,24 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.grid_view,
             color: Colors.green,
             onTap: () => _navigate(context, const GridViewScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Column Layout',
+            description: 'Non-scrollable column layout inside a scroll view',
+            icon: Icons.view_column,
+            color: Colors.teal,
+            onTap: () => _navigate(context, const ColumnExampleScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Row Layout',
+            description: 'Non-scrollable row layout inside a scroll view',
+            icon: Icons.table_rows,
+            color: Colors.pink,
+            onTap: () => _navigate(context, const RowExampleScreen()),
           ),
           const SizedBox(height: 12),
           _buildExampleCard(

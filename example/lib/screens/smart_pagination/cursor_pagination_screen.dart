@@ -34,7 +34,7 @@ class CursorPaginationScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.withProvider(
               request: PaginationRequest(
                 page: 1,
                 pageSize: 15,
@@ -48,10 +48,11 @@ class CursorPaginationScreen extends StatelessWidget {
                   return products;
                 },
               ),
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return _buildProductCard(product, index);
               },
-              separatorBuilder: (context, index) => const Divider(height: 1),
+              separator: const Divider(height: 1),
 
               // ========== FIRST PAGE STATES ==========
 

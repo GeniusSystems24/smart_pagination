@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2025-12-01
+
+### Added
+
+- **New Constructor**: `SmartPagination.column` and `SmartPagination.columnWithCubit` for non-scrollable column layouts.
+- **External Cubit Support**: Added `...WithCubit` named constructors for all view types (`listViewWithCubit`, `gridViewWithCubit`, `pageViewWithCubit`, `staggeredGridViewWithCubit`, `rowWithCubit`) to easily use externally created Cubits.
+- **Exposed Parameters**: Added missing parameters to all convenience constructors:
+  - `scrollController`: For external scroll control.
+  - `cacheExtent`: For viewport caching customization.
+  - `invisibleItemsThreshold`: For configuring smart preloading.
+  - **State Builders**: `firstPageLoadingBuilder`, `firstPageErrorBuilder`, `firstPageEmptyBuilder`, `loadMoreLoadingBuilder`, `loadMoreErrorBuilder`, `loadMoreNoMoreItemsBuilder`.
+
+### Breaking Changes ⚠️
+
+- **Constructor Renaming**:
+  - `SmartPagination(...)` is now `SmartPagination.withProvider(...)`.
+  - `SmartPagination.cubit(...)` is now `SmartPagination.withCubit(...)`.
+  - All named constructors now have explicit suffixes:
+    - `listView` -> `listViewWithProvider` / `listViewWithCubit`
+    - `gridView` -> `gridViewWithProvider` / `gridViewWithCubit`
+    - `pageView` -> `pageViewWithProvider` / `pageViewWithCubit`
+    - `staggeredGridView` -> `staggeredGridViewWithProvider` / `staggeredGridViewWithCubit`
+    - `column` -> `columnWithProvider` / `columnWithCubit`
+    - `row` -> `rowWithProvider` / `rowWithCubit`
+    - `reorderableListView` -> `reorderableListViewWithProvider` / `reorderableListViewWithCubit`
+
+- **Removed Convenience Widgets**: `SmartPaginatedListView` and `SmartPaginatedGridView` have been removed. Use `SmartPagination` directly.
+- **API Unification**:
+  - `childBuilder` is renamed to `itemBuilder`.
+  - `itemBuilder` signature changed from `(context, item, index)` to `(context, items, index)`. You must now access the item using `items[index]`.
+- **Configuration**:
+  - Use `itemBuilderType: PaginateBuilderType.gridView` for grid layouts.
+  - Use `itemBuilderType: PaginateBuilderType.listView` (default) for list layouts.
+
+### Changed
+
+- Updated all example screens to use the new constructor names.
+- Improved API clarity by explicitly distinguishing between `Provider` (internal Cubit creation) and `Cubit` (external Cubit injection) usage.
+- Updated `SmartPagination` to be the single entry point for all pagination types.
+- Updated `emptyWidget`, `loadingWidget`, and `bottomLoader` to accept `Widget` directly.
+- Updated `separator` to accept `Widget` directly.
+
 ## [0.0.6] - 2025-11-30
 
 ### Added

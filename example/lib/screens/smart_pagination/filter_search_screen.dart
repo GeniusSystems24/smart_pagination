@@ -101,7 +101,7 @@ class _FilterSearchScreenState extends State<FilterSearchScreen> {
           const Divider(height: 1),
           // Product List
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.withProvider(
               key: ValueKey('$_selectedCategory-$_searchQuery'),
               request: PaginationRequest(
                 page: 1,
@@ -118,13 +118,14 @@ class _FilterSearchScreenState extends State<FilterSearchScreen> {
                   return MockApiService.fetchProducts(request);
                 },
               ),
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return ProductCard(
                   product: product,
                   searchQuery: _searchQuery,
                 );
               },
-              separatorBuilder: (context, index) => const Divider(height: 1),
+              separator: const Divider(height: 1),
 
               // ========== FIRST PAGE STATES ==========
 

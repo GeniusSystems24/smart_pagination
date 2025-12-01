@@ -14,15 +14,16 @@ class BasicListViewScreen extends StatelessWidget {
         title: const Text('Basic ListView'),
         backgroundColor: Colors.blue,
       ),
-      body: SmartPaginatedListView<Product>(
+      body: SmartPagination<Product>.withProvider(
         request: const PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(
           (request) => MockApiService.fetchProducts(request),
         ),
-        childBuilder: (context, product, index) {
+        itemBuilder: (context, products, index) {
+          final product = products[index];
           return _buildProductCard(product);
         },
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separator: const Divider(height: 1),
 
         // ========== FIRST PAGE STATES ==========
 
@@ -141,20 +142,18 @@ class BasicListViewScreen extends StatelessWidget {
 
         // ========== LOAD MORE STATES ==========
 
-        loadMoreLoadingBuilder: (context) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            alignment: Alignment.center,
-            child: const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: Colors.blue,
-              ),
+        bottomLoader: Container(
+          padding: const EdgeInsets.all(16),
+          alignment: Alignment.center,
+          child: const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Colors.blue,
             ),
-          );
-        },
+          ),
+        ),
 
         loadMoreErrorBuilder: (context, error, retry) {
           return Container(

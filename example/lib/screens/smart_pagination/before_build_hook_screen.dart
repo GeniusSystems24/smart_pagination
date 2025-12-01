@@ -123,7 +123,7 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
             ),
           ),
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
@@ -147,25 +147,24 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
               //   //   'total_items': state.items.length,
               //   // });
               // },
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return _buildProductCard(product, index);
               },
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              emptyBuilder: (context) {
-                return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'No products found',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              separator: const Divider(height: 1),
+              emptyWidget: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'No products found',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

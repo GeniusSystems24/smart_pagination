@@ -1,11 +1,12 @@
 name: smart_pagination
 description: >
   Powerful Flutter pagination library with built-in BLoC state management,
-  6+ view types (ListView, GridView, PageView, StaggeredGrid), advanced error
-  handling (6 pre-built error styles), smart preloading, real-time stream support,
-  automatic retry with exponential backoff, and production-ready UI components.
-  Zero boilerplate, highly customizable, type-safe, and well-tested (60+ tests).
-version: 0.0.6+1
+  6+ view types (ListView, GridView, PageView, StaggeredGrid, ReorderableListView,
+  Column, Row, Custom), advanced error handling (6 pre-built error styles),
+  smart preloading, real-time stream support, automatic retry with exponential
+  backoff, and production-ready UI components. Zero boilerplate, highly
+  customizable, type-safe, and well-tested.
+version: 0.1.0
 homepage: https://github.com/GeniusSystems24/smart_pagination
 repository: https://github.com/GeniusSystems24/smart_pagination
 issue_tracker: https://github.com/GeniusSystems24/smart_pagination/issues

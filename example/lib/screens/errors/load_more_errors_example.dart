@@ -104,10 +104,11 @@ class _CompactErrorTabState extends State<_CompactErrorTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return ListTile(
                 leading: CircleAvatar(child: Text('${index + 1}')),
                 title: Text(product.name),
@@ -205,11 +206,12 @@ class _InlineRetryTabState extends State<_InlineRetryTab> {
           ),
         ),
         Expanded(
-          child: SmartPaginatedListView<Product>(
+          child: SmartPagination<Product>.listViewWithProvider(
             key: ValueKey('inline_retry_$_loadMoreAttempts'),
             request: PaginationRequest(page: 1, pageSize: 15),
             provider: PaginationProvider.future(_fetchProducts),
-            childBuilder: (context, product, index) {
+            itemBuilder: (context, products, index) {
+              final product = products[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: ListTile(
@@ -332,10 +334,11 @@ class _SilentFailureTabState extends State<_SilentFailureTab> {
         Expanded(
           child: Stack(
             children: [
-              SmartPaginatedListView<Product>(
+              SmartPagination<Product>.listViewWithProvider(
                 request: PaginationRequest(page: 1, pageSize: 20),
                 provider: PaginationProvider.future(_fetchProducts),
-                childBuilder: (context, product, index) {
+                itemBuilder: (context, products, index) {
+                  final product = products[index];
                   return ListTile(
                     leading: CircleAvatar(child: Text('${index + 1}')),
                     title: Text(product.name),

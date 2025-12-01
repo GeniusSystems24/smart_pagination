@@ -89,15 +89,16 @@ class _HasReachedEndScreenState extends State<HasReachedEndScreen> {
           const Divider(height: 1),
           // Product List
           Expanded(
-            child: SmartPaginatedListView<Product>(
+            child: SmartPagination<Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
               ),
-              childBuilder: (context, product, index) {
+              itemBuilder: (context, products, index) {
+                final product = products[index];
                 return _buildProductCard(product, index);
               },
-              separatorBuilder: (context, index) => const Divider(height: 1),
+              separator: const Divider(height: 1),
             ),
           ),
         ],
@@ -258,7 +259,7 @@ class HasReachedEndCallbackScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>(
+            child: SmartPagination<Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),

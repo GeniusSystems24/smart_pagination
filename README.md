@@ -42,7 +42,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^0.0.5
+  smart_pagination: ^0.0.7
 ```
 
 Install it:
@@ -54,7 +54,7 @@ flutter pub get
 Import it:
 
 ```dart
-import 'package:smart_pagination/smart_pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 ```
 
 ---
@@ -66,7 +66,7 @@ import 'package:smart_pagination/smart_pagination.dart';
 The simplest way to add pagination to your app:
 
 ```dart
-import 'package:smart_pagination/smart_pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 import 'package:flutter/material.dart';
 
 class ProductsPage extends StatelessWidget {
@@ -74,12 +74,13 @@ class ProductsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Products')),
-      body: SmartPaginatedListView<Product>(
+      body: SmartPagination<Product>.withProvider(
         request: PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(
           (request) => apiService.fetchProducts(request),
         ),
-        childBuilder: (context, product, index) {
+        itemBuilder: (context, items, index) {
+          final product = items[index];
           return ListTile(
             leading: Image.network(product.imageUrl),
             title: Text(product.name),
@@ -105,18 +106,20 @@ That's it! You now have a fully functional paginated list with:
 Switch to a grid layout by changing one line:
 
 ```dart
-SmartPaginatedGridView<Product>(
+SmartPagination<Product>.withProvider(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(
     (request) => apiService.fetchProducts(request),
   ),
+  itemBuilderType: PaginateBuilderType.gridView,
   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
     crossAxisCount: 2,
     childAspectRatio: 0.75,
     crossAxisSpacing: 10,
     mainAxisSpacing: 10,
   ),
-  childBuilder: (context, product, index) {
+  itemBuilder: (context, items, index) {
+    final product = items[index];
     return ProductCard(product: product);
   },
 )
@@ -127,10 +130,10 @@ SmartPaginatedGridView<Product>(
 Add beautiful error states:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination<Product>.withProvider(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 
   // Beautiful Material Design error for first page
   firstPageErrorBuilder: (context, error, retry) {
@@ -188,7 +191,7 @@ Different error UIs for different scenarios:
 - **Load More Error** - Compact, inline error when pagination fails
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination<Product>.withProvider(
   // ... other properties
 
   // Full-screen error for initial load
@@ -266,7 +269,7 @@ firstPageErrorBuilder: (context, error, retry) {
 #### 2. Automatic Retry with Exponential Backoff
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   retryConfig: RetryConfig(
@@ -275,7 +278,7 @@ SmartPaginatedListView<Product>(
     maxDelay: Duration(seconds: 10),
     shouldRetry: (error) => error is NetworkException,
   ),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 )
 ```
 
@@ -294,7 +297,7 @@ See [example app](example/) for complete implementations.
 Load data before users reach the end:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   // ... other properties
 
   // Load when user is 3 items away from the end (default: 3)
@@ -313,7 +316,7 @@ Adjust based on your needs:
 #### Server-Side Filtering
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(
     page: 1,
     pageSize: 20,
@@ -325,7 +328,7 @@ SmartPaginatedListView<Product>(
     },
   ),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 )
 ```
 
@@ -334,7 +337,7 @@ SmartPaginatedListView<Product>(
 ```dart
 final filterListener = SmartPaginationFilterChangeListener<Product>();
 
-SmartPagination(
+SmartPagination.withCubit(
   cubit: cubit,
   filterListeners: [filterListener],
   itemBuilder: (context, items, index) => ProductCard(items[index]),
@@ -358,10 +361,10 @@ filterListener.searchTerm = (product) =>
 Every aspect of the UI can be customized:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 
   // Loading states
   firstPageLoadingBuilder: (context) => CustomLoader(),
@@ -378,7 +381,7 @@ SmartPaginatedListView<Product>(
   loadMoreNoMoreItemsBuilder: (context) => EndOfList(),
 
   // Separators
-  separatorBuilder: (context, index) => Divider(),
+  separator: Divider(),
 
   // Scroll behavior
   physics: BouncingScrollPhysics(),
@@ -637,10 +640,11 @@ See [docs/ERROR_IMAGES_SETUP.md](docs/ERROR_IMAGES_SETUP.md) for setup instructi
 Standard vertical or horizontal scrolling list.
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) {
+  itemBuilder: (context, items, index) {
+    final product = items[index];
     return ListTile(
       leading: Image.network(product.imageUrl),
       title: Text(product.name),
@@ -648,7 +652,7 @@ SmartPaginatedListView<Product>(
       trailing: Icon(Icons.arrow_forward_ios),
     );
   },
-  separatorBuilder: (context, index) => Divider(),
+  separator: Divider(),
 )
 ```
 
@@ -664,7 +668,7 @@ SmartPaginatedListView<Product>(
 Multi-column grid layout.
 
 ```dart
-SmartPaginatedGridView<Product>(
+SmartPagination.gridViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -673,7 +677,8 @@ SmartPaginatedGridView<Product>(
     crossAxisSpacing: 10,
     mainAxisSpacing: 10,
   ),
-  childBuilder: (context, product, index) {
+  itemBuilder: (context, items, index) {
+    final product = items[index];
     return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,17 +712,33 @@ SmartPaginatedGridView<Product>(
 )
 ```
 
-**Grid Delegates**:
+### 3. Column (Non-scrollable)
 
-- `SliverGridDelegateWithFixedCrossAxisCount` - Fixed number of columns
-- `SliverGridDelegateWithMaxCrossAxisExtent` - Max width per item
+A non-scrollable column layout, useful when you want to embed the list inside another scroll view (e.g., `SingleChildScrollView`).
 
-### 3. PageView
+```dart
+SingleChildScrollView(
+  child: Column(
+    children: [
+      HeaderWidget(),
+      SmartPagination.columnWithProvider<Product>(
+        request: PaginationRequest(page: 1, pageSize: 5),
+        provider: PaginationProvider.future(fetchProducts),
+        itemBuilder: (context, items, index) => ProductTile(items[index]),
+        separator: Divider(),
+      ),
+      FooterWidget(),
+    ],
+  ),
+)
+```
+
+### 4. PageView
 
 Swipeable full-screen pages.
 
 ```dart
-SmartPagination.pageView(
+SmartPagination.pageViewWithCubit(
   cubit: cubit,
   itemBuilder: (context, items, index) {
     return Container(
@@ -726,7 +747,6 @@ SmartPagination.pageView(
       child: ProductDetailView(product: items[index]),
     );
   },
-  pageSnapping: true,
   scrollDirection: Axis.horizontal,
 )
 ```
@@ -743,7 +763,7 @@ SmartPagination.pageView(
 Pinterest-style masonry layout with varying item sizes.
 
 ```dart
-SmartPagination.staggeredGridView(
+SmartPagination.staggeredGridViewWithCubit(
   cubit: cubit,
   crossAxisCount: 2,
   itemBuilder: (context, items, index) {
@@ -782,9 +802,8 @@ SmartPagination.staggeredGridView(
 Drag-and-drop list reordering.
 
 ```dart
-SmartPagination(
+SmartPagination.reorderableListViewWithCubit(
   cubit: cubit,
-  itemBuilderType: PaginateBuilderType.reorderableListView,
   itemBuilder: (context, items, index) {
     return ListTile(
       key: ValueKey(items[index].id),
@@ -816,7 +835,7 @@ SmartPagination(
 Complete control over the layout.
 
 ```dart
-SmartPagination(
+SmartPagination.withCubit(
   cubit: cubit,
   itemBuilderType: PaginateBuilderType.custom,
   customViewBuilder: (context, items, hasReachedEnd, fetchMore) {
@@ -865,7 +884,7 @@ SmartPagination(
 #### Real-time Updates (Single Stream)
 
 ```dart
-SmartPaginatedListView<Message>(
+SmartPagination.listViewWithProvider<Message>(
   request: PaginationRequest(page: 1, pageSize: 50),
   provider: PaginationProvider.stream(
     (request) => firestore
@@ -875,8 +894,8 @@ SmartPaginatedListView<Message>(
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => Message.fromDoc(doc)).toList()),
   ),
-  childBuilder: (context, message, index) {
-    return MessageBubble(message: message);
+  itemBuilder: (context, items, index) {
+    return MessageBubble(message: items[index]);
   },
 )
 ```
@@ -922,11 +941,11 @@ class _ProductsPageState extends State<ProductsPage> {
           ),
         ],
       ),
-      body: SmartPaginatedListView<Product>(
+      body: SmartPagination.listViewWithProvider<Product>(
         key: ValueKey(selectedStream), // Force rebuild on stream change
         request: PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.stream(getStream),
-        childBuilder: (context, product, index) => ProductCard(product),
+        itemBuilder: (context, items, index) => ProductCard(items[index]),
       ),
     );
   }
@@ -938,7 +957,7 @@ class _ProductsPageState extends State<ProductsPage> {
 Combine multiple streams into one:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.mergeStreams(
     (request) => [
@@ -947,8 +966,54 @@ SmartPaginatedListView<Product>(
       apiService.saleProductsStream(request),
     ],
   ),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 )
+```
+
+### External Cubit & State Management
+
+If you need to manage the `SmartPaginationCubit` externally (e.g., for dependency injection or sharing state), use the `...WithCubit` named constructors:
+
+- `SmartPagination.listViewWithCubit`
+- `SmartPagination.gridViewWithCubit`
+- `SmartPagination.columnWithCubit`
+- `SmartPagination.pageViewWithCubit`
+- `SmartPagination.staggeredGridViewWithCubit`
+- `SmartPagination.rowWithCubit`
+- `SmartPagination.reorderableListViewWithCubit`
+
+```dart
+class MyPage extends StatefulWidget {
+  @override
+  _MyPageState createState() => _MyPageState();
+}
+
+class _MyPageState extends State<MyPage> {
+  late SmartPaginationCubit<Product> _cubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _cubit = SmartPaginationCubit<Product>(
+      request: PaginationRequest(page: 1, pageSize: 20),
+      provider: PaginationProvider.future(fetchProducts),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SmartPagination.listViewWithCubit<Product>(
+      cubit: _cubit,
+      itemBuilder: (context, items, index) => ProductCard(items[index]),
+    );
+  }
+
+  @override
+  void dispose() {
+    _cubit.close();
+    super.dispose();
+  }
+}
 ```
 
 ### Scroll Control
@@ -1003,7 +1068,7 @@ class _ProductsPageState extends State<ProductsPage> {
           ),
         ],
       ),
-      body: SmartPagination.cubit(
+      body: SmartPagination.withCubit(
         cubit: cubit,
         itemBuilder: (context, items, index) => ProductCard(items[index]),
       ),
@@ -1023,10 +1088,10 @@ class _ProductsPageState extends State<ProductsPage> {
 Transform state before rendering:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 
   // Sort items before rendering
   beforeBuild: (state) {
@@ -1096,11 +1161,11 @@ class ProductsPage extends StatelessWidget {
         refreshListener.refreshed = true;
         await Future.delayed(Duration(seconds: 1));
       },
-      child: SmartPaginatedListView<Product>(
+      child: SmartPagination.listViewWithProvider<Product>(
         request: PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(fetchProducts),
         refreshListener: refreshListener,
-        childBuilder: (context, product, index) => ProductCard(product),
+        itemBuilder: (context, items, index) => ProductCard(items[index]),
       ),
     );
   }
@@ -1127,10 +1192,10 @@ SmartPaginationCubit<Product>(
 Customize loading indicators for different states:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 
   // Full-screen loading for first page
   firstPageLoadingBuilder: (context) {
@@ -1173,10 +1238,10 @@ SmartPaginatedListView<Product>(
 Show custom UI when no data is available:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listViewWithProvider<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 
   firstPageEmptyBuilder: (context) {
     return Center(
@@ -1247,10 +1312,10 @@ class _ProductsPageState extends State<ProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SmartPaginatedListView<Product>(
+    return SmartPagination.listViewWithProvider<Product>(
       request: PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(fetchProducts),
-      childBuilder: (context, product, index) => ProductCard(product),
+      itemBuilder: (context, items, index) => ProductCard(items[index]),
     );
   }
 }
@@ -1695,65 +1760,12 @@ See [screenshots/README.md](screenshots/README.md) for detailed instructions.
 
 ## 📚 API Reference
 
-### SmartPaginatedListView<T>
-
-The easiest way to create a paginated list.
-
-```dart
-SmartPaginatedListView<T>({
-  // Required
-  required PaginationRequest request,
-  required PaginationProvider<T> provider,
-  required Widget Function(BuildContext, T, int) childBuilder,
-
-  // Optional builders
-  Widget Function(BuildContext, int)? separatorBuilder,
-
-  // First page builders
-  Widget Function(BuildContext)? firstPageLoadingBuilder,
-  Widget Function(BuildContext, Exception, VoidCallback)? firstPageErrorBuilder,
-  Widget Function(BuildContext)? firstPageEmptyBuilder,
-
-  // Load more builders
-  Widget Function(BuildContext)? loadMoreLoadingBuilder,
-  Widget Function(BuildContext, Exception, VoidCallback)? loadMoreErrorBuilder,
-  Widget Function(BuildContext)? loadMoreNoMoreItemsBuilder,
-
-  // Configuration
-  RetryConfig? retryConfig,
-  bool shrinkWrap = false,
-  bool reverse = false,
-  Axis scrollDirection = Axis.vertical,
-  EdgeInsetsGeometry? padding,
-  ScrollPhysics? physics,
-  ScrollController? scrollController,
-  int invisibleItemsThreshold = 3,
-  VoidCallback? onReachedEnd,
-
-  // Advanced
-  SmartPaginationState<T> Function(SmartPaginationState<T>)? beforeBuild,
-  SmartPaginationRefreshedChangeListener? refreshListener,
-  List<SmartPaginationFilterChangeListener<T>>? filterListeners,
-})
-```
-
-### SmartPaginatedGridView<T>
-
-Grid layout with pagination.
-
-```dart
-SmartPaginatedGridView<T>({
-  // All SmartPaginatedListView parameters, plus:
-  required SliverGridDelegate gridDelegate,
-})
-```
-
-### SmartPagination<T>
+### SmartPagination.withProvider<T>
 
 Low-level widget for complete control.
 
 ```dart
-SmartPagination<T>({
+SmartPagination.withProvider<T>({
   // Data source
   required PaginationRequest request,
   required PaginationProvider<T> provider,
@@ -1770,21 +1782,249 @@ SmartPagination<T>({
     VoidCallback fetchMore,
   )? customViewBuilder,
 
-  // All other parameters same as SmartPaginatedListView
+  // All other parameters same as SmartPagination.listView
 })
 ```
 
-### SmartPagination.cubit()
+### SmartPagination.withCubit<T>
 
 Use with your own cubit instance for full control.
 
 ```dart
-SmartPagination.cubit<T>({
+SmartPagination.withCubit<T>({
+  required SmartPaginationCubit<T> cubit,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  required PaginateBuilderType itemBuilderType,
+  // ... other parameters
+})
+```
+
+### SmartPagination.columnWithProvider<T>
+
+Creates a pagination widget as a Column layout (non-scrollable).
+
+```dart
+SmartPagination.columnWithProvider<T>({
+  required PaginationRequest request,
+  required PaginationProvider<T> provider,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.columnWithCubit<T>
+
+Creates a pagination widget as a Column layout (non-scrollable) with an external Cubit.
+
+```dart
+SmartPagination.columnWithCubit<T>({
   required SmartPaginationCubit<T> cubit,
   required Widget Function(BuildContext, List<T>, int) itemBuilder,
   // ... other parameters
 })
 ```
+
+### SmartPagination.gridViewWithProvider<T>
+
+Grid layout with pagination.
+
+```dart
+SmartPagination.gridViewWithProvider<T>({
+  required PaginationRequest request,
+  required PaginationProvider<T> provider,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  required SliverGridDelegate gridDelegate,
+  // ... other parameters
+})
+```
+
+### SmartPagination.gridViewWithCubit<T>
+
+Grid layout with pagination with an external Cubit.
+
+```dart
+SmartPagination.gridViewWithCubit<T>({
+  required SmartPaginationCubit<T> cubit,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  required SliverGridDelegate gridDelegate,
+  // ... other parameters
+})
+```
+
+### SmartPagination.listViewWithProvider<T>
+
+The easiest way to create a paginated list.
+
+```dart
+SmartPagination.listViewWithProvider<T>({
+  required PaginationRequest request,
+  required PaginationProvider<T> provider,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.listViewWithCubit<T>
+
+ListView layout with pagination with an external Cubit.
+
+```dart
+SmartPagination.listViewWithCubit<T>({
+  required SmartPaginationCubit<T> cubit,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.reorderableListViewWithProvider<T>
+
+Reorderable list layout with pagination.
+
+```dart
+SmartPagination.reorderableListViewWithProvider<T>({
+  required PaginationRequest request,
+  required PaginationProvider<T> provider,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  required void Function(int oldIndex, int newIndex) onReorder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.reorderableListViewWithCubit<T>
+
+Reorderable list layout with pagination with an external Cubit.
+
+```dart
+SmartPagination.reorderableListViewWithCubit<T>({
+  required SmartPaginationCubit<T> cubit,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  required void Function(int oldIndex, int newIndex) onReorder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.pageViewWithProvider<T>
+
+PageView layout with pagination.
+
+```dart
+SmartPagination.pageViewWithProvider<T>({
+  required PaginationRequest request,
+  required PaginationProvider<T> provider,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.pageViewWithCubit<T>
+
+PageView layout with pagination with an external Cubit.
+
+```dart
+SmartPagination.pageViewWithCubit<T>({
+  required SmartPaginationCubit<T> cubit,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.staggeredGridViewWithProvider<T>
+
+StaggeredGridView layout with pagination.
+
+```dart
+SmartPagination.staggeredGridViewWithProvider<T>({
+  required PaginationRequest request,
+  required PaginationProvider<T> provider,
+  required StaggeredGridTile Function(BuildContext, List<T>, int) itemBuilder,
+  required int crossAxisCount,
+  // ... other parameters
+})
+```
+
+### SmartPagination.staggeredGridViewWithCubit<T>
+
+StaggeredGridView layout with pagination with an external Cubit.
+
+```dart
+SmartPagination.staggeredGridViewWithCubit<T>({
+  required SmartPaginationCubit<T> cubit,
+  required StaggeredGridTile Function(BuildContext, List<T>, int) itemBuilder,
+  required int crossAxisCount,
+  // ... other parameters
+})
+```
+
+### SmartPagination.rowWithProvider<T>
+
+Row layout (horizontal non-scrollable) with pagination.
+
+```dart
+SmartPagination.rowWithProvider<T>({
+  required PaginationRequest request,
+  required PaginationProvider<T> provider,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  // ... other parameters
+})
+```
+
+### SmartPagination.rowWithCubit<T>
+
+Row layout (horizontal non-scrollable) with pagination with an external Cubit.
+
+```dart
+SmartPagination.rowWithCubit<T>({
+  required SmartPaginationCubit<T> cubit,
+  required Widget Function(BuildContext, List<T>, int) itemBuilder,
+  // ... other parameters
+})
+```
+
+### Configuration Fields
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `request` | `PaginationRequest` | Configuration for pagination (page size, initial page). Required for `withProvider`. | - |
+| `provider` | `PaginationProvider<T>` | Data source definition (Future or Stream). Required for `withProvider`. | - |
+| `cubit` | `SmartPaginationCubit<T>` | External BLoC instance. Required for `withCubit`. | - |
+| `itemBuilder` | `ItemBuilder<T>` | Builder function for each item in the list. | - |
+| `itemBuilderType` | `PaginateBuilderType` | The type of layout to render (listView, gridView, etc.). | `listView` |
+| `gridDelegate` | `SliverGridDelegate` | Grid configuration. Required for `gridView` type. | `SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2)` |
+| `scrollDirection` | `Axis` | The axis along which the scroll view scrolls. | `Axis.vertical` |
+| `shrinkWrap` | `bool` | Whether the extent of the scroll view should be determined by the contents. | `false` |
+| `reverse` | `bool` | Whether the scroll view scrolls in the reading direction. | `false` |
+| `physics` | `ScrollPhysics?` | How the scroll view should respond to user input. | `null` |
+| `padding` | `EdgeInsetsGeometry` | The amount of space by which to inset the children. | `EdgeInsets.all(0)` |
+| `scrollController` | `ScrollController?` | An object that can be used to control the position to which this scroll view is scrolled. | `null` |
+| `pageController` | `PageController?` | Controller for `pageView` type. | `null` |
+| `onPageChanged` | `ValueChanged<int>?` | Callback when page changes in `pageView`. | `null` |
+| `header` | `Widget?` | Widget to display at the top of the list. | `null` |
+| `footer` | `Widget?` | Widget to display at the bottom of the list. | `null` |
+| `separator` | `Widget?` | Widget to display between items (ListView/Column/Row). | `EmptySeparator` / `SizedBox` |
+| `emptyWidget` | `Widget` | Widget to display when the list is empty. | `EmptyDisplay()` |
+| `loadingWidget` | `Widget` | Widget to display while loading the first page. | `InitialLoader()` |
+| `bottomLoader` | `Widget` | Widget to display at the bottom while loading more items. | `BottomLoader()` |
+| `heightOfInitialLoadingAndEmptyWidget` | `double?` | Height constraint for initial loading/empty states. | `MediaQuery.size.height` |
+| `customViewBuilder` | `CustomViewBuilder?` | Builder for `PaginateBuilderType.custom`. | `null` |
+| `onReorder` | `ReorderCallback?` | Callback for `reorderableListView`. | `null` |
+| `firstPageLoadingBuilder` | `WidgetBuilder?` | Custom builder for first page loading state. | `null` |
+| `firstPageErrorBuilder` | `ErrorBuilder?` | Custom builder for first page error state. | `null` |
+| `firstPageEmptyBuilder` | `WidgetBuilder?` | Custom builder for first page empty state. | `null` |
+| `loadMoreLoadingBuilder` | `WidgetBuilder?` | Custom builder for load more loading indicator. | `null` |
+| `loadMoreErrorBuilder` | `ErrorBuilder?` | Custom builder for load more error state. | `null` |
+| `loadMoreNoMoreItemsBuilder` | `WidgetBuilder?` | Custom builder for "no more items" state. | `null` |
+| `invisibleItemsThreshold` | `int` | Number of invisible items that triggers loading more. | `3` |
+| `retryConfig` | `RetryConfig?` | Configuration for automatic retries. | `null` |
+| `refreshListener` | `SmartPaginationRefreshedChangeListener?` | Listener for pull-to-refresh events. | `null` |
+| `filterListeners` | `List<SmartPaginationFilterChangeListener>?` | Listeners for search/filter events. | `null` |
+| `onReachedEnd` | `VoidCallback?` | Callback when the end of the list is reached. | `null` |
+| `onLoaded` | `Function(SmartPaginationLoaded)?` | Callback when data is successfully loaded. | `null` |
+| `beforeBuild` | `StateTransformer?` | Hook to transform state before building. | `null` |
+| `listBuilder` | `ListBuilder?` | Hook to transform list items in Cubit. | `null` |
+| `cacheExtent` | `double?` | The viewport distance that items are cached. | `null` |
+| `allowImplicitScrolling` | `bool` | Whether to allow implicit scrolling. | `false` |
+| `keyboardDismissBehavior` | `ScrollViewKeyboardDismissBehavior` | How the keyboard should be dismissed. | `manual` |
+| `maxPagesInMemory` | `int` | Maximum number of pages to keep in memory. | `5` |
 
 ### PaginationProvider<T>
 
@@ -1984,10 +2224,10 @@ Create the cubit once and reuse it:
 ```dart
 // ❌ Bad - Creates new cubit on every build
 Widget build(BuildContext context) {
-  return SmartPaginatedListView<Product>(
+  return SmartPagination.listViewWithProvider<Product>(
     request: PaginationRequest(page: 1, pageSize: 20),
     provider: PaginationProvider.future(fetchProducts),
-    childBuilder: (context, product, index) => ProductCard(product),
+    itemBuilder: (context, items, index) => ProductCard(items[index]),
   );
 }
 
@@ -2011,7 +2251,7 @@ class _ProductsPageState extends State<ProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SmartPagination.cubit(
+    return SmartPagination.withCubit(
       cubit: cubit,
       itemBuilder: (context, items, index) => ProductCard(items[index]),
     );
@@ -2042,7 +2282,7 @@ SmartPaginationCubit<Product>(
 Better user experience with custom error handling:
 
 ```dart
-SmartPaginatedListView<Product>(
+SmartPagination.listView<Product>(
   // ... other properties
 
   firstPageErrorBuilder: (context, error, retry) {
@@ -2107,13 +2347,13 @@ SmartPaginationCubit<Product>(
 )
 
 // ⚠️ Less efficient - Transforms on every build
-SmartPaginatedListView<Product>(
+SmartPagination.listView<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   beforeBuild: (state) {
     // Runs on every build
   },
-  childBuilder: (context, product, index) => ProductCard(product),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
 )
 ```
 
@@ -2152,11 +2392,11 @@ final mockProvider = PaginationProvider.future(
 testWidgets('displays products', (tester) async {
   await tester.pumpWidget(
     MaterialApp(
-      home: SmartPaginatedListView<Product>(
+      home: SmartPagination.listView<Product>(
         request: PaginationRequest(page: 1, pageSize: 20),
         provider: mockProvider,
-        childBuilder: (context, product, index) {
-          return Text(product.name);
+        itemBuilder: (context, items, index) {
+          return Text(items[index].name);
         },
       ),
     ),
@@ -2169,205 +2409,12 @@ testWidgets('displays products', (tester) async {
 
 ---
 
-## 🏗️ Architecture
-
-```
-lib/
-├── core/                          # Core interfaces and shared widgets
-│   ├── bloc/                      # Abstract interfaces
-│   │   ├── ipagination_cubit.dart
-│   │   ├── ipagination_state.dart
-│   │   └── ipagination_listeners.dart
-│   ├── controller/                # Controller interfaces
-│   │   └── ipagination_controller.dart
-│   └── widget/                    # Shared UI components
-│       ├── error_display.dart
-│       ├── custom_error_builder.dart    # 6 error styles
-│       ├── initial_loader.dart
-│       ├── bottom_loader.dart
-│       └── empty_display.dart
-│
-├── data/                          # Data models
-│   └── models/
-│       ├── pagination_request.dart
-│       ├── pagination_meta.dart
-│       └── pagination_provider.dart
-│
-└── smart_pagination/              # Main implementation
-    ├── bloc/                      # State management
-    │   ├── smart_pagination_cubit.dart
-    │   ├── smart_pagination_state.dart
-    │   └── smart_pagination_listeners.dart
-    ├── controller/                # Scroll control
-    │   └── smart_pagination_controller.dart
-    └── widgets/                   # UI widgets
-        ├── paginate_api_view.dart              # Low-level widget
-        ├── smart_paginated_list_view.dart      # Convenience widget
-        ├── smart_paginated_grid_view.dart      # Convenience widget
-        └── smart_paginated_staggered_grid.dart # Staggered grid
-```
-
-### Design Principles
-
-1. **Separation of Concerns** - Core interfaces separate from implementation
-2. **Flexibility** - Multiple abstraction levels for different use cases
-3. **Type Safety** - Generic types throughout for compile-time safety
-4. **Testability** - Mock-friendly interfaces and dependency injection
-5. **Extensibility** - Easy to extend with custom implementations
-
----
-
 ## 📖 Documentation
 
 - **Error Handling Guide**: [docs/ERROR_HANDLING.md](docs/ERROR_HANDLING.md)
 - **Error Images Setup**: [docs/ERROR_IMAGES_SETUP.md](docs/ERROR_IMAGES_SETUP.md)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 - **License**: [LICENSE](LICENSE)
-
----
-
-## 🧪 Testing
-
-The library includes 60+ unit tests ensuring reliability.
-
-### Run Tests
-
-```bash
-flutter test
-```
-
-### Example Tests
-
-```dart
-// Cubit test
-blocTest<SmartPaginationCubit<Product>, SmartPaginationState<Product>>(
-  'emits loaded state when fetch succeeds',
-  build: () => SmartPaginationCubit<Product>(
-    request: PaginationRequest(page: 1, pageSize: 20),
-    provider: PaginationProvider.future(mockFetchProducts),
-  ),
-  act: (cubit) => cubit.fetchPaginatedList(),
-  expect: () => [
-    isA<SmartPaginationLoaded<Product>>()
-      .having((s) => s.items.length, 'items length', 20),
-  ],
-);
-
-// Widget test
-testWidgets('shows loading indicator initially', (tester) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: SmartPaginatedListView<Product>(
-        request: PaginationRequest(page: 1, pageSize: 20),
-        provider: PaginationProvider.future(mockFetchProducts),
-        childBuilder: (context, product, index) => Text(product.name),
-      ),
-    ),
-  );
-
-  expect(find.byType(CircularProgressIndicator), findsOneWidget);
-});
-```
-
----
-
-## 🗺️ Roadmap
-
-- [x] Single pagination implementation
-- [x] BLoC state management
-- [x] ListView, GridView, PageView support
-- [x] Retry mechanism with exponential backoff
-- [x] 60+ unit tests
-- [x] Convenience widgets
-- [x] Example app with 28+ demos
-- [x] Advanced error handling (6 styles)
-- [x] Error state separation
-- [x] Error illustrations infrastructure
-- [x] Smart preloading
-- [x] Stream support
-- [x] Merged streams
-- [x] Custom view builder
-- [x] Reorderable list support
-- [x] StaggeredGridView support
-- [ ] Widget and integration tests
-- [ ] Performance benchmarks
-- [ ] Video tutorials
-- [ ] CI/CD pipeline
-- [ ] pub.dev publication
-- [ ] Infinite scroll mode
-- [ ] Bi-directional pagination
-- [ ] GraphQL support
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### Ways to Contribute
-
-1. 🐛 **Report bugs** - [Open an issue](https://github.com/GeniusSystems24/smart_pagination/issues)
-2. 💡 **Suggest features** - [Start a discussion](https://github.com/GeniusSystems24/smart_pagination/discussions)
-3. 📖 **Improve docs** - Fix typos, add examples
-4. 🔧 **Submit PRs** - Add features, fix bugs
-
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/GeniusSystems24/smart_pagination.git
-cd smart_pagination
-
-# Install dependencies
-flutter pub get
-
-# Run tests
-flutter test
-
-# Run example app
-cd example
-flutter pub get
-flutter run
-```
-
-### Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add/update tests
-5. Ensure tests pass (`flutter test`)
-6. Format code (`flutter format .`)
-7. Update documentation
-8. Commit changes (`git commit -m 'Add amazing feature'`)
-9. Push to branch (`git push origin feature/amazing-feature`)
-10. Open a Pull Request
-
-### Guidelines
-
-- ✅ All tests must pass
-- ✅ Code must be formatted (`flutter format .`)
-- ✅ Update documentation for new features
-- ✅ Add examples for new features
-- ✅ Follow existing code style
-- ✅ Write clear commit messages
-
----
-
-## 📝 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
-
-### Latest Version (0.0.5)
-
-- ✅ Advanced error handling with 6 pre-built error styles
-- ✅ Error state separation (first page vs load more)
-- ✅ Error illustrations infrastructure
-- ✅ Smart preloading configuration
-- ✅ Custom view builder support
-- ✅ Stream support (single, multiple, merged)
-- ✅ 28+ example screens
-- ✅ Comprehensive documentation
 
 ---
 
@@ -2378,7 +2425,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ```
 MIT License
 
-Copyright (c) 2024 Genius Systems 24
+Copyright (c) 2024 Genius Systems
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2407,17 +2454,6 @@ SOFTWARE.
 - **scrollview_observer** - Scroll control ([pub.dev/packages/scrollview_observer](https://pub.dev/packages/scrollview_observer))
 - **flutter_staggered_grid_view** - Staggered layouts ([pub.dev/packages/flutter_staggered_grid_view](https://pub.dev/packages/flutter_staggered_grid_view))
 - Inspired by Flutter pagination best practices
-
----
-
-## 📧 Support
-
-Need help? We're here for you!
-
-- 📫 [Open an issue](https://github.com/GeniusSystems24/smart_pagination/issues)
-- 💬 [Start a discussion](https://github.com/GeniusSystems24/smart_pagination/discussions)
-- 📚 [Read the docs](https://github.com/GeniusSystems24/smart_pagination#readme)
-- ⭐ Star the repo if you find it useful!
 
 ---
 
@@ -2479,24 +2515,12 @@ Need help? We're here for you!
 
 ---
 
-## 🎓 Learning Resources
-
-### Tutorials
-
-- [Getting Started Guide](https://github.com/GeniusSystems24/smart_pagination/wiki/Getting-Started)
-- [Error Handling Deep Dive](docs/ERROR_HANDLING.md)
-- [Advanced Patterns](https://github.com/GeniusSystems24/smart_pagination/wiki/Advanced-Patterns)
-
-### Example Code
+## Example Code
 
 - [Basic Examples](example/lib/screens/basic/)
 - [Stream Examples](example/lib/screens/streams/)
 - [Error Examples](example/lib/screens/errors/)
 - [Advanced Examples](example/lib/screens/advanced/)
-
-### Video Tutorials
-
-- Coming soon!
 
 ---
 
@@ -2504,7 +2528,7 @@ Need help? We're here for you!
 
 **Transport agnostic**: Bring your own async function and enjoy consistent pagination UI.
 
-Made with ❤️ by [Genius Systems 24](https://github.com/GeniusSystems24)
+Made with ❤️ by [Genius Systems](https://github.com/GeniusSystems24)
 
 [⬆ Back to Top](#custom-pagination)
 
