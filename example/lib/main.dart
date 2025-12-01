@@ -12,7 +12,7 @@ class PaginationExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Custom Pagination Examples',
+      title: 'Smart Pagination Examples',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,

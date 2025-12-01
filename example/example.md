@@ -1,10 +1,10 @@
-# Custom Pagination Examples
+# Smart Pagination Examples
 
-This document provides practical examples of using the Custom Pagination library.
+This document provides practical examples of using the Smart Pagination library.
 
 ## Table of Contents
 
-- [Custom Pagination Examples](#custom-pagination-examples)
+- [Smart Pagination Examples](#smart-pagination-examples)
   - [Table of Contents](#table-of-contents)
   - [1. Basic ListView Example](#1-basic-listview-example)
   - [2. GridView with Custom Styling](#2-gridview-with-custom-styling)

@@ -160,7 +160,7 @@ class _BasicErrorExampleState extends State<BasicErrorExample> {
                             retry();
                           },
                           icon: const Icon(Icons.refresh),
-                          label: Text('Retry (${_retryCount}/2)'),
+                          label: Text('Retry ($_retryCount/2)'),
                         ),
                         const SizedBox(height: 12),
                         TextButton(

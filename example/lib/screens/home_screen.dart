@@ -37,7 +37,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Custom Pagination Examples')),
+      appBar: AppBar(title: const Text('Smart Pagination Examples')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

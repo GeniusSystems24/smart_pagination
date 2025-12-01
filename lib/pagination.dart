@@ -1,4 +1,4 @@
-/// Custom Pagination Library
+/// Smart Pagination Library
 ///
 /// A comprehensive Flutter pagination library that provides flexible and powerful
 /// pagination solutions for REST APIs with support for multiple view types.

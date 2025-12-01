@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Enhanced README.md for pub.dev with professional presentation
-  - Added "Why Custom Pagination?" section highlighting key benefits
+  - Added "Why Smart Pagination?" section highlighting key benefits
   - Added comprehensive Table of Contents
   - Reorganized content with clear visual separators
   - Added detailed documentation for all 28 example screens
@@ -302,7 +302,7 @@ SmartPagination<Product>(
 
 #### Core Features
 
-- Initial release of Custom Pagination library
+- Initial release of Smart Pagination library
 - **SmartPagination** widget with multiple layout support:
   - ListView with separators
   - GridView with configurable delegates

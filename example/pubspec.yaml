@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Custom Pagination Library
+  # Smart Pagination Library
   smart_pagination:
     path: ../
 

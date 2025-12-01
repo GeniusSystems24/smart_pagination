@@ -1,6 +1,6 @@
 # Error Handling Guide
 
-This guide covers the comprehensive error handling features in the Custom Pagination package.
+This guide covers the comprehensive error handling features in the Smart Pagination package.
 
 ## Table of Contents
 
@@ -12,7 +12,7 @@ This guide covers the comprehensive error handling features in the Custom Pagina
 
 ## Overview
 
-The Custom Pagination package provides robust error handling with multiple customization options:
+The Smart Pagination package provides robust error handling with multiple customization options:
 
 1. **First Page Errors** - Errors that occur when initially loading data
 2. **Load More Errors** - Errors that occur when loading additional pages
@@ -475,7 +475,7 @@ SmartPaginatedListView<Product>(
 
 ## Summary
 
-The Custom Pagination package provides comprehensive error handling with:
+The Smart Pagination package provides comprehensive error handling with:
 
 - ✅ Separate builders for first page and load more errors
 - ✅ Pre-built error widget styles (material, compact, card, minimal, snackbar)

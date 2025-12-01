@@ -1,4 +1,4 @@
-# Custom Pagination
+# Smart Pagination
 
 [![Pub Version](https://img.shields.io/badge/pub-v0.0.5-blue)](https://pub.dev/packages/smart_pagination)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -8,7 +8,7 @@ A powerful, flexible, and easy-to-use Flutter pagination library with built-in *
 
 > **Transport agnostic**: Bring your own async function and enjoy consistent, production-ready pagination UI.
 
-## ✨ Why Custom Pagination?
+## ✨ Why Smart Pagination?
 
 - 🚀 **Zero boilerplate** - Get paginated lists running in minutes with minimal code
 - 🎨 **6+ view types** - ListView, GridView, PageView, StaggeredGrid, and more
@@ -1905,14 +1905,14 @@ Helper for error illustrations with automatic icon fallback.
 ErrorImages.general({double width, double height, Color? fallbackColor})
 ErrorImages.network({double width, double height, Color? fallbackColor})
 ErrorImages.notFound({double width, double height, Color? fallbackColor})
-ErrorImages.serverError({double width, double height, Color? fallbackColor})
+ErrorImages.server({double width, double height, Color? fallbackColor})
 ErrorImages.timeout({double width, double height, Color? fallbackColor})
 ErrorImages.auth({double width, double height, Color? fallbackColor})
 ErrorImages.offline({double width, double height, Color? fallbackColor})
 ErrorImages.empty({double width, double height, Color? fallbackColor})
 ErrorImages.retry({double width, double height, Color? fallbackColor})
 ErrorImages.recovery({double width, double height, Color? fallbackColor})
-ErrorImages.loadingError({double width, double height, Color? fallbackColor})
+ErrorImages.loading({double width, double height, Color? fallbackColor})
 ErrorImages.custom({double width, double height, Color? fallbackColor})
 ```
 
@@ -2423,7 +2423,7 @@ Need help? We're here for you!
 
 ## 🌟 Features Comparison
 
-| Feature | Custom Pagination | infinite_scroll_pagination | flutter_pagewise | pagination_view |
+| Feature | Smart Pagination | infinite_scroll_pagination | flutter_pagewise | pagination_view |
 |---------|------------------|---------------------------|------------------|-----------------|
 | BLoC Pattern | ✅ Built-in | ❌ Manual | ❌ Manual | ❌ Manual |
 | Multiple View Types | ✅ 6+ types | ⚠️ Limited | ⚠️ Limited | ⚠️ Limited |

@@ -5,7 +5,7 @@ description: >
   handling (6 pre-built error styles), smart preloading, real-time stream support,
   automatic retry with exponential backoff, and production-ready UI components.
   Zero boilerplate, highly customizable, type-safe, and well-tested (60+ tests).
-version: 0.0.6
+version: 0.0.6+1
 homepage: https://github.com/GeniusSystems24/smart_pagination
 repository: https://github.com/GeniusSystems24/smart_pagination
 issue_tracker: https://github.com/GeniusSystems24/smart_pagination/issues

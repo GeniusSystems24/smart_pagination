@@ -95,7 +95,7 @@ class ErrorImages {
   }
 
   /// Creates a 500 error image widget
-  static Widget serverError({
+  static Widget server({
     double width = 200,
     double height = 200,
     Color? fallbackColor,
