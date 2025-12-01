@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'dart:async';
-import 'package:custom_pagination/pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 import '../models/product.dart';
 import '../models/message.dart';
 

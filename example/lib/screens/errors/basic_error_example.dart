@@ -1,4 +1,4 @@
-import 'package:custom_pagination/pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 import 'package:flutter/material.dart';
 import '../../models/product.dart';
 

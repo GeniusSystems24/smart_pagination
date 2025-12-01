@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:custom_pagination/pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 import '../../models/product.dart';
 import '../../services/mock_api_service.dart';
 import '../../widgets/product_card.dart';

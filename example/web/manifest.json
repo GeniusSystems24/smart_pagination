@@ -1,6 +1,6 @@
 {
-    "name": "custom_pagination_example",
-    "short_name": "custom_pagination_example",
+    "name": "smart_pagination_example",
+    "short_name": "smart_pagination_example",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

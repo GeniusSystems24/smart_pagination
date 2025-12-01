@@ -4,16 +4,19 @@ This document provides practical examples of using the Custom Pagination library
 
 ## Table of Contents
 
-1. [Basic ListView Example](#1-basic-listview-example)
-2. [GridView with Custom Styling](#2-gridview-with-custom-styling)
-3. [PageView for Swipeable Content](#3-pageview-for-swipeable-content)
-4. [Filter and Search](#4-filter-and-search)
-5. [Pull-to-Refresh](#5-pull-to-refresh)
-6. [Custom Error Handling](#6-custom-error-handling)
-7. [Stream Updates (Real-time)](#7-stream-updates-real-time)
-8. [Programmatic Scrolling](#8-programmatic-scrolling)
-9. [Memory Management](#9-memory-management)
-10. [REST API Integration](#10-rest-api-integration)
+- [Custom Pagination Examples](#custom-pagination-examples)
+  - [Table of Contents](#table-of-contents)
+  - [1. Basic ListView Example](#1-basic-listview-example)
+  - [2. GridView with Custom Styling](#2-gridview-with-custom-styling)
+  - [3. PageView for Swipeable Content](#3-pageview-for-swipeable-content)
+  - [4. Filter and Search](#4-filter-and-search)
+  - [5. Pull-to-Refresh](#5-pull-to-refresh)
+  - [6. Custom Error Handling](#6-custom-error-handling)
+  - [7. Stream Updates (Real-time)](#7-stream-updates-real-time)
+  - [8. Programmatic Scrolling](#8-programmatic-scrolling)
+  - [9. Memory Management](#9-memory-management)
+  - [10. REST API Integration](#10-rest-api-integration)
+  - [Running the Examples](#running-the-examples)
 
 ---
 
@@ -23,7 +26,7 @@ Simple pagination with a REST API:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:custom_pagination/pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -926,22 +929,24 @@ class PostsPage extends StatelessWidget {
 To run these examples:
 
 1. Add the required dependencies to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   flutter:
     sdk: flutter
-  custom_pagination: ^0.0.1
+  smart_pagination: ^0.0.1
   http: ^1.1.0
   cloud_firestore: ^4.13.0  # For real-time example
 ```
 
 2. Import the package:
+
 ```dart
-import 'package:custom_pagination/pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 ```
 
 3. Copy any example code and customize it for your needs!
 
 ---
 
-For more information, see the [README.md](../README.md) or visit the [GitHub repository](https://github.com/GeniusSystems24/custom_pagination).
+For more information, see the [README.md](../README.md) or visit the [GitHub repository](https://github.com/GeniusSystems24/smart_pagination).

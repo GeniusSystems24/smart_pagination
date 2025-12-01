@@ -96,7 +96,7 @@ Download and save these images to `example/assets/images/errors/`:
 The `ErrorImages` helper class provides easy access to all error images with automatic fallback to icons:
 
 ```dart
-import 'package:custom_pagination_example/utils/error_images.dart';
+import 'package:smart_pagination_example/utils/error_images.dart';
 
 // In your error widget
 ErrorImages.network(

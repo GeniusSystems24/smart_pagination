@@ -1,5 +1,5 @@
-name: custom_pagination_example
-description: Example app demonstrating custom_pagination library features
+name: smart_pagination_example
+description: Example app demonstrating smart_pagination library features
 publish_to: 'none'
 version: 1.0.0
 
@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   # Custom Pagination Library
-  custom_pagination:
+  smart_pagination:
     path: ../
 
   # For date formatting in grouped messages

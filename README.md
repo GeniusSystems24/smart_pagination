@@ -1,6 +1,6 @@
 # Custom Pagination
 
-[![Pub Version](https://img.shields.io/badge/pub-v0.0.5-blue)](https://pub.dev/packages/custom_pagination)
+[![Pub Version](https://img.shields.io/badge/pub-v0.0.5-blue)](https://pub.dev/packages/smart_pagination)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Flutter](https://img.shields.io/badge/flutter-3.9.0+-02569B?logo=flutter)](https://flutter.dev)
 
@@ -42,7 +42,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  custom_pagination: ^0.0.5
+  smart_pagination: ^0.0.5
 ```
 
 Install it:
@@ -54,7 +54,7 @@ flutter pub get
 Import it:
 
 ```dart
-import 'package:custom_pagination/custom_pagination.dart';
+import 'package:smart_pagination/smart_pagination.dart';
 ```
 
 ---
@@ -66,7 +66,7 @@ import 'package:custom_pagination/custom_pagination.dart';
 The simplest way to add pagination to your app:
 
 ```dart
-import 'package:custom_pagination/custom_pagination.dart';
+import 'package:smart_pagination/smart_pagination.dart';
 import 'package:flutter/material.dart';
 
 class ProductsPage extends StatelessWidget {
@@ -2306,8 +2306,8 @@ We welcome contributions! Here's how you can help:
 
 ### Ways to Contribute
 
-1. 🐛 **Report bugs** - [Open an issue](https://github.com/GeniusSystems24/custom_pagination/issues)
-2. 💡 **Suggest features** - [Start a discussion](https://github.com/GeniusSystems24/custom_pagination/discussions)
+1. 🐛 **Report bugs** - [Open an issue](https://github.com/GeniusSystems24/smart_pagination/issues)
+2. 💡 **Suggest features** - [Start a discussion](https://github.com/GeniusSystems24/smart_pagination/discussions)
 3. 📖 **Improve docs** - Fix typos, add examples
 4. 🔧 **Submit PRs** - Add features, fix bugs
 
@@ -2315,8 +2315,8 @@ We welcome contributions! Here's how you can help:
 
 ```bash
 # Clone the repository
-git clone https://github.com/GeniusSystems24/custom_pagination.git
-cd custom_pagination
+git clone https://github.com/GeniusSystems24/smart_pagination.git
+cd smart_pagination
 
 # Install dependencies
 flutter pub get
@@ -2414,9 +2414,9 @@ SOFTWARE.
 
 Need help? We're here for you!
 
-- 📫 [Open an issue](https://github.com/GeniusSystems24/custom_pagination/issues)
-- 💬 [Start a discussion](https://github.com/GeniusSystems24/custom_pagination/discussions)
-- 📚 [Read the docs](https://github.com/GeniusSystems24/custom_pagination#readme)
+- 📫 [Open an issue](https://github.com/GeniusSystems24/smart_pagination/issues)
+- 💬 [Start a discussion](https://github.com/GeniusSystems24/smart_pagination/discussions)
+- 📚 [Read the docs](https://github.com/GeniusSystems24/smart_pagination#readme)
 - ⭐ Star the repo if you find it useful!
 
 ---
@@ -2483,9 +2483,9 @@ Need help? We're here for you!
 
 ### Tutorials
 
-- [Getting Started Guide](https://github.com/GeniusSystems24/custom_pagination/wiki/Getting-Started)
+- [Getting Started Guide](https://github.com/GeniusSystems24/smart_pagination/wiki/Getting-Started)
 - [Error Handling Deep Dive](docs/ERROR_HANDLING.md)
-- [Advanced Patterns](https://github.com/GeniusSystems24/custom_pagination/wiki/Advanced-Patterns)
+- [Advanced Patterns](https://github.com/GeniusSystems24/smart_pagination/wiki/Advanced-Patterns)
 
 ### Example Code
 

@@ -1,4 +1,4 @@
-import 'package:custom_pagination/pagination.dart';
+import 'package:smart_pagination/pagination.dart';
 import 'package:flutter/material.dart';
 import '../../models/product.dart';
 
@@ -150,7 +150,9 @@ class _AutoRetryTabState extends State<_AutoRetryTab> {
       });
     }
 
-    throw Exception('Error occurred (Attempt #$_attemptCount). Will auto-retry...');
+    throw Exception(
+      'Error occurred (Attempt #$_attemptCount). Will auto-retry...',
+    );
   }
 
   void _startCountdown(VoidCallback retry) {
@@ -297,9 +299,7 @@ class _ExponentialBackoffTabState extends State<_ExponentialBackoffTab> {
     final delaySeconds = (1 << (_attemptCount - 1)).clamp(1, 8);
     await Future.delayed(Duration(seconds: delaySeconds));
 
-    throw Exception(
-      'Error (Attempt #$_attemptCount, waited ${delaySeconds}s)'
-    );
+    throw Exception('Error (Attempt #$_attemptCount, waited ${delaySeconds}s)');
   }
 
   @override
@@ -322,22 +322,16 @@ class _ExponentialBackoffTabState extends State<_ExponentialBackoffTab> {
             key: ValueKey('exponential_backoff_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
-            retryConfig: RetryConfig(
+            retryConfig: const RetryConfig(
               maxAttempts: 4,
-              // retryDelays: [
-              //   const Duration(seconds: 1),
-              //   const Duration(seconds: 2),
-              //   const Duration(seconds: 4),
-              //   const Duration(seconds: 8),
-              // ],
+              initialDelay: Duration(seconds: 1),
+              maxDelay: Duration(seconds: 8),
             ),
             childBuilder: (context, product, index) {
               return ListTile(title: Text(product.name));
             },
             firstPageErrorBuilder: (context, error, retry) {
-              final nextDelay = _attemptCount < 4
-                  ? (1 << _attemptCount)
-                  : 8;
+              final nextDelay = _attemptCount < 4 ? (1 << _attemptCount) : 8;
 
               return CustomErrorBuilder.material(
                 context: context,
