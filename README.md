@@ -1234,7 +1234,7 @@ class _ProductsPageState extends State<ProductsPage> {
 
 ## 🎨 Example App
 
-The library includes a comprehensive example app with **28+ demonstration screens** covering every feature.
+The library includes a comprehensive example app with **28 demonstration screens** covering every feature.
 
 ### Running the Example
 
@@ -1244,47 +1244,426 @@ flutter pub get
 flutter run
 ```
 
-### Example Categories
+### 📱 All Example Screens with Screenshots
 
-#### Basic Pagination (5 examples)
-1. **Basic ListView** - Simple paginated product list
-2. **GridView** - Product grid with 2 columns
-3. **Retry Mechanism** - Automatic retry with exponential backoff
-4. **Filter & Search** - Real-time search and filtering
-5. **Pull to Refresh** - Swipe down to refresh
+<div align="center">
 
-#### Stream Examples (3 examples)
-6. **Single Stream** - Real-time updates from Firestore/WebSocket
-7. **Multi Stream** - Switch between different data streams
-8. **Merged Streams** - Combine multiple streams into one
+> 💡 **Tip**: Click on any example below to see the implementation in the repository
 
-#### Advanced Examples (13 examples)
-9. **Cursor Pagination** - Efficient cursor-based pagination
-10. **Horizontal Scroll** - Horizontal scrolling list
-11. **PageView** - Swipeable full-screen pages
-12. **Staggered Grid** - Pinterest-style masonry layout
-13. **Custom States** - Custom loading, empty, error UI
-14. **Scroll Control** - Programmatic scrolling to items
-15. **beforeBuild Hook** - Transform state before rendering
-16. **hasReachedEnd** - Detect when reaching end of data
-17. **Custom View Builder** - Complete layout control
-18. **Reorderable List** - Drag and drop reordering
-19. **State Separation** - Different UI for first vs load more
-20. **Smart Preloading** - Configurable preload threshold
-21. **Custom Error Handling** - All error widget styles
+</div>
 
-#### Error Handling Examples (7 examples)
-22. **Basic Error Handling** - Simple error display with retry
-23. **Network Errors** - Different error types (timeout, 404, 500)
-24. **Retry Patterns** - Manual, auto, exponential, limited
-25. **Custom Error Widgets** - All 6 error widget styles
-26. **Error Recovery** - Cached data, partial data, fallback
-27. **Graceful Degradation** - Offline mode, placeholders
-28. **Load More Errors** - Handle pagination errors
+---
 
-### Screenshots
+### 🎯 Basic Pagination Examples
 
-> See the [example/screenshots](example/screenshots/) directory for visual examples of each screen.
+#### 1. Basic ListView
+
+Simple paginated product list with automatic loading.
+
+<div align="center">
+  <img src="screenshots/basic/01_basic_listview.png" alt="Basic ListView" width="250"/>
+</div>
+
+**Features**: Automatic pagination, loading indicators, scroll-to-load
+
+**Code**: [basic_listview_screen.dart](example/lib/screens/smart_pagination/basic_listview_screen.dart)
+
+---
+
+#### 2. GridView Pagination
+
+Product grid with 2 columns and pagination.
+
+<div align="center">
+  <img src="screenshots/basic/02_gridview.png" alt="GridView" width="250"/>
+</div>
+
+**Features**: GridView layout, configurable columns, responsive grid
+
+**Code**: [gridview_screen.dart](example/lib/screens/smart_pagination/gridview_screen.dart)
+
+---
+
+#### 3. Retry Mechanism
+
+Automatic retry with exponential backoff.
+
+<div align="center">
+  <img src="screenshots/basic/03_retry_mechanism.png" alt="Retry Mechanism" width="250"/>
+</div>
+
+**Features**: Auto-retry, exponential backoff, configurable attempts
+
+**Code**: [retry_demo_screen.dart](example/lib/screens/smart_pagination/retry_demo_screen.dart)
+
+---
+
+#### 4. Filter & Search
+
+Real-time search and filtering with pagination.
+
+<div align="center">
+  <img src="screenshots/basic/04_filter_search.png" alt="Filter & Search" width="250"/>
+</div>
+
+**Features**: Server-side filtering, search as you type, filter persistence
+
+**Code**: [filter_search_screen.dart](example/lib/screens/smart_pagination/filter_search_screen.dart)
+
+---
+
+#### 5. Pull to Refresh
+
+Swipe down to refresh functionality.
+
+<div align="center">
+  <img src="screenshots/basic/05_pull_to_refresh.png" alt="Pull to Refresh" width="250"/>
+</div>
+
+**Features**: Pull-to-refresh, refresh indicators, state reset
+
+**Code**: [pull_to_refresh_screen.dart](example/lib/screens/smart_pagination/pull_to_refresh_screen.dart)
+
+---
+
+### 📡 Stream Examples
+
+#### 6. Single Stream
+
+Real-time updates from a single data stream.
+
+<div align="center">
+  <img src="screenshots/streams/06_single_stream.png" alt="Single Stream" width="250"/>
+</div>
+
+**Features**: Real-time updates, WebSocket/Firestore integration, auto-sync
+
+**Code**: [single_stream_screen.dart](example/lib/screens/smart_pagination/single_stream_screen.dart)
+
+---
+
+#### 7. Multi Stream
+
+Switch between different data streams dynamically.
+
+<div align="center">
+  <img src="screenshots/streams/07_multi_stream.png" alt="Multi Stream" width="250"/>
+</div>
+
+**Features**: Stream switching, multiple data sources, smooth transitions
+
+**Code**: [multi_stream_screen.dart](example/lib/screens/smart_pagination/multi_stream_screen.dart)
+
+---
+
+#### 8. Merged Streams
+
+Combine multiple streams into one unified list.
+
+<div align="center">
+  <img src="screenshots/streams/08_merged_streams.png" alt="Merged Streams" width="250"/>
+</div>
+
+**Features**: Stream merging, unified data, concurrent updates
+
+**Code**: [merged_streams_screen.dart](example/lib/screens/smart_pagination/merged_streams_screen.dart)
+
+---
+
+### ⚙️ Advanced Examples
+
+#### 9. Cursor Pagination
+
+Efficient cursor-based pagination for large datasets.
+
+<div align="center">
+  <img src="screenshots/advanced/09_cursor_pagination.png" alt="Cursor Pagination" width="250"/>
+</div>
+
+**Features**: Cursor-based pagination, efficient queries, no page skipping
+
+**Code**: [cursor_pagination_screen.dart](example/lib/screens/smart_pagination/cursor_pagination_screen.dart)
+
+---
+
+#### 10. Horizontal Scroll
+
+Horizontal scrolling paginated list.
+
+<div align="center">
+  <img src="screenshots/advanced/10_horizontal_scroll.png" alt="Horizontal Scroll" width="250"/>
+</div>
+
+**Features**: Horizontal orientation, swipe navigation, carousel-style
+
+**Code**: [horizontal_list_screen.dart](example/lib/screens/smart_pagination/horizontal_list_screen.dart)
+
+---
+
+#### 11. PageView
+
+Swipeable full-screen pages with pagination.
+
+<div align="center">
+  <img src="screenshots/advanced/11_page_view.png" alt="PageView" width="250"/>
+</div>
+
+**Features**: Full-screen pages, swipe gestures, page indicators
+
+**Code**: [page_view_screen.dart](example/lib/screens/smart_pagination/page_view_screen.dart)
+
+---
+
+#### 12. Staggered Grid
+
+Pinterest-style masonry layout.
+
+<div align="center">
+  <img src="screenshots/advanced/12_staggered_grid.png" alt="Staggered Grid" width="250"/>
+</div>
+
+**Features**: Masonry layout, variable heights, dynamic positioning
+
+**Code**: [staggered_grid_screen.dart](example/lib/screens/smart_pagination/staggered_grid_screen.dart)
+
+---
+
+#### 13. Custom States
+
+Custom loading, empty, and error states.
+
+<div align="center">
+  <img src="screenshots/advanced/13_custom_states.png" alt="Custom States" width="250"/>
+</div>
+
+**Features**: Custom UI for all states, branded loading, custom animations
+
+**Code**: [custom_states_screen.dart](example/lib/screens/smart_pagination/custom_states_screen.dart)
+
+---
+
+#### 14. Scroll Control
+
+Programmatic scrolling to specific items or indices.
+
+<div align="center">
+  <img src="screenshots/advanced/14_scroll_control.png" alt="Scroll Control" width="250"/>
+</div>
+
+**Features**: Scroll to item, scroll to index, smooth animations
+
+**Code**: [scroll_control_screen.dart](example/lib/screens/smart_pagination/scroll_control_screen.dart)
+
+---
+
+#### 15. beforeBuild Hook
+
+Transform state before rendering.
+
+<div align="center">
+  <img src="screenshots/advanced/15_before_build_hook.png" alt="beforeBuild Hook" width="250"/>
+</div>
+
+**Features**: State transformation, sorting, filtering before render
+
+**Code**: [before_build_hook_screen.dart](example/lib/screens/smart_pagination/before_build_hook_screen.dart)
+
+---
+
+#### 16. hasReachedEnd
+
+Detect when pagination reaches the end.
+
+<div align="center">
+  <img src="screenshots/advanced/16_has_reached_end.png" alt="hasReachedEnd" width="250"/>
+</div>
+
+**Features**: End detection, custom end message, callbacks
+
+**Code**: [has_reached_end_screen.dart](example/lib/screens/smart_pagination/has_reached_end_screen.dart)
+
+---
+
+#### 17. Custom View Builder
+
+Complete control over the layout.
+
+<div align="center">
+  <img src="screenshots/advanced/17_custom_view_builder.png" alt="Custom View Builder" width="250"/>
+</div>
+
+**Features**: Fully custom layouts, mixed views, complex UIs
+
+**Code**: [custom_view_builder_screen.dart](example/lib/screens/smart_pagination/custom_view_builder_screen.dart)
+
+---
+
+#### 18. Reorderable List
+
+Drag and drop to reorder items.
+
+<div align="center">
+  <img src="screenshots/advanced/18_reorderable_list.png" alt="Reorderable List" width="250"/>
+</div>
+
+**Features**: Drag-and-drop, reorder callbacks, visual feedback
+
+**Code**: [reorderable_list_screen.dart](example/lib/screens/smart_pagination/reorderable_list_screen.dart)
+
+---
+
+#### 19. State Separation
+
+Different UI for first page vs load more states.
+
+<div align="center">
+  <img src="screenshots/advanced/19_state_separation.png" alt="State Separation" width="250"/>
+</div>
+
+**Features**: Separate first page/load more UI, different error handling
+
+**Code**: [state_separation_screen.dart](example/lib/screens/smart_pagination/state_separation_screen.dart)
+
+---
+
+#### 20. Smart Preloading
+
+Configurable preload threshold.
+
+<div align="center">
+  <img src="screenshots/advanced/20_smart_preloading.png" alt="Smart Preloading" width="250"/>
+</div>
+
+**Features**: Preload before end, configurable threshold, smooth experience
+
+**Code**: [smart_preloading_screen.dart](example/lib/screens/smart_pagination/smart_preloading_screen.dart)
+
+---
+
+#### 21. Custom Error Handling
+
+All error widget styles demonstration.
+
+<div align="center">
+  <img src="screenshots/advanced/21_custom_error_handling.png" alt="Custom Error Handling" width="250"/>
+</div>
+
+**Features**: All 6 error styles, custom error types, retry mechanisms
+
+**Code**: [custom_error_handling_screen.dart](example/lib/screens/smart_pagination/custom_error_handling_screen.dart)
+
+---
+
+### 🛡️ Error Handling Examples
+
+#### 22. Basic Error Handling
+
+Simple error display with retry button.
+
+<div align="center">
+  <img src="screenshots/errors/22_basic_error.png" alt="Basic Error" width="250"/>
+</div>
+
+**Features**: Simple retry, error counter, success after N attempts
+
+**Code**: [basic_error_example.dart](example/lib/screens/errors/basic_error_example.dart)
+
+---
+
+#### 23. Network Errors
+
+Different network error types (timeout, 404, 500, etc.).
+
+<div align="center">
+  <img src="screenshots/errors/23_network_errors.png" alt="Network Errors" width="250"/>
+</div>
+
+**Features**: Custom exceptions, context-aware errors, appropriate icons
+
+**Code**: [network_errors_example.dart](example/lib/screens/errors/network_errors_example.dart)
+
+---
+
+#### 24. Retry Patterns
+
+Manual, auto, exponential backoff, limited retries.
+
+<div align="center">
+  <img src="screenshots/errors/24_retry_patterns.png" alt="Retry Patterns" width="250"/>
+</div>
+
+**Features**: 4 retry strategies, countdown timers, retry limits
+
+**Code**: [retry_patterns_example.dart](example/lib/screens/errors/retry_patterns_example.dart)
+
+---
+
+#### 25. Custom Error Widgets
+
+All 6 pre-built error widget styles.
+
+<div align="center">
+  <img src="screenshots/errors/25_custom_error_widgets.png" alt="Custom Error Widgets" width="250"/>
+</div>
+
+**Features**: Material, Compact, Card, Minimal, Snackbar, Custom styles
+
+**Code**: [custom_error_widgets_example.dart](example/lib/screens/errors/custom_error_widgets_example.dart)
+
+---
+
+#### 26. Error Recovery
+
+Cached data, partial data, fallback strategies.
+
+<div align="center">
+  <img src="screenshots/errors/26_error_recovery.png" alt="Error Recovery" width="250"/>
+</div>
+
+**Features**: 4 recovery strategies, offline mode, data persistence
+
+**Code**: [error_recovery_example.dart](example/lib/screens/errors/error_recovery_example.dart)
+
+---
+
+#### 27. Graceful Degradation
+
+Offline mode, placeholders, limited features.
+
+<div align="center">
+  <img src="screenshots/errors/27_graceful_degradation.png" alt="Graceful Degradation" width="250"/>
+</div>
+
+**Features**: 3 degradation strategies, offline UI, skeleton screens
+
+**Code**: [graceful_degradation_example.dart](example/lib/screens/errors/graceful_degradation_example.dart)
+
+---
+
+#### 28. Load More Errors
+
+Handle errors while loading additional pages.
+
+<div align="center">
+  <img src="screenshots/errors/28_load_more_errors.png" alt="Load More Errors" width="250"/>
+</div>
+
+**Features**: 3 load-more patterns, inline errors, dismissible banners
+
+**Code**: [load_more_errors_example.dart](example/lib/screens/errors/load_more_errors_example.dart)
+
+---
+
+### 📸 Adding Screenshots
+
+To capture screenshots for the examples:
+
+1. Run the example app
+2. Navigate to each screen
+3. Take screenshots (recommended: 1080x2400px)
+4. Save to `screenshots/` directory following naming convention
+
+See [screenshots/README.md](screenshots/README.md) for detailed instructions.
 
 ---
 
