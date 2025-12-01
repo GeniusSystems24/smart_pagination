@@ -202,7 +202,7 @@ class ErrorImages {
   }
 
   /// Creates a loading error image widget
-  static Widget loadingError({
+  static Widget loading({
     double width = 200,
     double height = 200,
     Color? fallbackColor,
@@ -244,19 +244,19 @@ class ErrorImages {
 
   /// Gets all available error image paths
   static List<String> get allImages => [
-        generalError,
-        networkError,
-        error404,
-        error500,
-        timeoutError,
-        authError,
-        offlineError,
-        emptyState,
-        retryIcon,
-        recoveryIcon,
-        loadingError,
-        customError,
-      ];
+    generalError,
+    networkError,
+    error404,
+    error500,
+    timeoutError,
+    authError,
+    offlineError,
+    emptyState,
+    retryIcon,
+    recoveryIcon,
+    loadingError,
+    customError,
+  ];
 }
 
 /// Extension to easily use error images in widgets

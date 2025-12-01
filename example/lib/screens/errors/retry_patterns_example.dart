@@ -324,12 +324,12 @@ class _ExponentialBackoffTabState extends State<_ExponentialBackoffTab> {
             provider: PaginationProvider.future(_fetchProducts),
             retryConfig: RetryConfig(
               maxAttempts: 4,
-              retryDelays: [
-                const Duration(seconds: 1),
-                const Duration(seconds: 2),
-                const Duration(seconds: 4),
-                const Duration(seconds: 8),
-              ],
+              // retryDelays: [
+              //   const Duration(seconds: 1),
+              //   const Duration(seconds: 2),
+              //   const Duration(seconds: 4),
+              //   const Duration(seconds: 8),
+              // ],
             ),
             childBuilder: (context, product, index) {
               return ListTile(title: Text(product.name));
