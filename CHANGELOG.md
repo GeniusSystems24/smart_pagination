@@ -5,15 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.6] - 2025-11-30
 
 ### Added
+
 - Documentation preparation for pub.dev publication
 - Comprehensive example screens section in README (28 screens documented)
 - Screenshot infrastructure with placeholder guides
 - Screenshots directory structure (`basic/`, `streams/`, `advanced/`, `errors/`)
 
 ### Changed
+
 - Enhanced README.md for pub.dev with professional presentation
   - Added "Why Custom Pagination?" section highlighting key benefits
   - Added comprehensive Table of Contents
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Emphasizes: Zero boilerplate, type-safe, well-tested (60+ tests)
 
 ### Documentation
+
 - Created `screenshots/README.md` - Complete guide for capturing screenshots
 - Created category-specific guides (`PLACEHOLDER.md` files)
 - Added instructions for Flutter DevTools, command line, and automation
@@ -37,11 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.5] - 2024-11-02
+## [0.0.5] - 2025-11-02
 
 ### Added
 
 #### Unified Provider Pattern 🔄
+
 - **PaginationProvider Sealed Class**: Type-safe unified provider pattern
   - `PaginationProvider.future()` for REST API pagination
   - `PaginationProvider.stream()` for real-time updates
@@ -51,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Legacy typedefs maintained for backward compatibility
 
 #### Merged Streams Support 🔀
+
 - **MergedStreamPaginationProvider**: Merge multiple data streams
   - Combines streams into a single unified stream
   - Emits data whenever any source stream emits
@@ -61,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Visual indicators for each stream source
 
 #### Stream Examples 📡
+
 - **Single Stream Example**: Real-time product list with live price updates
   - Products update every 3 seconds
   - Visual indicators for streaming data
@@ -71,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Color-coded badges
 
 #### Advanced Error Handling 🛡️
+
 - **CustomErrorBuilder**: 6 pre-built error widget styles
   - `CustomErrorBuilder.material()` - Full-screen Material Design error
   - `CustomErrorBuilder.compact()` - Inline compact error
@@ -89,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Graceful degradation
 
 #### Error Examples (7 New Screens) 🐛
+
 - **Basic Error Handling** - Simple retry with progressive counter
 - **Network Errors** - Different error types (timeout, 404, 500, 401)
 - **Retry Patterns** - Manual, auto, exponential backoff, limited retries
@@ -98,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Load More Errors** - 3 load-more patterns (compact, inline, silent)
 
 #### Error Images Infrastructure 🎨
+
 - **ErrorImages Helper Class**: Easy image integration with fallback icons
   - 12 pre-configured image methods (general, network, 404, 500, timeout, etc.)
   - Automatic fallback to icons if images fail to load
@@ -111,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### API Improvements
+
 - **SmartPagination**: Updated to unified `PaginationProvider<T>` parameter
   - Removed separate `dataProvider` and `streamProvider`
   - Single `provider` parameter accepts both Future and Stream
@@ -122,6 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added error builder parameters (`firstPageErrorBuilder`, `loadMoreErrorBuilder`)
 
 #### Documentation Updates
+
 - Updated README.md for unified provider pattern
 - Added comprehensive error handling documentation
 - Updated all code examples to use `PaginationProvider`
@@ -130,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 #### DualPagination (Grouped Pagination) - Complete Removal
+
 - Removed all DualPagination functionality to simplify library focus
 - Deleted `lib/dual_pagination/` directory
 - Removed DualPagination tests and examples
@@ -174,6 +186,7 @@ SmartPagination<Product>(
 ```
 
 ### Benefits
+
 - **Type Safety**: Sealed classes ensure compile-time checking
 - **Cleaner API**: Single provider instead of two parameters
 - **Better Intent**: Clear distinction between Future and Stream
@@ -182,11 +195,12 @@ SmartPagination<Product>(
 
 ---
 
-## [0.0.4] - 2024-10-31
+## [0.0.4] - 2025-10-31
 
 ### Added
 
 #### Convenience Widgets 🛠️
+
 - **SmartPaginatedListView**: Simplified ListView pagination widget
   - Cleaner API with direct `childBuilder`
   - Optional `separatorBuilder`, `emptyBuilder`, `errorBuilder`
@@ -202,6 +216,7 @@ SmartPagination<Product>(
   - Direct `groupHeaderBuilder` and `childBuilder`
 
 #### Example App 🎨
+
 - **Complete Example Application** with 5 demonstration screens:
   1. Basic ListView - Simple paginated product list
   2. GridView - Product grid with pagination
@@ -212,17 +227,19 @@ SmartPagination<Product>(
 - **Example Models**: Product and Message with JSON serialization
 
 ### Enhanced
+
 - **Developer Experience**: 40-60% reduction in boilerplate code
 - **Example-Driven Learning**: Complete runnable examples
 - **Better API Design**: More intuitive method names
 
 ---
 
-## [0.0.3] - 2024-10-31
+## [0.0.3] - 2025-10-31
 
 ### Added
 
 #### Comprehensive Test Suite 🧪
+
 - **60+ Unit Tests** covering all core functionality
 - **Data Model Tests**: PaginationMeta (12 tests), PaginationRequest (8 tests)
 - **Error Handling Tests**: RetryConfig, RetryHandler, PaginationException
@@ -230,6 +247,7 @@ SmartPagination<Product>(
 - **Test Infrastructure**: Test models, factories, proper organization
 
 ### Testing Coverage
+
 - ✅ PaginationMeta (100%)
 - ✅ PaginationRequest (100%)
 - ✅ RetryConfig (100%)
@@ -239,22 +257,25 @@ SmartPagination<Product>(
 - ✅ DualPaginationCubit (80%)
 
 ### Dependencies
+
 - Added `bloc_test: ^9.1.5` for BLoC testing
 - Added `mocktail: ^1.0.1` for mocking
 
 ---
 
-## [0.0.2] - 2024-10-31
+## [0.0.2] - 2025-10-31
 
 ### Added
 
 #### Dual Pagination (Grouped Pagination)
+
 - **DualPaginationCubit<Key, T>**: Managing grouped state
 - **Flexible Grouping**: Custom `KeyGenerator` function
 - **Group Headers**: Customizable group header builder
 - **Real-time Updates**: Stream support for grouped data
 
 #### Retry Mechanism & Error Handling
+
 - **RetryConfig**: Configurable retry behavior with exponential backoff
   - Max attempts (default: 3)
   - Initial delay (default: 1s)
@@ -269,16 +290,18 @@ SmartPagination<Product>(
 - **RetryHandler Utility**: Automatic retry execution with logging
 
 ### Enhanced
+
 - Improved error logging with retry attempt information
 - Exponential backoff prevents API rate limiting
 
 ---
 
-## [0.0.1] - 2024-10-31
+## [0.0.1] - 2025-10-31
 
 ### Added
 
 #### Core Features
+
 - Initial release of Custom Pagination library
 - **SmartPagination** widget with multiple layout support:
   - ListView with separators
@@ -288,12 +311,14 @@ SmartPagination<Product>(
   - Column/Row layouts
 
 #### State Management
+
 - **SmartPaginationCubit**: BLoC pattern implementation
 - Three state types: `Initial`, `Loaded`, `Error`
 - **PaginationMeta**: Metadata tracking
 - **PaginationRequest**: Pagination configuration
 
 #### Advanced Features
+
 - Cursor-based and offset-based pagination
 - Stream provider for real-time updates
 - Memory management with `maxPagesInMemory`
@@ -302,22 +327,26 @@ SmartPagination<Product>(
 - `beforeBuild` hook for pre-render transformations
 
 #### Controller
+
 - **SmartPaginationController**: Scroll capabilities
 - Programmatic scrolling: `scrollToIndex()`, `scrollToItem()`
 
 #### UI Components
+
 - `BottomLoader` - pagination loading indicator
 - `InitialLoader` - initial loading state
 - `EmptyDisplay` - empty state widget
 - `ErrorDisplay` - error state widget
 
 #### Developer Experience
+
 - Type-safe generic support
 - Custom error handling with callbacks
 - Comprehensive in-code documentation
 - Multiple named constructors
 
 ### Dependencies
+
 - `flutter_bloc: ^9.1.1` - State management
 - `flutter_staggered_grid_view: ^0.7.0` - Staggered layouts
 - `logger: ^2.6.2` - Logging support
@@ -325,6 +354,7 @@ SmartPagination<Product>(
 - `scrollview_observer: ^1.26.2` - Scroll observation
 
 ### Documentation
+
 - Comprehensive README.md with examples
 - API reference and best practices
 - Contributing guidelines
@@ -335,6 +365,7 @@ SmartPagination<Product>(
 ## Future Releases
 
 ### Planned Features
+
 - [ ] Widget and integration tests
 - [ ] Code coverage reporting
 - [ ] Pull-to-refresh built-in widget support
