@@ -93,6 +93,7 @@ class ProductsPage extends StatelessWidget {
 ```
 
 That's it! You now have a fully functional paginated list with:
+
 - ✅ Automatic loading of next pages
 - ✅ Loading indicators
 - ✅ Error handling with retry
@@ -182,6 +183,7 @@ SmartPaginatedListView<Product>(
 #### Error State Separation
 
 Different error UIs for different scenarios:
+
 - **First Page Error** - Full-screen, detailed error when initial load fails
 - **Load More Error** - Compact, inline error when pagination fails
 
@@ -220,6 +222,7 @@ SmartPaginatedListView<Product>(
 ### 📡 Data Sources
 
 #### Future Provider (REST APIs)
+
 ```dart
 PaginationProvider.future(
   (request) => apiService.fetchProducts(request),
@@ -227,6 +230,7 @@ PaginationProvider.future(
 ```
 
 #### Stream Provider (Real-time)
+
 ```dart
 PaginationProvider.stream(
   (request) => firestore.collection('products').snapshots(),
@@ -234,6 +238,7 @@ PaginationProvider.stream(
 ```
 
 #### Merged Streams
+
 ```dart
 PaginationProvider.mergeStreams(
   (request) => [
@@ -246,7 +251,9 @@ PaginationProvider.mergeStreams(
 ### 🔁 Retry Mechanisms
 
 #### 1. Manual Retry
+
 User clicks a button to retry:
+
 ```dart
 firstPageErrorBuilder: (context, error, retry) {
   return ElevatedButton(
@@ -257,6 +264,7 @@ firstPageErrorBuilder: (context, error, retry) {
 ```
 
 #### 2. Automatic Retry with Exponential Backoff
+
 ```dart
 SmartPaginatedListView<Product>(
   request: PaginationRequest(page: 1, pageSize: 20),
@@ -272,9 +280,11 @@ SmartPaginatedListView<Product>(
 ```
 
 #### 3. Auto Retry with Countdown
+
 Show a countdown timer before auto-retry
 
 #### 4. Limited Attempts
+
 Maximum retry attempts with exhaustion handling
 
 See [example app](example/) for complete implementations.
@@ -293,6 +303,7 @@ SmartPaginatedListView<Product>(
 ```
 
 Adjust based on your needs:
+
 - `invisibleItemsThreshold: 5` - More aggressive preloading
 - `invisibleItemsThreshold: 1` - Load just before reaching end
 - `invisibleItemsThreshold: 0` - Load only when reaching end
@@ -300,6 +311,7 @@ Adjust based on your needs:
 ### 🔍 Filtering & Search
 
 #### Server-Side Filtering
+
 ```dart
 SmartPaginatedListView<Product>(
   request: PaginationRequest(
@@ -318,6 +330,7 @@ SmartPaginatedListView<Product>(
 ```
 
 #### Client-Side Filtering
+
 ```dart
 final filterListener = SmartPaginationFilterChangeListener<Product>();
 
@@ -508,18 +521,23 @@ CustomErrorBuilder.custom(
 The library supports multiple error recovery strategies:
 
 #### 1. Cached Data Fallback
+
 Show offline/cached data when fresh data fails to load
 
 #### 2. Partial Data Display
+
 Display whatever data loaded successfully before the error occurred
 
 #### 3. Alternative Source
+
 Switch to a backup data source (e.g., backup server, CDN)
 
 #### 4. User-Initiated Recovery
+
 Require user action to resolve (e.g., login, grant permissions)
 
 #### 5. Graceful Degradation
+
 Continue with limited functionality in offline/error mode
 
 See [docs/ERROR_HANDLING.md](docs/ERROR_HANDLING.md) and the [example app](example/lib/screens/errors/) for complete implementations.
@@ -588,6 +606,7 @@ CustomErrorBuilder.material(
 ```
 
 **Available images**:
+
 - `ErrorImages.general()` - General error
 - `ErrorImages.network()` - Network/connectivity error
 - `ErrorImages.notFound()` - 404 not found
@@ -602,6 +621,7 @@ CustomErrorBuilder.material(
 - `ErrorImages.custom()` - Custom error
 
 **Features**:
+
 - Automatic fallback to icons if images fail to load
 - Customizable width, height, and fallback colors
 - Free illustration sources guide included
@@ -633,6 +653,7 @@ SmartPaginatedListView<Product>(
 ```
 
 **Properties**:
+
 - `scrollDirection`: `Axis.vertical` (default) or `Axis.horizontal`
 - `shrinkWrap`: `true` to fit content
 - `reverse`: `true` for bottom-to-top scrolling
@@ -687,6 +708,7 @@ SmartPaginatedGridView<Product>(
 ```
 
 **Grid Delegates**:
+
 - `SliverGridDelegateWithFixedCrossAxisCount` - Fixed number of columns
 - `SliverGridDelegateWithMaxCrossAxisExtent` - Max width per item
 
@@ -710,6 +732,7 @@ SmartPagination.pageView(
 ```
 
 **Use cases**:
+
 - Image carousels
 - Onboarding flows
 - Full-screen product views
@@ -748,6 +771,7 @@ SmartPagination.staggeredGridView(
 ```
 
 **Use cases**:
+
 - Pinterest-style galleries
 - Mixed-size content
 - Dynamic height items
@@ -781,6 +805,7 @@ SmartPagination(
 ```
 
 **Use cases**:
+
 - Task lists
 - Priority management
 - Playlist organization
@@ -825,6 +850,7 @@ SmartPagination(
 ```
 
 **Use cases**:
+
 - Unique layouts
 - Complex UIs
 - Mixed view types
@@ -2417,30 +2443,35 @@ Need help? We're here for you!
 ## 💡 Use Cases
 
 ### E-Commerce Apps
+
 - Product catalogs with grid/list views
 - Search and filter products
 - Categorized product listings
 - Order history pagination
 
 ### Social Media
+
 - News feeds with real-time updates
 - User profiles and followers lists
 - Comments and replies threading
 - Media galleries (photos, videos)
 
 ### Content Apps
+
 - Article listings
 - Video streaming libraries
 - Podcast episodes
 - News aggregators
 
 ### Business Apps
+
 - Transaction histories
 - Customer lists
 - Invoice management
 - Report listings
 
 ### Chat Apps
+
 - Message history pagination
 - Contact lists
 - Channel/group listings
@@ -2451,17 +2482,20 @@ Need help? We're here for you!
 ## 🎓 Learning Resources
 
 ### Tutorials
+
 - [Getting Started Guide](https://github.com/GeniusSystems24/custom_pagination/wiki/Getting-Started)
 - [Error Handling Deep Dive](docs/ERROR_HANDLING.md)
 - [Advanced Patterns](https://github.com/GeniusSystems24/custom_pagination/wiki/Advanced-Patterns)
 
 ### Example Code
+
 - [Basic Examples](example/lib/screens/basic/)
 - [Stream Examples](example/lib/screens/streams/)
 - [Error Examples](example/lib/screens/errors/)
 - [Advanced Examples](example/lib/screens/advanced/)
 
 ### Video Tutorials
+
 - Coming soon!
 
 ---
