@@ -11,6 +11,7 @@ class SmartPaginationCubit<T>
     int maxPagesInMemory = 5,
     Logger? logger,
     RetryConfig? retryConfig,
+    Duration? dataAge,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -18,6 +19,7 @@ class SmartPaginationCubit<T>
        _maxPagesInMemory = maxPagesInMemory,
        _logger = logger ?? Logger(),
        _retryHandler = retryConfig != null ? RetryHandler(retryConfig) : null,
+       _dataAge = dataAge,
        initialRequest = request,
        _currentRequest = request,
        super(SmartPaginationInitial<T>());
@@ -29,6 +31,7 @@ class SmartPaginationCubit<T>
   final int _maxPagesInMemory;
   final Logger _logger;
   final RetryHandler? _retryHandler;
+  final Duration? _dataAge;
 
   @override
   final PaginationRequest initialRequest;
@@ -38,9 +41,49 @@ class SmartPaginationCubit<T>
   final List<List<T>> _pages = <List<T>>[];
   StreamSubscription<List<T>>? _streamSubscription;
   int _fetchToken = 0;
+  DateTime? _lastFetchTime;
 
   @override
   bool didFetch = false;
+
+  /// Returns the configured data age duration.
+  Duration? get dataAge => _dataAge;
+
+  /// Returns the timestamp of the last successful data fetch.
+  DateTime? get lastFetchTime => _lastFetchTime;
+
+  /// Returns true if data has expired based on the configured [dataAge].
+  /// If [dataAge] is null, data never expires.
+  /// If no data has been fetched yet, returns false.
+  bool get isDataExpired {
+    if (_dataAge == null || _lastFetchTime == null) return false;
+    return DateTime.now().difference(_lastFetchTime!) > _dataAge!;
+  }
+
+  /// Checks if data has expired and resets the cubit if so.
+  /// Returns true if the data was expired and reset was triggered.
+  /// This is useful when using the cubit as a global variable and
+  /// re-entering a screen after some time.
+  bool checkAndResetIfExpired() {
+    if (isDataExpired) {
+      _logger.d('Data expired after $_dataAge, resetting pagination');
+      _resetToInitial();
+      return true;
+    }
+    return false;
+  }
+
+  /// Resets the cubit to its initial state, clearing all data.
+  void _resetToInitial() {
+    cancelOngoingRequest();
+    _streamSubscription?.cancel();
+    _onClear?.call();
+    didFetch = false;
+    _pages.clear();
+    _currentMeta = null;
+    _lastFetchTime = null;
+    emit(SmartPaginationInitial<T>());
+  }
 
   bool get _hasReachedEnd => _currentMeta != null && !_currentMeta!.hasNext;
 
@@ -88,6 +131,11 @@ class SmartPaginationCubit<T>
 
   @override
   void fetchPaginatedList({PaginationRequest? requestOverride, int? limit}) {
+    // Check if data has expired and reset if necessary
+    if (checkAndResetIfExpired()) {
+      // State has been reset to initial, continue to load fresh data
+    }
+
     if (state is SmartPaginationInitial<T>) {
       refreshPaginatedList(requestOverride: requestOverride, limit: limit);
       return;
@@ -142,7 +190,9 @@ class SmartPaginationCubit<T>
       didFetch = true;
       _currentRequest = request;
 
+      // Update last fetch time for data age tracking
       if (reset) {
+        _lastFetchTime = DateTime.now();
         _pages
           ..clear()
           ..add(pageItems);
@@ -174,6 +224,10 @@ class SmartPaginationCubit<T>
           hasReachedEnd: !hasNext,
           isLoadingMore: false, // Clear loading flag on success
           loadMoreError: null, // Clear any previous error
+          fetchedAt: _lastFetchTime,
+          dataExpiredAt: _dataAge != null && _lastFetchTime != null
+              ? _lastFetchTime!.add(_dataAge!)
+              : null,
         ),
       );
 
@@ -271,6 +325,10 @@ class SmartPaginationCubit<T>
             hasReachedEnd: !meta.hasNext,
             isLoadingMore: false,
             loadMoreError: null,
+            fetchedAt: _lastFetchTime,
+            dataExpiredAt: _dataAge != null && _lastFetchTime != null
+                ? _lastFetchTime!.add(_dataAge!)
+                : null,
           ),
         );
       },
@@ -538,6 +596,9 @@ class SmartPaginationCubit<T>
     final transformedItems = _applyListBuilder(items);
     _onInsertionCallback?.call(transformedItems);
 
+    // Update last fetch time when setting items manually
+    _lastFetchTime = DateTime.now();
+
     if (currentState is SmartPaginationLoaded<T>) {
       emit(
         currentState.copyWith(
@@ -545,6 +606,8 @@ class SmartPaginationCubit<T>
           items: transformedItems,
           hasReachedEnd: true,
           lastUpdate: DateTime.now(),
+          fetchedAt: _lastFetchTime,
+          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
         ),
       );
     } else {
@@ -565,6 +628,8 @@ class SmartPaginationCubit<T>
           hasReachedEnd: true,
           isLoadingMore: false,
           loadMoreError: null,
+          fetchedAt: _lastFetchTime,
+          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
         ),
       );
     }
