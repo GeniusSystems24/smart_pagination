@@ -79,3 +79,12 @@ part 'data/models/pagination_meta.dart';
 part 'data/models/pagination_request.dart';
 
 part 'smart_pagination/pagination.dart';
+
+// Specialized widget classes
+part 'smart_pagination/widgets/smart_pagination_list_view.dart';
+part 'smart_pagination/widgets/smart_pagination_grid_view.dart';
+part 'smart_pagination/widgets/smart_pagination_column.dart';
+part 'smart_pagination/widgets/smart_pagination_row.dart';
+part 'smart_pagination/widgets/smart_pagination_page_view.dart';
+part 'smart_pagination/widgets/smart_pagination_staggered_grid_view.dart';
+part 'smart_pagination/widgets/smart_pagination_reorderable_list_view.dart';

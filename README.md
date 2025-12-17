@@ -27,6 +27,7 @@ A powerful, flexible, and easy-to-use Flutter pagination library with built-in *
 
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
+- [Widget Classes](#-widget-classes)
 - [Features](#-features)
 - [Data Operations](#-data-operations)
 - [Data Age & Expiration](#-data-age--expiration)
@@ -159,6 +160,89 @@ SmartPagination<Product>.withProvider(
   },
 )
 ```
+
+---
+
+## 🎯 Widget Classes
+
+Smart Pagination provides **specialized widget classes** for each view type, offering a cleaner and more intuitive API:
+
+| Widget Class | Layout Type | Use Case |
+|--------------|-------------|----------|
+| `SmartPaginationListView` | Vertical/horizontal list | Standard lists, feeds, messages |
+| `SmartPaginationGridView` | Multi-column grid | Product catalogs, image galleries |
+| `SmartPaginationColumn` | Non-scrollable column | Embedded in scroll views |
+| `SmartPaginationRow` | Non-scrollable horizontal row | Tags, chips, horizontal items |
+| `SmartPaginationPageView` | Swipeable pages | Onboarding, image carousels |
+| `SmartPaginationStaggeredGridView` | Masonry layout | Pinterest-style, mixed sizes |
+| `SmartPaginationReorderableListView` | Drag-and-drop list | Task lists, priorities |
+
+### Using Specialized Widget Classes
+
+Each widget class provides two constructors:
+
+```dart
+// With Provider (creates cubit internally)
+SmartPaginationListView.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  itemBuilder: (context, items, index) => ProductTile(items[index]),
+)
+
+// With Cubit (uses external cubit)
+SmartPaginationListView.withCubit(
+  cubit: productsCubit,
+  itemBuilder: (context, items, index) => ProductTile(items[index]),
+)
+```
+
+### GridView Example
+
+```dart
+SmartPaginationGridView.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
+)
+```
+
+### Column Example (Non-scrollable)
+
+```dart
+SingleChildScrollView(
+  child: Column(
+    children: [
+      Header(),
+      SmartPaginationColumn.withProvider(
+        request: PaginationRequest(page: 1, pageSize: 10),
+        provider: PaginationProvider.future(fetchProducts),
+        itemBuilder: (context, items, index) => ProductTile(items[index]),
+      ),
+      Footer(),
+    ],
+  ),
+)
+```
+
+### With External Cubit (Global State)
+
+```dart
+// Create cubit with data age for automatic expiration
+final productsCubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  dataAge: Duration(minutes: 5),
+);
+
+// Use anywhere in your app
+SmartPaginationListView.withCubit(
+  cubit: productsCubit,
+  itemBuilder: (context, items, index) => ProductTile(items[index]),
+)
+```
+
+> **Note**: The original `SmartPagination` class with named constructors (e.g., `SmartPagination.listViewWithProvider`) remains available for backward compatibility.
 
 ---
 

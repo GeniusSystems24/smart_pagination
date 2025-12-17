@@ -5,6 +5,77 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2025-12-17
+
+### Added
+
+#### Specialized Widget Classes 🎯
+
+New dedicated widget classes for each view type, providing cleaner and more intuitive API:
+
+**New Widget Classes:**
+- `SmartPaginationListView` - Paginated ListView widget
+- `SmartPaginationGridView` - Paginated GridView widget
+- `SmartPaginationColumn` - Paginated non-scrollable Column layout
+- `SmartPaginationRow` - Paginated non-scrollable Row layout
+- `SmartPaginationPageView` - Paginated PageView widget
+- `SmartPaginationStaggeredGridView` - Paginated Pinterest-style masonry layout
+- `SmartPaginationReorderableListView` - Paginated drag-and-drop reorderable list
+
+**Each widget class provides:**
+- `.withProvider()` constructor - Creates cubit internally with data provider
+- `.withCubit()` constructor - Uses externally managed cubit
+
+**Benefits:**
+- **Clearer Intent**: Each widget class explicitly states its layout type
+- **Better IDE Support**: Autocomplete shows relevant parameters for each view type
+- **Reduced Confusion**: No need to specify `itemBuilderType` parameter
+- **Same Functionality**: All features from `SmartPagination` are available
+
+### Usage Examples
+
+```dart
+// Before (using SmartPagination with named constructors)
+SmartPagination.listViewWithProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  itemBuilder: (context, items, index) => ProductTile(items[index]),
+)
+
+// After (using specialized widget class)
+SmartPaginationListView.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  itemBuilder: (context, items, index) => ProductTile(items[index]),
+)
+
+// GridView example
+SmartPaginationGridView.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
+)
+
+// External cubit example
+final cubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  dataAge: Duration(minutes: 5),
+);
+
+SmartPaginationListView.withCubit(
+  cubit: cubit,
+  itemBuilder: (context, items, index) => ProductTile(items[index]),
+)
+```
+
+### Note
+
+The original `SmartPagination` class with named constructors remains available for backward compatibility. Both approaches work identically - choose the style that best fits your preferences.
+
+---
+
 ## [0.1.2] - 2025-12-17
 
 ### Added

@@ -141,7 +141,7 @@ class _DataAgeScreenState extends State<DataAgeScreen> {
 
           // Products list
           Expanded(
-            child: SmartPagination.listViewWithCubit(
+            child: SmartPaginationListView.withCubit(
               cubit: _cubit,
               itemBuilder: (context, items, index) {
                 final product = items[index];
