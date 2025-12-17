@@ -23,7 +23,6 @@ class DataOperationsScreen extends StatefulWidget {
 
 class _DataOperationsScreenState extends State<DataOperationsScreen> {
   late SmartPaginationCubit<Product> _cubit;
-  final MockApiService _apiService = MockApiService();
 
   int _productCounter = 1000; // For generating unique product IDs
 
@@ -33,9 +32,11 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
     _cubit = SmartPaginationCubit<Product>(
       request: const PaginationRequest(page: 1, pageSize: 10),
       provider: PaginationProvider.future(
-        (request) => _apiService.fetchProducts(
-          page: request.page,
-          pageSize: request.pageSize ?? 10,
+        (request) => MockApiService.fetchProducts(
+          PaginationRequest(
+            page: request.page,
+            pageSize: request.pageSize ?? 10,
+          ),
         ),
       ),
     );
@@ -56,15 +57,14 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
       description: 'Added programmatically',
       price: 99.99,
       imageUrl: 'https://via.placeholder.com/150',
+      category: '',
+      createdAt: DateTime.now(),
     );
   }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-      ),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
   }
 
@@ -101,13 +101,16 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
   // Update first item
   void _updateFirst() {
     final updated = _cubit.updateItemEmit(
-      (item) => _cubit.currentItems.isNotEmpty && item == _cubit.currentItems[0],
+      (item) =>
+          _cubit.currentItems.isNotEmpty && item == _cubit.currentItems[0],
       (item) => Product(
         id: item.id,
         name: '${item.name} (Updated)',
         description: 'Price increased!',
         price: item.price * 1.1,
         imageUrl: item.imageUrl,
+        createdAt: DateTime.now(),
+        category: '',
       ),
     );
     _showSnackBar(updated ? 'Updated first item' : 'No items to update');
@@ -123,6 +126,8 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
         description: item.description,
         price: item.price * 0.9, // 10% discount
         imageUrl: item.imageUrl,
+        category: '',
+        createdAt: DateTime.now(),
       ),
     );
     _showSnackBar('Applied 10% discount to $count products');
@@ -150,6 +155,8 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
         description: 'Set via setItems()',
         price: (index + 1) * 10.0,
         imageUrl: 'https://via.placeholder.com/150',
+        category: '',
+        createdAt: DateTime.now(),
       ),
     );
     _cubit.setItems(products);
@@ -250,7 +257,7 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
           const Divider(height: 1),
           // Products list
           Expanded(
-            child: SmartPagination.listViewWithCubit<Product>(
+            child: SmartPagination.listViewWithCubit(
               cubit: _cubit,
               itemBuilder: (context, items, index) {
                 final product = items[index];
@@ -319,7 +326,10 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Available operations:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                'Available operations:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               SizedBox(height: 8),
               Text('• insertEmit() - Add single item'),
               Text('• insertAllEmit() - Add multiple items'),
