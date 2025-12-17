@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2025-12-17
+
+### Added
+
+#### Data Age & Automatic Expiration ⏰
+
+New feature for automatic data invalidation and refresh when using cubit as a global variable:
+
+**New Parameters:**
+- `dataAge: Duration?` - Configure how long data remains valid after fetching
+
+**New Properties on SmartPaginationCubit:**
+- `dataAge` - Get the configured data age duration
+- `lastFetchTime` - Get the timestamp of the last successful data fetch
+- `isDataExpired` - Check if data has expired based on the configured dataAge
+- `checkAndResetIfExpired()` - Check expiration and reset if expired (returns `true` if reset)
+
+**New Properties on SmartPaginationLoaded State:**
+- `fetchedAt: DateTime?` - Timestamp when data was initially fetched
+- `dataExpiredAt: DateTime?` - Timestamp when data will expire (null if no expiration)
+
+**Automatic Behavior:**
+- When `fetchPaginatedList()` is called, it automatically checks if data has expired
+- If expired, the cubit resets to initial state and triggers a fresh data load
+- Perfect for global cubits that persist across screen navigations
+
+### Usage Example
+
+```dart
+// Create a global cubit with 5-minute data age
+final productsCubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  dataAge: Duration(minutes: 5), // Data expires after 5 minutes
+);
+
+// When re-entering the screen, data is automatically refreshed if expired
+// Or manually check expiration:
+if (productsCubit.isDataExpired) {
+  print('Data is stale, will refresh on next fetch');
+}
+
+// Access expiration info from state
+if (state is SmartPaginationLoaded<Product>) {
+  print('Data fetched at: ${state.fetchedAt}');
+  print('Data expires at: ${state.dataExpiredAt}');
+}
+```
+
+---
+
 ## [0.1.1] - 2025-12-17
 
 ### Added

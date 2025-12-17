@@ -23,6 +23,7 @@ import 'smart_pagination/state_separation_screen.dart';
 import 'smart_pagination/smart_preloading_screen.dart';
 import 'smart_pagination/custom_error_handling_screen.dart';
 import 'smart_pagination/data_operations_screen.dart';
+import 'smart_pagination/data_age_screen.dart';
 
 // Error handling examples
 import 'errors/basic_error_example.dart';
@@ -264,6 +265,15 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.data_array,
             color: Colors.cyan,
             onTap: () => _navigate(context, const DataOperationsScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Data Age & Expiration',
+            description: 'Auto-refresh data after expiration period',
+            icon: Icons.timer,
+            color: Colors.deepOrange,
+            onTap: () => _navigate(context, const DataAgeScreen()),
           ),
           const SizedBox(height: 32),
           _buildHeader('Error Handling Examples'),

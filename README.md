@@ -29,6 +29,7 @@ A powerful, flexible, and easy-to-use Flutter pagination library with built-in *
 - [Quick Start](#-quick-start)
 - [Features](#-features)
 - [Data Operations](#-data-operations)
+- [Data Age & Expiration](#-data-age--expiration)
 - [Error Handling](#-error-handling)
 - [View Types](#-view-types)
 - [Advanced Usage](#-advanced-usage)
@@ -586,6 +587,109 @@ productCubit.updateWhereEmit(
   (product) => product.copyWith(price: product.price * 0.5),
 );
 ```
+
+---
+
+## ⏰ Data Age & Expiration
+
+The `dataAge` feature allows automatic data invalidation and refresh when using the cubit as a global variable. This is perfect for scenarios where you want to keep the cubit alive across screen navigations but ensure data freshness.
+
+### Basic Usage
+
+```dart
+// Create a global cubit with data expiration
+final productsCubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  dataAge: Duration(minutes: 5), // Data expires after 5 minutes
+);
+```
+
+### How It Works
+
+1. When data is successfully fetched, the `lastFetchTime` is recorded
+2. When `fetchPaginatedList()` is called (e.g., when re-entering a screen), it checks if data has expired
+3. If `dataAge` duration has passed since `lastFetchTime`, the cubit automatically:
+   - Clears all cached data
+   - Resets to initial state
+   - Triggers a fresh data load
+
+### Available Properties
+
+```dart
+// Check if data has expired
+if (cubit.isDataExpired) {
+  print('Data is stale');
+}
+
+// Get the last fetch timestamp
+final lastFetch = cubit.lastFetchTime;
+
+// Get the configured data age
+final age = cubit.dataAge;
+
+// Manually check and reset if expired (returns true if reset occurred)
+final wasReset = cubit.checkAndResetIfExpired();
+```
+
+### Accessing Expiration Info from State
+
+```dart
+BlocBuilder<SmartPaginationCubit<Product>, SmartPaginationState<Product>>(
+  builder: (context, state) {
+    if (state is SmartPaginationLoaded<Product>) {
+      // When the data was fetched
+      final fetchedAt = state.fetchedAt;
+
+      // When the data will expire (null if no dataAge configured)
+      final expiresAt = state.dataExpiredAt;
+
+      if (expiresAt != null) {
+        final remaining = expiresAt.difference(DateTime.now());
+        print('Data expires in ${remaining.inMinutes} minutes');
+      }
+    }
+    return YourWidget();
+  },
+)
+```
+
+### Use Case: Global Cubit with Auto-Refresh
+
+```dart
+// In your dependency injection or global state
+class AppState {
+  static final productsCubit = SmartPaginationCubit<Product>(
+    request: PaginationRequest(page: 1, pageSize: 20),
+    provider: PaginationProvider.future(ApiService.fetchProducts),
+    dataAge: Duration(minutes: 10), // Refresh data every 10 minutes
+  );
+}
+
+// In your screen
+class ProductsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SmartPagination.listViewWithCubit(
+      cubit: AppState.productsCubit,
+      itemBuilder: (context, items, index) => ProductCard(items[index]),
+    );
+  }
+}
+
+// When user navigates to ProductsScreen after 10+ minutes,
+// data will automatically refresh!
+```
+
+### Configuration Options
+
+| Duration | Use Case |
+|----------|----------|
+| `Duration(seconds: 30)` | Real-time dashboards |
+| `Duration(minutes: 5)` | Frequently updated content |
+| `Duration(minutes: 30)` | Standard content lists |
+| `Duration(hours: 1)` | Relatively static content |
+| `null` (default) | Never expires automatically |
 
 ---
 
@@ -2382,16 +2486,21 @@ class SmartPaginationCubit<T> extends Cubit<SmartPaginationState<T>> {
     VoidCallback? onClear,
     VoidCallback? onReachedEnd,
     Logger? logger,
+    Duration? dataAge,                // NEW: Auto-expire data after this duration
   });
 
   // Properties
   List<T> get currentItems;           // Get current items (read-only)
   bool get didFetch;                  // Whether data has been fetched
+  Duration? get dataAge;              // Get configured data age duration
+  DateTime? get lastFetchTime;        // Get timestamp of last successful fetch
+  bool get isDataExpired;             // Check if data has expired
 
   // Pagination Methods
-  void fetchPaginatedList();          // Fetch next page
+  void fetchPaginatedList();          // Fetch next page (auto-checks expiration)
   void refreshPaginatedList();        // Refresh from beginning
   void reload();                      // Alias for refreshPaginatedList
+  bool checkAndResetIfExpired();      // Check and reset if data expired
 
   // Insert Operations
   void insertEmit(T item, {int index = 0});           // Insert single item
@@ -2437,6 +2546,8 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T> {
   final bool hasReachedEnd;
   final bool isLoadingMore;
   final Exception? loadMoreError;
+  final DateTime? fetchedAt;        // When data was fetched
+  final DateTime? dataExpiredAt;    // When data will expire
 }
 
 // First page error
