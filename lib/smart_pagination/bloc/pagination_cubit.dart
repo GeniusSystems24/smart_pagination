@@ -85,6 +85,20 @@ class SmartPaginationCubit<T>
     emit(SmartPaginationInitial<T>());
   }
 
+  /// Refreshes the data age timer. Called on any data interaction.
+  /// This extends the data validity when user interacts with the list.
+  void _refreshDataAge() {
+    if (_dataAge != null && _lastFetchTime != null) {
+      _lastFetchTime = DateTime.now();
+    }
+  }
+
+  /// Gets the current expiration DateTime based on lastFetchTime and dataAge.
+  DateTime? _getDataExpiredAt() {
+    if (_dataAge == null || _lastFetchTime == null) return null;
+    return _lastFetchTime!.add(_dataAge!);
+  }
+
   bool get _hasReachedEnd => _currentMeta != null && !_currentMeta!.hasNext;
 
   @override
@@ -191,8 +205,10 @@ class SmartPaginationCubit<T>
       _currentRequest = request;
 
       // Update last fetch time for data age tracking
+      // Refresh on initial load and on load more (any successful fetch)
+      _lastFetchTime = DateTime.now();
+
       if (reset) {
-        _lastFetchTime = DateTime.now();
         _pages
           ..clear()
           ..add(pageItems);
@@ -378,11 +394,14 @@ class SmartPaginationCubit<T>
     updated.insert(insertIndex, item);
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
   }
@@ -404,11 +423,14 @@ class SmartPaginationCubit<T>
 
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
   }
@@ -433,11 +455,14 @@ class SmartPaginationCubit<T>
 
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
   }
@@ -454,11 +479,14 @@ class SmartPaginationCubit<T>
 
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
     return true;
@@ -477,11 +505,14 @@ class SmartPaginationCubit<T>
 
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
     return removedItem;
@@ -501,11 +532,14 @@ class SmartPaginationCubit<T>
 
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
     return removedCount;
@@ -526,11 +560,14 @@ class SmartPaginationCubit<T>
 
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
     return true;
@@ -556,11 +593,14 @@ class SmartPaginationCubit<T>
 
     _onInsertionCallback?.call(updated);
 
+    _refreshDataAge();
     emit(
       currentState.copyWith(
         allItems: updated,
         items: updated,
         lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
       ),
     );
     return updateCount;

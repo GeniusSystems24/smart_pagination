@@ -614,6 +614,8 @@ final productsCubit = SmartPaginationCubit<Product>(
    - Resets to initial state
    - Triggers a fresh data load
 
+**Timer Auto-Refresh:** The timer resets on any data interaction (insert, update, remove, load more). This ensures active users don't experience unexpected data resets while using the list.
+
 ### Available Properties
 
 ```dart

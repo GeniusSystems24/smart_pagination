@@ -99,6 +99,24 @@ class _DataAgeScreenState extends State<DataAgeScreen> {
     _showSnackBar('Data age changed to ${newAge.inSeconds} seconds');
   }
 
+  // Simulate user interaction - adds an item and refreshes the timer
+  int _counter = 1000;
+  void _addItem() {
+    _counter++;
+    final product = Product(
+      id: _counter.toString(),
+      name: 'New Item $_counter',
+      description: 'Timer refreshed!',
+      price: 99.99,
+      imageUrl: '',
+      category: '',
+      createdAt: DateTime.now(),
+    );
+    _cubit.insertEmit(product, index: 0);
+    _showSnackBar('Item added - Timer REFRESHED!');
+    setState(() {}); // Update UI to show new timer
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -348,6 +366,16 @@ class _DataAgeScreenState extends State<DataAgeScreen> {
                     foregroundColor: Colors.white,
                   ),
                 ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: _addItem,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add Item'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -385,6 +413,21 @@ class _DataAgeScreenState extends State<DataAgeScreen> {
               Text('• Global cubits that persist across screens'),
               Text('• Cached data that needs periodic refresh'),
               Text('• Real-time dashboards with stale data protection'),
+              SizedBox(height: 16),
+              Text(
+                'Timer Auto-Refresh:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'The timer resets on any data interaction:\n'
+                '• Insert/Add items\n'
+                '• Update items\n'
+                '• Remove items\n'
+                '• Load more pages\n\n'
+                'This ensures active users don\'t experience '
+                'unexpected data resets.',
+              ),
               SizedBox(height: 16),
               Text(
                 'Available Properties:',

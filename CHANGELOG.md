@@ -30,6 +30,8 @@ New feature for automatic data invalidation and refresh when using cubit as a gl
 - When `fetchPaginatedList()` is called, it automatically checks if data has expired
 - If expired, the cubit resets to initial state and triggers a fresh data load
 - Perfect for global cubits that persist across screen navigations
+- **Timer refreshes on any data interaction:** insert, update, remove, load more
+- This ensures active users don't experience unexpected data resets
 
 ### Usage Example
 
