@@ -5,6 +5,77 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-12-17
+
+### Added
+
+#### Cubit Data Operations 🎛️
+
+New programmatic data operations accessible from anywhere in your app via the cubit:
+
+**Insert Operations:**
+- `insertEmit(item, {index})` - Insert a single item at specified index (default: 0)
+- `insertAllEmit(items, {index})` - Insert multiple items at specified index
+
+**Remove Operations:**
+- `removeItemEmit(item)` - Remove an item by reference, returns `true` if found
+- `removeAtEmit(index)` - Remove item at index, returns the removed item or `null`
+- `removeWhereEmit(test)` - Remove all items matching predicate, returns count removed
+
+**Update Operations:**
+- `updateItemEmit(matcher, updater)` - Update first matching item, returns `true` if updated
+- `updateWhereEmit(matcher, updater)` - Update all matching items, returns count updated
+
+**Other Operations:**
+- `clearItems()` - Clear all items from the list
+- `reload()` - Reload data from the beginning (alias for `refreshPaginatedList`)
+- `setItems(items)` - Set the list to a completely new set of items
+- `currentItems` - Getter to access current list of items (read-only)
+
+#### Example App
+- **Data Operations Screen** - New example demonstrating all cubit data operations:
+  - Interactive buttons to test each operation
+  - Long-press to remove items
+  - Visual feedback for all operations
+
+### Usage Examples
+
+```dart
+// Get the cubit reference
+final cubit = SmartPaginationCubit<Product>(...);
+
+// Insert operations
+cubit.insertEmit(newProduct);
+cubit.insertEmit(newProduct, index: 5);
+cubit.insertAllEmit([product1, product2, product3]);
+
+// Remove operations
+cubit.removeItemEmit(productToRemove);
+cubit.removeAtEmit(0); // Remove first item
+cubit.removeWhereEmit((item) => item.price > 100); // Remove expensive items
+
+// Update operations
+cubit.updateItemEmit(
+  (item) => item.id == '123',
+  (item) => item.copyWith(price: item.price * 0.9), // Apply discount
+);
+cubit.updateWhereEmit(
+  (item) => item.category == 'sale',
+  (item) => item.copyWith(price: item.price * 0.8),
+);
+
+// Other operations
+cubit.clearItems();
+cubit.reload();
+cubit.setItems(customProductList);
+
+// Access current items
+final items = cubit.currentItems;
+print('Total items: ${items.length}');
+```
+
+---
+
 ## [0.1.0] - 2025-12-01
 
 ### Added

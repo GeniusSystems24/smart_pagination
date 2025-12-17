@@ -22,6 +22,7 @@ import 'smart_pagination/reorderable_list_screen.dart';
 import 'smart_pagination/state_separation_screen.dart';
 import 'smart_pagination/smart_preloading_screen.dart';
 import 'smart_pagination/custom_error_handling_screen.dart';
+import 'smart_pagination/data_operations_screen.dart';
 
 // Error handling examples
 import 'errors/basic_error_example.dart';
@@ -254,6 +255,15 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.error_outline,
             color: Colors.red,
             onTap: () => _navigate(context, const CustomErrorHandlingScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Data Operations',
+            description: 'Programmatic add, remove, update, and clear items',
+            icon: Icons.data_array,
+            color: Colors.cyan,
+            onTap: () => _navigate(context, const DataOperationsScreen()),
           ),
           const SizedBox(height: 32),
           _buildHeader('Error Handling Examples'),

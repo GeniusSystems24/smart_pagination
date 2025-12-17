@@ -16,6 +16,7 @@ A powerful, flexible, and easy-to-use Flutter pagination library with built-in *
 - ⚡ **Smart preloading** - Automatically loads data before users reach the end
 - 🔄 **Real-time support** - Works seamlessly with Streams and Futures
 - 📱 **State separation** - Different UI for first page vs load more states
+- 🎛️ **Data operations** - Programmatic add, remove, update, clear via cubit
 - 🧩 **Highly customizable** - Every aspect can be customized to match your design
 - 🎯 **Type-safe** - Full generic type support throughout the library
 - 🧪 **Well tested** - 60+ unit tests ensuring reliability
@@ -27,6 +28,7 @@ A powerful, flexible, and easy-to-use Flutter pagination library with built-in *
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
 - [Features](#-features)
+- [Data Operations](#-data-operations)
 - [Error Handling](#-error-handling)
 - [View Types](#-view-types)
 - [Advanced Usage](#-advanced-usage)
@@ -389,6 +391,200 @@ SmartPagination.listViewWithProvider<Product>(
   shrinkWrap: true,
   reverse: false,
 )
+```
+
+---
+
+## 🎛️ Data Operations
+
+The `SmartPaginationCubit` provides powerful data manipulation methods that can be called from anywhere in your app. These operations automatically update the UI.
+
+### Accessing the Cubit
+
+```dart
+// Create and store the cubit reference
+late SmartPaginationCubit<Product> cubit;
+
+@override
+void initState() {
+  super.initState();
+  cubit = SmartPaginationCubit<Product>(
+    request: PaginationRequest(page: 1, pageSize: 20),
+    provider: PaginationProvider.future(fetchProducts),
+  );
+}
+
+// Use in your widget
+SmartPagination.listViewWithCubit<Product>(
+  cubit: cubit,
+  itemBuilder: (context, items, index) => ProductCard(items[index]),
+)
+```
+
+### Insert Operations
+
+#### Insert Single Item
+
+```dart
+// Insert at the beginning (default)
+cubit.insertEmit(newProduct);
+
+// Insert at specific index
+cubit.insertEmit(newProduct, index: 5);
+```
+
+#### Insert Multiple Items
+
+```dart
+cubit.insertAllEmit([product1, product2, product3]);
+cubit.insertAllEmit(newProducts, index: 10);
+```
+
+### Remove Operations
+
+#### Remove by Item
+
+```dart
+final wasRemoved = cubit.removeItemEmit(productToRemove);
+if (wasRemoved) {
+  print('Product removed successfully');
+}
+```
+
+#### Remove by Index
+
+```dart
+final removedItem = cubit.removeAtEmit(0);
+if (removedItem != null) {
+  print('Removed: ${removedItem.name}');
+}
+```
+
+#### Remove by Condition
+
+```dart
+// Remove all products with price > 100
+final count = cubit.removeWhereEmit((item) => item.price > 100);
+print('Removed $count expensive products');
+
+// Remove out-of-stock items
+cubit.removeWhereEmit((item) => item.stock == 0);
+```
+
+### Update Operations
+
+#### Update Single Item
+
+```dart
+final wasUpdated = cubit.updateItemEmit(
+  (item) => item.id == '123',  // Find item
+  (item) => item.copyWith(     // Update it
+    price: item.price * 0.9,   // 10% discount
+  ),
+);
+```
+
+#### Update Multiple Items
+
+```dart
+// Apply discount to all sale items
+final count = cubit.updateWhereEmit(
+  (item) => item.category == 'sale',
+  (item) => item.copyWith(price: item.price * 0.8),
+);
+print('Updated $count items');
+
+// Mark all as featured
+cubit.updateWhereEmit(
+  (item) => true,
+  (item) => item.copyWith(isFeatured: true),
+);
+```
+
+### Other Operations
+
+#### Clear All Items
+
+```dart
+cubit.clearItems();
+```
+
+#### Reload from Server
+
+```dart
+cubit.reload();
+```
+
+#### Set Custom Items
+
+```dart
+// Replace all items with a new list
+cubit.setItems(customProductList);
+```
+
+#### Access Current Items
+
+```dart
+final items = cubit.currentItems;
+print('Total items: ${items.length}');
+
+// Find specific item
+final featured = items.where((item) => item.isFeatured).toList();
+```
+
+### Real-World Examples
+
+#### Shopping Cart - Add to Cart
+
+```dart
+void addToCart(Product product) {
+  cartCubit.addOrUpdateEmit(
+    CartItem(product: product, quantity: 1),
+  );
+}
+```
+
+#### Todo App - Toggle Complete
+
+```dart
+void toggleTodo(String todoId) {
+  todoCubit.updateItemEmit(
+    (item) => item.id == todoId,
+    (item) => item.copyWith(isCompleted: !item.isCompleted),
+  );
+}
+```
+
+#### Chat App - Delete Message
+
+```dart
+void deleteMessage(Message message) {
+  chatCubit.removeItemEmit(message);
+}
+```
+
+#### Inventory - Update Stock
+
+```dart
+void updateStock(String productId, int newStock) {
+  inventoryCubit.updateItemEmit(
+    (item) => item.id == productId,
+    (item) => item.copyWith(stock: newStock),
+  );
+}
+```
+
+#### Bulk Operations
+
+```dart
+// Remove all completed tasks
+taskCubit.removeWhereEmit((task) => task.isCompleted);
+
+// Apply bulk discount
+productCubit.updateWhereEmit(
+  (product) => product.category == 'clearance',
+  (product) => product.copyWith(price: product.price * 0.5),
+);
 ```
 
 ---
@@ -1325,7 +1521,7 @@ class _ProductsPageState extends State<ProductsPage> {
 
 ## 🎨 Example App
 
-The library includes a comprehensive example app with **28 demonstration screens** covering every feature.
+The library includes a comprehensive example app with **29 demonstration screens** covering every feature.
 
 ### Running the Example
 
@@ -1645,14 +1841,28 @@ All error widget styles demonstration.
 
 ---
 
+#### 22. Data Operations
+
+Programmatic data manipulation (add, remove, update, clear).
+
+<div align="center">
+  <img src="screenshots/advanced/22_data_operations.png" alt="Data Operations" width="250"/>
+</div>
+
+**Features**: Insert items, remove items, update items, clear all, reload, set items
+
+**Code**: [data_operations_screen.dart](example/lib/screens/smart_pagination/data_operations_screen.dart)
+
+---
+
 ### 🛡️ Error Handling Examples
 
-#### 22. Basic Error Handling
+#### 23. Basic Error Handling
 
 Simple error display with retry button.
 
 <div align="center">
-  <img src="screenshots/errors/22_basic_error.png" alt="Basic Error" width="250"/>
+  <img src="screenshots/errors/23_basic_error.png" alt="Basic Error" width="250"/>
 </div>
 
 **Features**: Simple retry, error counter, success after N attempts
@@ -1661,12 +1871,12 @@ Simple error display with retry button.
 
 ---
 
-#### 23. Network Errors
+#### 24. Network Errors
 
 Different network error types (timeout, 404, 500, etc.).
 
 <div align="center">
-  <img src="screenshots/errors/23_network_errors.png" alt="Network Errors" width="250"/>
+  <img src="screenshots/errors/24_network_errors.png" alt="Network Errors" width="250"/>
 </div>
 
 **Features**: Custom exceptions, context-aware errors, appropriate icons
@@ -1675,12 +1885,12 @@ Different network error types (timeout, 404, 500, etc.).
 
 ---
 
-#### 24. Retry Patterns
+#### 25. Retry Patterns
 
 Manual, auto, exponential backoff, limited retries.
 
 <div align="center">
-  <img src="screenshots/errors/24_retry_patterns.png" alt="Retry Patterns" width="250"/>
+  <img src="screenshots/errors/25_retry_patterns.png" alt="Retry Patterns" width="250"/>
 </div>
 
 **Features**: 4 retry strategies, countdown timers, retry limits
@@ -1689,12 +1899,12 @@ Manual, auto, exponential backoff, limited retries.
 
 ---
 
-#### 25. Custom Error Widgets
+#### 26. Custom Error Widgets
 
 All 6 pre-built error widget styles.
 
 <div align="center">
-  <img src="screenshots/errors/25_custom_error_widgets.png" alt="Custom Error Widgets" width="250"/>
+  <img src="screenshots/errors/26_custom_error_widgets.png" alt="Custom Error Widgets" width="250"/>
 </div>
 
 **Features**: Material, Compact, Card, Minimal, Snackbar, Custom styles
@@ -1703,12 +1913,12 @@ All 6 pre-built error widget styles.
 
 ---
 
-#### 26. Error Recovery
+#### 27. Error Recovery
 
 Cached data, partial data, fallback strategies.
 
 <div align="center">
-  <img src="screenshots/errors/26_error_recovery.png" alt="Error Recovery" width="250"/>
+  <img src="screenshots/errors/27_error_recovery.png" alt="Error Recovery" width="250"/>
 </div>
 
 **Features**: 4 recovery strategies, offline mode, data persistence
@@ -1717,12 +1927,12 @@ Cached data, partial data, fallback strategies.
 
 ---
 
-#### 27. Graceful Degradation
+#### 28. Graceful Degradation
 
 Offline mode, placeholders, limited features.
 
 <div align="center">
-  <img src="screenshots/errors/27_graceful_degradation.png" alt="Graceful Degradation" width="250"/>
+  <img src="screenshots/errors/28_graceful_degradation.png" alt="Graceful Degradation" width="250"/>
 </div>
 
 **Features**: 3 degradation strategies, offline UI, skeleton screens
@@ -1731,12 +1941,12 @@ Offline mode, placeholders, limited features.
 
 ---
 
-#### 28. Load More Errors
+#### 29. Load More Errors
 
 Handle errors while loading additional pages.
 
 <div align="center">
-  <img src="screenshots/errors/28_load_more_errors.png" alt="Load More Errors" width="250"/>
+  <img src="screenshots/errors/29_load_more_errors.png" alt="Load More Errors" width="250"/>
 </div>
 
 **Features**: 3 load-more patterns, inline errors, dismissible banners
@@ -2174,14 +2384,39 @@ class SmartPaginationCubit<T> extends Cubit<SmartPaginationState<T>> {
     Logger? logger,
   });
 
-  // Methods
-  Future<void> fetchPaginatedList();
-  Future<void> loadMore();
-  void refresh();
-  void clear();
-  void addItems(List<T> items);
-  void removeItem(T item);
-  void updateItem(T oldItem, T newItem);
+  // Properties
+  List<T> get currentItems;           // Get current items (read-only)
+  bool get didFetch;                  // Whether data has been fetched
+
+  // Pagination Methods
+  void fetchPaginatedList();          // Fetch next page
+  void refreshPaginatedList();        // Refresh from beginning
+  void reload();                      // Alias for refreshPaginatedList
+
+  // Insert Operations
+  void insertEmit(T item, {int index = 0});           // Insert single item
+  void insertAllEmit(List<T> items, {int index = 0}); // Insert multiple items
+  void addOrUpdateEmit(T item, {int index = 0});      // Add or update item
+
+  // Remove Operations
+  bool removeItemEmit(T item);                        // Remove by item
+  T? removeAtEmit(int index);                         // Remove by index
+  int removeWhereEmit(bool Function(T) test);         // Remove by condition
+
+  // Update Operations
+  bool updateItemEmit(
+    bool Function(T) matcher,
+    T Function(T) updater,
+  );                                                   // Update single item
+  int updateWhereEmit(
+    bool Function(T) matcher,
+    T Function(T) updater,
+  );                                                   // Update multiple items
+
+  // Other Operations
+  void clearItems();                                   // Clear all items
+  void setItems(List<T> items);                        // Set custom items
+  void filterPaginatedList(bool Function(T)? filter); // Filter items
 }
 ```
 
@@ -2469,10 +2704,11 @@ SOFTWARE.
 | Smart Preloading | ✅ Configurable | ⚠️ Fixed | ⚠️ Fixed | ❌ No |
 | Memory Management | ✅ Yes | ❌ No | ❌ No | ❌ No |
 | Retry Mechanism | ✅ Advanced | ⚠️ Basic | ⚠️ Basic | ❌ No |
+| Data Operations | ✅ Full CRUD | ❌ No | ❌ No | ❌ No |
 | Type Safety | ✅ Full generics | ✅ Yes | ✅ Yes | ⚠️ Limited |
 | Testing | ✅ 60+ tests | ⚠️ Partial | ⚠️ Partial | ❌ No |
 | Documentation | ✅ Comprehensive | ⚠️ Basic | ⚠️ Basic | ⚠️ Basic |
-| Example App | ✅ 28+ screens | ⚠️ Few | ⚠️ Few | ⚠️ Few |
+| Example App | ✅ 29+ screens | ⚠️ Few | ⚠️ Few | ⚠️ Few |
 
 ---
 

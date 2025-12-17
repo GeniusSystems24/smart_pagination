@@ -354,4 +354,219 @@ class SmartPaginationCubit<T>
       ),
     );
   }
+
+  @override
+  List<T> get currentItems {
+    final currentState = state;
+    if (currentState is SmartPaginationLoaded<T>) {
+      return List<T>.unmodifiable(currentState.allItems);
+    }
+    return const [];
+  }
+
+  @override
+  void insertAllEmit(List<T> items, {int index = 0}) {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return;
+
+    final updated = List<T>.from(currentState.allItems);
+    final insertIndex = index.clamp(0, updated.length);
+    updated.insertAll(insertIndex, items);
+
+    _onInsertionCallback?.call(updated);
+
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+  }
+
+  @override
+  bool removeItemEmit(T item) {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final removed = updated.remove(item);
+
+    if (!removed) return false;
+
+    _onInsertionCallback?.call(updated);
+
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  T? removeAtEmit(int index) {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return null;
+
+    final updated = List<T>.from(currentState.allItems);
+
+    if (index < 0 || index >= updated.length) return null;
+
+    final removedItem = updated.removeAt(index);
+
+    _onInsertionCallback?.call(updated);
+
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+    return removedItem;
+  }
+
+  @override
+  int removeWhereEmit(bool Function(T item) test) {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return 0;
+
+    final updated = List<T>.from(currentState.allItems);
+    final originalLength = updated.length;
+    updated.removeWhere(test);
+    final removedCount = originalLength - updated.length;
+
+    if (removedCount == 0) return 0;
+
+    _onInsertionCallback?.call(updated);
+
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+    return removedCount;
+  }
+
+  @override
+  bool updateItemEmit(
+      bool Function(T item) matcher, T Function(T item) updater) {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final index = updated.indexWhere(matcher);
+
+    if (index == -1) return false;
+
+    updated[index] = updater(updated[index]);
+
+    _onInsertionCallback?.call(updated);
+
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  int updateWhereEmit(
+      bool Function(T item) matcher, T Function(T item) updater) {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return 0;
+
+    final updated = List<T>.from(currentState.allItems);
+    var updateCount = 0;
+
+    for (var i = 0; i < updated.length; i++) {
+      if (matcher(updated[i])) {
+        updated[i] = updater(updated[i]);
+        updateCount++;
+      }
+    }
+
+    if (updateCount == 0) return 0;
+
+    _onInsertionCallback?.call(updated);
+
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+    return updateCount;
+  }
+
+  @override
+  void clearItems() {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return;
+
+    _pages.clear();
+    _onClear?.call();
+
+    emit(
+      currentState.copyWith(
+        allItems: <T>[],
+        items: <T>[],
+        hasReachedEnd: true,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+  }
+
+  @override
+  void reload() {
+    refreshPaginatedList();
+  }
+
+  @override
+  void setItems(List<T> items) {
+    final currentState = state;
+
+    final transformedItems = _applyListBuilder(items);
+    _onInsertionCallback?.call(transformedItems);
+
+    if (currentState is SmartPaginationLoaded<T>) {
+      emit(
+        currentState.copyWith(
+          allItems: transformedItems,
+          items: transformedItems,
+          hasReachedEnd: true,
+          lastUpdate: DateTime.now(),
+        ),
+      );
+    } else {
+      // Create a new loaded state if we're in initial or error state
+      final meta = PaginationMeta(
+        page: 1,
+        pageSize: items.length,
+        hasNext: false,
+        hasPrevious: false,
+      );
+      _currentMeta = meta;
+
+      emit(
+        SmartPaginationLoaded<T>(
+          items: List<T>.from(transformedItems),
+          allItems: transformedItems,
+          meta: meta,
+          hasReachedEnd: true,
+          isLoadingMore: false,
+          loadMoreError: null,
+        ),
+      );
+    }
+  }
 }
