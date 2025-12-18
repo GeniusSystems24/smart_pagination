@@ -113,7 +113,10 @@ class _FilterSearchScreenState extends State<FilterSearchScreen> {
               provider: PaginationProvider.future(
                 (request) async {
                   if (_searchQuery.isNotEmpty) {
-                    return MockApiService.searchProducts(_searchQuery, request);
+                    return MockApiService.searchProducts(
+                      _searchQuery,
+                      pageSize: request.pageSize ?? 20,
+                    );
                   }
                   return MockApiService.fetchProducts(request);
                 },

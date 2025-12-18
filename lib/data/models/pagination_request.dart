@@ -56,8 +56,14 @@ part of '../../pagination.dart';
 /// ```
 @immutable
 class PaginationRequest {
-  const PaginationRequest({this.page = 1, this.pageSize, this.cursor, this.filters, this.extra})
-    : assert(page > 0, 'Page must be greater than 0');
+  const PaginationRequest({
+    this.page = 1,
+    this.pageSize,
+    this.cursor,
+    this.filters,
+    this.extra,
+    this.searchQuery,
+  }) : assert(page > 0, 'Page must be greater than 0');
 
   /// Current page (1-based).
   final int page;
@@ -74,13 +80,24 @@ class PaginationRequest {
   /// Bag for any additional metadata callers want to persist.
   final Map<String, dynamic>? extra;
 
-  PaginationRequest copyWith({int? page, int? pageSize, String? cursor, Map<String, dynamic>? filters, Map<String, dynamic>? extra}) {
+  /// Optional search query string for search operations.
+  final String? searchQuery;
+
+  PaginationRequest copyWith({
+    int? page,
+    int? pageSize,
+    String? cursor,
+    Map<String, dynamic>? filters,
+    Map<String, dynamic>? extra,
+    String? searchQuery,
+  }) {
     return PaginationRequest(
       page: page ?? this.page,
       pageSize: pageSize ?? this.pageSize,
       cursor: cursor ?? this.cursor,
       filters: filters ?? this.filters,
       extra: extra ?? this.extra,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
