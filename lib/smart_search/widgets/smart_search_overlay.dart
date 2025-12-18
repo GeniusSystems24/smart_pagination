@@ -366,10 +366,13 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
                 constraints: BoxConstraints(
                   maxHeight: positionData.size.height,
                 ),
-                decoration: widget.overlayDecoration ??
+                decoration:
+                    widget.overlayDecoration ??
                     BoxDecoration(
                       color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(widget.config.borderRadius),
+                      borderRadius: BorderRadius.circular(
+                        widget.config.borderRadius,
+                      ),
                     ),
                 child: _buildContent(context),
               ),
@@ -388,9 +391,15 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
           bloc: widget.controller.cubit,
           builder: (context, state) {
             return switch (state) {
-              SmartPaginationInitial<T>() => _buildInitialOrLoading(context),
-              SmartPaginationError<T>(:final error) => _buildError(context, error),
-              SmartPaginationLoaded<T>(:final items) => _buildResults(context, items),
+              SmartPaginationError<T>(:final error) => _buildError(
+                context,
+                error,
+              ),
+              SmartPaginationLoaded<T>(:final items) => _buildResults(
+                context,
+                items,
+              ),
+              _ => _buildInitialOrLoading(context),
             };
           },
         );
@@ -405,9 +414,7 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
 
     return const Padding(
       padding: EdgeInsets.all(24),
-      child: Center(
-        child: CircularProgressIndicator.adaptive(),
-      ),
+      child: Center(child: CircularProgressIndicator.adaptive()),
     );
   }
 
@@ -429,9 +436,7 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
           const SizedBox(height: 8),
           Text(
             'An error occurred',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-            ),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
           const SizedBox(height: 8),
           TextButton(
@@ -462,7 +467,8 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
             shrinkWrap: true,
             padding: EdgeInsets.zero,
             itemCount: items.length,
-            separatorBuilder: widget.separatorBuilder ??
+            separatorBuilder:
+                widget.separatorBuilder ??
                 (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final item = items[index];
@@ -471,9 +477,12 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
               return _FocusableItem<T>(
                 item: item,
                 isFocused: isFocused,
-                focusedDecoration: widget.focusedItemDecoration ??
+                focusedDecoration:
+                    widget.focusedItemDecoration ??
                     BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.3,
+                      ),
                     ),
                 onTap: () => widget.onItemSelected(item),
                 onHover: (hovering) {
@@ -510,9 +519,7 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
             const SizedBox(height: 8),
             Text(
               'No results found',
-              style: TextStyle(
-                color: Theme.of(context).disabledColor,
-              ),
+              style: TextStyle(color: Theme.of(context).disabledColor),
             ),
           ],
         ),
