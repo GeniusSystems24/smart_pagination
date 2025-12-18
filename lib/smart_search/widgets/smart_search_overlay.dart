@@ -206,7 +206,7 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
   }
 }
 
-class _OverlayContent<T> extends StatelessWidget {
+class _OverlayContent<T> extends StatefulWidget {
   const _OverlayContent({
     required this.layerLink,
     required this.searchBoxKey,
@@ -223,6 +223,7 @@ class _OverlayContent<T> extends StatelessWidget {
     this.headerBuilder,
     this.footerBuilder,
     this.overlayDecoration,
+    this.focusedItemDecoration,
   });
 
   final LayerLink layerLink;
@@ -240,11 +241,74 @@ class _OverlayContent<T> extends StatelessWidget {
   final WidgetBuilder? headerBuilder;
   final WidgetBuilder? footerBuilder;
   final BoxDecoration? overlayDecoration;
+  final BoxDecoration? focusedItemDecoration;
+
+  @override
+  State<_OverlayContent<T>> createState() => _OverlayContentState<T>();
+}
+
+class _OverlayContentState<T> extends State<_OverlayContent<T>> {
+  final ScrollController _scrollController = ScrollController();
+  static const double _itemHeight = 56.0; // Approximate item height
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    // Scroll to the focused item when it changes
+    if (widget.controller.hasItemFocus) {
+      _scrollToFocusedItem();
+    }
+  }
+
+  void _scrollToFocusedItem() {
+    final focusedIndex = widget.controller.focusedIndex;
+    if (focusedIndex < 0 || !_scrollController.hasClients) return;
+
+    final targetOffset = focusedIndex * _itemHeight;
+    final viewportHeight = _scrollController.position.viewportDimension;
+    final currentOffset = _scrollController.offset;
+    final maxOffset = _scrollController.position.maxScrollExtent;
+
+    // Check if item is already visible
+    if (targetOffset >= currentOffset &&
+        targetOffset + _itemHeight <= currentOffset + viewportHeight) {
+      return; // Already visible
+    }
+
+    // Calculate the scroll position to center the item if possible
+    double newOffset;
+    if (targetOffset < currentOffset) {
+      // Item is above the viewport, scroll up
+      newOffset = targetOffset;
+    } else {
+      // Item is below the viewport, scroll down
+      newOffset = targetOffset - viewportHeight + _itemHeight;
+    }
+
+    newOffset = newOffset.clamp(0.0, maxOffset);
+
+    _scrollController.animateTo(
+      newOffset,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final renderBox =
-        searchBoxKey.currentContext?.findRenderObject() as RenderBox?;
+        widget.searchBoxKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return const SizedBox.shrink();
 
     final searchBoxPosition = renderBox.localToGlobal(Offset.zero);
@@ -262,26 +326,26 @@ class _OverlayContent<T> extends StatelessWidget {
     final positionData = OverlayPositioner.calculatePosition(
       targetRect: searchBoxRect,
       overlaySize: Size(
-        config.maxWidth ?? searchBoxSize.width,
-        config.maxHeight,
+        widget.config.maxWidth ?? searchBoxSize.width,
+        widget.config.maxHeight,
       ),
       screenSize: screenSize,
-      config: config,
+      config: widget.config,
       padding: padding,
     );
 
     return Stack(
       children: [
         // Barrier
-        if (config.barrierDismissible)
+        if (widget.config.barrierDismissible)
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: onDismiss,
-              child: config.barrierColor != null
+              onTap: widget.onDismiss,
+              child: widget.config.barrierColor != null
                   ? FadeTransition(
-                      opacity: fadeAnimation,
-                      child: Container(color: config.barrierColor),
+                      opacity: widget.fadeAnimation,
+                      child: Container(color: widget.config.barrierColor),
                     )
                   : const SizedBox.expand(),
             ),
@@ -292,20 +356,20 @@ class _OverlayContent<T> extends StatelessWidget {
           left: positionData.offset.dx,
           top: positionData.offset.dy,
           child: FadeTransition(
-            opacity: fadeAnimation,
+            opacity: widget.fadeAnimation,
             child: Material(
-              elevation: config.elevation,
-              borderRadius: BorderRadius.circular(config.borderRadius),
+              elevation: widget.config.elevation,
+              borderRadius: BorderRadius.circular(widget.config.borderRadius),
               clipBehavior: Clip.antiAlias,
               child: Container(
                 width: positionData.size.width,
                 constraints: BoxConstraints(
                   maxHeight: positionData.size.height,
                 ),
-                decoration: overlayDecoration ??
+                decoration: widget.overlayDecoration ??
                     BoxDecoration(
                       color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(config.borderRadius),
+                      borderRadius: BorderRadius.circular(widget.config.borderRadius),
                     ),
                 child: _buildContent(context),
               ),
@@ -317,21 +381,26 @@ class _OverlayContent<T> extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    return BlocBuilder<SmartPaginationCubit<T>, SmartPaginationState<T>>(
-      bloc: controller.cubit,
-      builder: (context, state) {
-        return switch (state) {
-          SmartPaginationError<T>(:final error) => _buildError(context, error),
-          SmartPaginationLoaded<T>(:final items) => _buildResults(context, items),
-          _ => _buildInitialOrLoading(context),
-        };
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, _) {
+        return BlocBuilder<SmartPaginationCubit<T>, SmartPaginationState<T>>(
+          bloc: widget.controller.cubit,
+          builder: (context, state) {
+            return switch (state) {
+              SmartPaginationInitial<T>() => _buildInitialOrLoading(context),
+              SmartPaginationError<T>(:final error) => _buildError(context, error),
+              SmartPaginationLoaded<T>(:final items) => _buildResults(context, items),
+            };
+          },
+        );
       },
     );
   }
 
   Widget _buildInitialOrLoading(BuildContext context) {
-    if (loadingBuilder != null) {
-      return loadingBuilder!(context);
+    if (widget.loadingBuilder != null) {
+      return widget.loadingBuilder!(context);
     }
 
     return const Padding(
@@ -343,8 +412,8 @@ class _OverlayContent<T> extends StatelessWidget {
   }
 
   Widget _buildError(BuildContext context, Exception error) {
-    if (errorBuilder != null) {
-      return errorBuilder!(context, error);
+    if (widget.errorBuilder != null) {
+      return widget.errorBuilder!(context, error);
     }
 
     return Padding(
@@ -366,7 +435,7 @@ class _OverlayContent<T> extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           TextButton(
-            onPressed: () => controller.searchNow(),
+            onPressed: () => widget.controller.searchNow(),
             child: const Text('Retry'),
           ),
         ],
@@ -379,35 +448,52 @@ class _OverlayContent<T> extends StatelessWidget {
       return _buildEmpty(context);
     }
 
+    final focusedIndex = widget.controller.focusedIndex;
+    final theme = Theme.of(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (headerBuilder != null) headerBuilder!(context),
+        if (widget.headerBuilder != null) widget.headerBuilder!(context),
         Flexible(
           child: ListView.separated(
+            controller: _scrollController,
             shrinkWrap: true,
             padding: EdgeInsets.zero,
             itemCount: items.length,
-            separatorBuilder: separatorBuilder ??
+            separatorBuilder: widget.separatorBuilder ??
                 (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final item = items[index];
-              return InkWell(
-                onTap: () => onItemSelected(item),
-                child: itemBuilder(context, item),
+              final isFocused = index == focusedIndex;
+
+              return _FocusableItem<T>(
+                item: item,
+                isFocused: isFocused,
+                focusedDecoration: widget.focusedItemDecoration ??
+                    BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    ),
+                onTap: () => widget.onItemSelected(item),
+                onHover: (hovering) {
+                  if (hovering) {
+                    widget.controller.setFocusedIndex(index);
+                  }
+                },
+                child: widget.itemBuilder(context, item),
               );
             },
           ),
         ),
-        if (footerBuilder != null) footerBuilder!(context),
+        if (widget.footerBuilder != null) widget.footerBuilder!(context),
       ],
     );
   }
 
   Widget _buildEmpty(BuildContext context) {
-    if (emptyBuilder != null) {
-      return emptyBuilder!(context);
+    if (widget.emptyBuilder != null) {
+      return widget.emptyBuilder!(context);
     }
 
     return Padding(
@@ -429,6 +515,41 @@ class _OverlayContent<T> extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A focusable item widget that shows visual feedback when focused or hovered.
+class _FocusableItem<T> extends StatelessWidget {
+  const _FocusableItem({
+    required this.item,
+    required this.isFocused,
+    required this.focusedDecoration,
+    required this.onTap,
+    required this.onHover,
+    required this.child,
+  });
+
+  final T item;
+  final bool isFocused;
+  final BoxDecoration focusedDecoration;
+  final VoidCallback onTap;
+  final ValueChanged<bool> onHover;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => onHover(true),
+      onExit: (_) => onHover(false),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          decoration: isFocused ? focusedDecoration : null,
+          child: child,
         ),
       ),
     );

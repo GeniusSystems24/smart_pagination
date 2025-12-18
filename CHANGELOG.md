@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-12-18
+
+### Added
+
+#### Keyboard Navigation for SmartSearchDropdown ⌨️
+
+Full keyboard navigation support for the search dropdown with focus state persistence.
+
+**Keyboard Shortcuts:**
+| Key | Action |
+|-----|--------|
+| `↓` Arrow Down | Move focus to next item / Open overlay |
+| `↑` Arrow Up | Move focus to previous item / Open overlay |
+| `Enter` | Select the focused item |
+| `Escape` | Close the overlay |
+| `Home` | Move focus to first item |
+| `End` | Move focus to last item |
+| `Page Down` | Move focus 5 items down |
+| `Page Up` | Move focus 5 items up |
+
+**Key Features:**
+- **Focus Persistence**: Focus position is preserved when overlay is closed and reopened
+- **Visual Feedback**: Focused item is highlighted with configurable decoration
+- **Auto-Scroll**: List automatically scrolls to keep focused item visible
+- **Mouse Hover**: Hovering over an item also updates focus
+- **Smooth Animations**: Focus transitions with 100ms animation
+
+**New Controller Methods:**
+```dart
+// Navigation
+controller.moveToNextItem();
+controller.moveToPreviousItem();
+controller.moveToFirstItem();
+controller.moveToLastItem();
+controller.setFocusedIndex(index);
+controller.clearItemFocus();
+
+// Selection
+controller.selectFocusedItem();
+
+// Properties
+controller.focusedIndex;      // Current focused index (-1 if none)
+controller.focusedItem;       // Current focused item (null if none)
+controller.hasItemFocus;      // Whether an item is focused
+```
+
+**Usage Example:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  searchConfig: SmartSearchConfig(
+    clearOnClose: false, // Keep focus when closing
+  ),
+)
+```
+
+---
+
 ## [2.0.0] - 2025-12-18
 
 ### Added

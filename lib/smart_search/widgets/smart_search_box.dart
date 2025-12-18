@@ -109,25 +109,40 @@ class SmartSearchBox<T> extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        return TextField(
-          controller: controller.textController,
-          focusNode: controller.focusNode,
-          decoration: _buildDecoration(context),
-          style: style,
-          textCapitalization: textCapitalization,
-          textInputAction: textInputAction,
-          keyboardType: keyboardType,
-          autofocus: controller.config.autoFocus,
-          enabled: enabled,
-          readOnly: readOnly,
-          onSubmitted: (value) {
-            controller.searchNow();
-            onSubmitted?.call(value);
+        return KeyboardListener(
+          focusNode: FocusNode(skipTraversal: true),
+          onKeyEvent: (event) {
+            // Handle keyboard navigation
+            if (controller.handleKeyEvent(event)) {
+              // Event was handled by the controller
+              return;
+            }
           },
-          onTap: () {
-            controller.showOverlay();
-            onTap?.call();
-          },
+          child: TextField(
+            controller: controller.textController,
+            focusNode: controller.focusNode,
+            decoration: _buildDecoration(context),
+            style: style,
+            textCapitalization: textCapitalization,
+            textInputAction: textInputAction,
+            keyboardType: keyboardType,
+            autofocus: controller.config.autoFocus,
+            enabled: enabled,
+            readOnly: readOnly,
+            onSubmitted: (value) {
+              // If an item is focused, select it instead of triggering search
+              if (controller.hasItemFocus) {
+                controller.selectFocusedItem();
+              } else {
+                controller.searchNow();
+                onSubmitted?.call(value);
+              }
+            },
+            onTap: () {
+              controller.showOverlay();
+              onTap?.call();
+            },
+          ),
         );
       },
     );

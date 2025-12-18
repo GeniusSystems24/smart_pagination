@@ -70,7 +70,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.0.0
+  smart_pagination: ^2.1.0
 ```
 
 Install it:
@@ -670,6 +670,36 @@ Scaffold(
     ],
   ),
 )
+```
+
+### Keyboard Navigation
+
+The search dropdown supports full keyboard navigation:
+
+| Key | Action |
+|-----|--------|
+| `↓` Arrow Down | Move focus to next item / Open overlay |
+| `↑` Arrow Up | Move focus to previous item / Open overlay |
+| `Enter` | Select the focused item |
+| `Escape` | Close the overlay |
+| `Home` | Move focus to first item |
+| `End` | Move focus to last item |
+| `Page Down` | Move focus 5 items down |
+| `Page Up` | Move focus 5 items up |
+
+**Focus Persistence**: The focused item position is remembered when the overlay closes and restored when it reopens.
+
+```dart
+// Programmatic navigation
+controller.moveToNextItem();
+controller.moveToPreviousItem();
+controller.setFocusedIndex(3);
+controller.selectFocusedItem();
+
+// Check focus state
+if (controller.hasItemFocus) {
+  print('Focused: ${controller.focusedItem}');
+}
 ```
 
 ### Customizing Overlay Appearance
