@@ -154,20 +154,37 @@ class MockApiService {
 
   /// Search products by name
   static Future<List<Product>> searchProducts(
-    String query,
-    PaginationRequest request,
-  ) async {
-    await Future.delayed(Duration(milliseconds: 500));
+    String query, {
+    int pageSize = 20,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    final allProducts = await fetchProducts(request);
+    // Generate a pool of searchable products
+    final allProducts = List.generate(
+      100,
+      (index) => Product(
+        id: 'product_$index',
+        name: '${_productNames[index % _productNames.length]} #$index',
+        description: 'High quality product with amazing features.',
+        price: 19.99 + (index % 100) * 5.0,
+        category: _categories[index % _categories.length],
+        imageUrl: 'https://picsum.photos/200/200?random=$index',
+        createdAt: DateTime.now().subtract(Duration(days: index)),
+        rating: 3.0 + (_random.nextDouble() * 2),
+        stock: _random.nextInt(100),
+      ),
+    );
 
     if (query.isEmpty) {
-      return allProducts;
+      return allProducts.take(pageSize).toList();
     }
 
-    return allProducts
+    final filtered = allProducts
         .where((p) => p.name.toLowerCase().contains(query.toLowerCase()))
+        .take(pageSize)
         .toList();
+
+    return filtered;
   }
 
   // ============= STREAM EXAMPLES =============

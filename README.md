@@ -38,6 +38,7 @@
 | 🎛️ **Data Operations** | Programmatic add, remove, update, clear via cubit |
 | ⏰ **Data Age** | Automatic data expiration and refresh for global cubits |
 | 📊 **Sorting & Orders** | Programmatic sorting with multiple configurable orders |
+| 🔍 **Smart Search** | Search box with auto-positioning overlay dropdown |
 | 🧩 **Customizable** | Every aspect can be customized to match your design |
 | 🎯 **Type-safe** | Full generic type support throughout the library |
 | 🧪 **Well Tested** | 60+ unit tests ensuring reliability |
@@ -50,6 +51,7 @@
 - [Quick Start](#-quick-start)
 - [Widget Classes](#-widget-classes)
 - [Features](#-features)
+- [Smart Search](#-smart-search)
 - [Data Operations](#-data-operations)
 - [Data Age & Expiration](#-data-age--expiration)
 - [Sorting & Orders](#-sorting--orders)
@@ -68,7 +70,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^0.1.4
+  smart_pagination: ^2.0.0
 ```
 
 Install it:
@@ -528,6 +530,181 @@ SmartPagination.listViewWithProvider<Product>(
   padding: EdgeInsets.all(16),
   shrinkWrap: true,
   reverse: false,
+)
+```
+
+---
+
+## 🔍 Smart Search
+
+Smart Search provides a search input with an auto-positioning overlay dropdown that connects to `SmartPaginationCubit` for real-time search results.
+
+### SmartSearchDropdown (All-in-One)
+
+The easiest way to add search with dropdown results:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future((request) async {
+    return await api.searchProducts(request.searchQuery ?? '');
+  }),
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  itemBuilder: (context, product) => ListTile(
+    leading: CircleAvatar(child: Text(product.name[0])),
+    title: Text(product.name),
+    subtitle: Text('\$${product.price}'),
+  ),
+  onItemSelected: (product) {
+    Navigator.pop(context, product);
+  },
+)
+```
+
+### With External Cubit
+
+```dart
+final searchCubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(searchProducts),
+);
+
+SmartSearchDropdown<Product>.withCubit(
+  cubit: searchCubit,
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+  ),
+  onItemSelected: (product) => print('Selected: ${product.name}'),
+)
+```
+
+### Overlay Position
+
+The dropdown automatically positions itself in the best available space. You can also force a specific position:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  overlayConfig: SmartSearchOverlayConfig(
+    position: OverlayPosition.bottom, // Force bottom position
+    // position: OverlayPosition.auto, // Auto (default)
+    // position: OverlayPosition.top,
+    // position: OverlayPosition.left,
+    // position: OverlayPosition.right,
+    maxHeight: 400,
+    borderRadius: 12,
+    elevation: 8,
+  ),
+)
+```
+
+### Search Configuration
+
+Control search behavior with `SmartSearchConfig`:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  searchConfig: SmartSearchConfig(
+    debounceDelay: Duration(milliseconds: 500), // Wait before searching
+    minSearchLength: 2, // Minimum characters to trigger search
+    searchOnEmpty: false, // Don't search when input is empty
+    clearOnClose: true, // Clear text when overlay closes
+    autoFocus: false, // Don't auto-focus on mount
+  ),
+)
+```
+
+### Separate Search Box & Overlay
+
+For more control, use `SmartSearchBox` and `SmartSearchOverlay` separately:
+
+```dart
+// Create controller
+final controller = SmartSearchController<Product>(
+  cubit: productsCubit,
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  config: SmartSearchConfig(
+    debounceDelay: Duration(milliseconds: 300),
+  ),
+);
+
+// Place search box anywhere (e.g., in AppBar)
+AppBar(
+  title: SmartSearchBox<Product>(
+    controller: controller,
+    decoration: InputDecoration(
+      hintText: 'Search products...',
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+  ),
+)
+
+// Place overlay in your body
+Scaffold(
+  body: Stack(
+    children: [
+      YourMainContent(),
+      SmartSearchOverlay<Product>(
+        controller: controller,
+        itemBuilder: (context, product) => ProductTile(product),
+        onItemSelected: (product) {
+          Navigator.push(context, ProductDetailsPage(product));
+        },
+      ),
+    ],
+  ),
+)
+```
+
+### Customizing Overlay Appearance
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+
+  // Custom states
+  loadingBuilder: (context) => Center(child: CircularProgressIndicator()),
+  emptyBuilder: (context) => Center(child: Text('No results found')),
+  errorBuilder: (context, error) => Center(child: Text('Error: $error')),
+
+  // Header and footer
+  headerBuilder: (context) => Padding(
+    padding: EdgeInsets.all(8),
+    child: Text('Search Results', style: TextStyle(fontWeight: FontWeight.bold)),
+  ),
+  footerBuilder: (context) => TextButton(
+    onPressed: () {},
+    child: Text('View all results'),
+  ),
+
+  // Overlay decoration
+  overlayDecoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black26,
+        blurRadius: 10,
+        offset: Offset(0, 4),
+      ),
+    ],
+  ),
 )
 ```
 

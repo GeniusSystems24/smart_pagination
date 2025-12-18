@@ -5,6 +5,116 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-12-18
+
+### Added
+
+#### SmartSearchBox - Search with Overlay Dropdown 🔍
+
+New powerful search component that connects to SmartPaginationCubit for searching with an auto-positioning overlay dropdown.
+
+**New Classes:**
+- `SmartSearchBox<T>` - Search input widget connected to pagination cubit
+- `SmartSearchOverlay<T>` - Combines search box with overlay dropdown
+- `SmartSearchDropdown<T>` - Convenient all-in-one search dropdown widget
+- `SmartSearchController<T>` - Controller for managing search state
+- `SmartSearchConfig` - Configuration for search behavior (debounce, min length, etc.)
+- `SmartSearchOverlayConfig` - Configuration for overlay appearance and positioning
+- `OverlayPosition` - Enum for overlay positioning (auto, top, bottom, left, right)
+- `OverlayPositioner` - Utility for calculating optimal overlay position
+
+**Key Features:**
+- **Auto-Positioning**: Overlay automatically positions itself in the best available space
+- **Cubit Integration**: Directly connected to SmartPaginationCubit for data fetching
+- **Debounced Search**: Configurable delay to prevent excessive API calls
+- **Flexible Placement**: Position overlay top, bottom, left, right, or auto
+- **Customizable**: Full control over search box and overlay appearance
+- **Animations**: Smooth show/hide animations with configurable duration
+
+**SmartSearchDropdown Constructors:**
+- `.withProvider()` - Creates internal cubit with data provider
+- `.withCubit()` - Uses externally managed cubit
+
+### Usage Examples
+
+```dart
+// Simple search dropdown with provider
+SmartSearchDropdown<Product>.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future((request) async {
+    return await api.searchProducts(request.searchQuery ?? '');
+  }),
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+    subtitle: Text('\$${product.price}'),
+  ),
+  onItemSelected: (product) {
+    Navigator.pop(context, product);
+  },
+)
+
+// With external cubit
+final searchCubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(searchProducts),
+);
+
+SmartSearchDropdown<Product>.withCubit(
+  cubit: searchCubit,
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+  ),
+  onItemSelected: (product) => print('Selected: ${product.name}'),
+  overlayConfig: SmartSearchOverlayConfig(
+    position: OverlayPosition.bottom, // Force bottom position
+    maxHeight: 400,
+    borderRadius: 12,
+    elevation: 8,
+  ),
+)
+
+// Using SmartSearchBox and SmartSearchOverlay separately
+final controller = SmartSearchController<Product>(
+  cubit: productsCubit,
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  config: SmartSearchConfig(
+    debounceDelay: Duration(milliseconds: 500),
+    minSearchLength: 2,
+  ),
+);
+
+// Place search box in app bar
+AppBar(
+  title: SmartSearchBox<Product>(
+    controller: controller,
+    decoration: InputDecoration(hintText: 'Search...'),
+  ),
+)
+
+// Place overlay anywhere in your layout
+SmartSearchOverlay<Product>(
+  controller: controller,
+  itemBuilder: (context, product) => ProductTile(product),
+  onItemSelected: selectProduct,
+)
+```
+
+---
+
 ## [0.1.4] - 2025-12-18
 
 ### Added

@@ -25,6 +25,7 @@ import 'smart_pagination/custom_error_handling_screen.dart';
 import 'smart_pagination/data_operations_screen.dart';
 import 'smart_pagination/data_age_screen.dart';
 import 'smart_pagination/sorting_screen.dart';
+import 'smart_pagination/search_dropdown_screen.dart';
 
 // Error handling examples
 import 'errors/basic_error_example.dart';
@@ -284,6 +285,15 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.sort,
             color: Colors.indigo,
             onTap: () => _navigate(context, const SortingScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Search Dropdown',
+            description: 'Search box with auto-positioning overlay dropdown',
+            icon: Icons.search,
+            color: Colors.deepPurple,
+            onTap: () => _navigate(context, const SearchDropdownScreen()),
           ),
           const SizedBox(height: 32),
           _buildHeader('Error Handling Examples'),

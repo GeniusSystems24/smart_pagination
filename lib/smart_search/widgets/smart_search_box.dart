@@ -1,0 +1,196 @@
+part of '../../pagination.dart';
+
+/// A search box widget that connects to a SmartPaginationCubit for searching.
+///
+/// This widget provides a text field that triggers search operations on the
+/// connected cubit when the user types.
+///
+/// Example:
+/// ```dart
+/// SmartSearchBox<Product>(
+///   controller: searchController,
+///   decoration: InputDecoration(
+///     hintText: 'Search products...',
+///     prefixIcon: Icon(Icons.search),
+///   ),
+/// )
+/// ```
+class SmartSearchBox<T> extends StatelessWidget {
+  const SmartSearchBox({
+    super.key,
+    required this.controller,
+    this.decoration,
+    this.style,
+    this.textCapitalization = TextCapitalization.none,
+    this.textInputAction = TextInputAction.search,
+    this.keyboardType = TextInputType.text,
+    this.onSubmitted,
+    this.onTap,
+    this.enabled = true,
+    this.readOnly = false,
+    this.showClearButton = true,
+    this.clearButtonBuilder,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.contentPadding,
+    this.filled,
+    this.fillColor,
+    this.borderRadius,
+    this.border,
+    this.focusedBorder,
+    this.enabledBorder,
+  });
+
+  /// The search controller managing this search box.
+  final SmartSearchController<T> controller;
+
+  /// Decoration for the text field.
+  final InputDecoration? decoration;
+
+  /// Text style for the search input.
+  final TextStyle? style;
+
+  /// Text capitalization behavior.
+  final TextCapitalization textCapitalization;
+
+  /// The action button on the keyboard.
+  final TextInputAction textInputAction;
+
+  /// The type of keyboard to display.
+  final TextInputType keyboardType;
+
+  /// Called when the user submits the search (e.g., presses Enter).
+  final ValueChanged<String>? onSubmitted;
+
+  /// Called when the text field is tapped.
+  final VoidCallback? onTap;
+
+  /// Whether the text field is enabled.
+  final bool enabled;
+
+  /// Whether the text field is read-only.
+  final bool readOnly;
+
+  /// Whether to show a clear button when there's text.
+  final bool showClearButton;
+
+  /// Custom builder for the clear button.
+  final Widget Function(VoidCallback onClear)? clearButtonBuilder;
+
+  /// Icon to show at the start of the text field.
+  final Widget? prefixIcon;
+
+  /// Icon to show at the end of the text field (before clear button).
+  final Widget? suffixIcon;
+
+  /// Padding for the content inside the text field.
+  final EdgeInsetsGeometry? contentPadding;
+
+  /// Whether to fill the text field background.
+  final bool? filled;
+
+  /// Background fill color.
+  final Color? fillColor;
+
+  /// Border radius for the text field.
+  final BorderRadius? borderRadius;
+
+  /// Default border.
+  final InputBorder? border;
+
+  /// Border when focused.
+  final InputBorder? focusedBorder;
+
+  /// Border when enabled but not focused.
+  final InputBorder? enabledBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        return TextField(
+          controller: controller.textController,
+          focusNode: controller.focusNode,
+          decoration: _buildDecoration(context),
+          style: style,
+          textCapitalization: textCapitalization,
+          textInputAction: textInputAction,
+          keyboardType: keyboardType,
+          autofocus: controller.config.autoFocus,
+          enabled: enabled,
+          readOnly: readOnly,
+          onSubmitted: (value) {
+            controller.searchNow();
+            onSubmitted?.call(value);
+          },
+          onTap: () {
+            controller.showOverlay();
+            onTap?.call();
+          },
+        );
+      },
+    );
+  }
+
+  InputDecoration _buildDecoration(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final defaultBorder = borderRadius != null
+        ? OutlineInputBorder(
+            borderRadius: borderRadius!,
+            borderSide: BorderSide(color: theme.dividerColor),
+          )
+        : null;
+
+    final baseDecoration = decoration ??
+        InputDecoration(
+          hintText: 'Search...',
+          filled: filled ?? true,
+          fillColor: fillColor ?? theme.inputDecorationTheme.fillColor,
+          contentPadding: contentPadding ??
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          border: border ?? defaultBorder,
+          focusedBorder: focusedBorder,
+          enabledBorder: enabledBorder ?? defaultBorder,
+        );
+
+    // Build suffix icons
+    final List<Widget> suffixWidgets = [];
+
+    if (suffixIcon != null) {
+      suffixWidgets.add(suffixIcon!);
+    }
+
+    if (showClearButton && controller.hasText) {
+      if (clearButtonBuilder != null) {
+        suffixWidgets.add(clearButtonBuilder!(controller.clearSearch));
+      } else {
+        suffixWidgets.add(
+          IconButton(
+            icon: const Icon(Icons.clear, size: 20),
+            onPressed: controller.clearSearch,
+            splashRadius: 20,
+          ),
+        );
+      }
+    }
+
+    Widget? suffixIconWidget;
+    if (suffixWidgets.isNotEmpty) {
+      if (suffixWidgets.length == 1) {
+        suffixIconWidget = suffixWidgets.first;
+      } else {
+        suffixIconWidget = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: suffixWidgets,
+        );
+      }
+    }
+
+    return baseDecoration.copyWith(
+      prefixIcon: prefixIcon ?? baseDecoration.prefixIcon ?? const Icon(Icons.search),
+      suffixIcon: suffixIconWidget,
+    );
+  }
+}
