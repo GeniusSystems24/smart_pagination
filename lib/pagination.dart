@@ -93,6 +93,7 @@ part 'smart_pagination/widgets/smart_pagination_reorderable_list_view.dart';
 
 // Smart Search components
 part 'smart_search/models/search_config.dart';
+part 'smart_search/theme/smart_search_theme.dart';
 part 'smart_search/controller/smart_search_controller.dart';
 part 'smart_search/utils/overlay_positioner.dart';
 part 'smart_search/widgets/smart_search_box.dart';

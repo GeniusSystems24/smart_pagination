@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_pagination/pagination.dart';
 
+import '../../main.dart';
 import '../../models/product.dart';
 import '../../services/mock_api_service.dart';
 
@@ -11,6 +12,7 @@ import '../../services/mock_api_service.dart';
 /// - Configure search behavior (debounce, min length, etc.)
 /// - Customize overlay appearance and position
 /// - Handle item selection
+/// - Use SmartSearchTheme for theming (light/dark)
 class SearchDropdownScreen extends StatefulWidget {
   const SearchDropdownScreen({super.key});
 
@@ -24,9 +26,21 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Smart Search Dropdown'),
+        actions: [
+          // Theme toggle button
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            tooltip: isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme',
+            onPressed: () {
+              PaginationExampleApp.toggleTheme();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -94,6 +108,8 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
+            // The SmartSearchDropdown now uses SmartSearchTheme for styling
+            // Toggle the theme using the button in the app bar to see the effect
             SmartSearchDropdown<Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
@@ -124,22 +140,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
                 barrierDismissible: true,
                 animationDuration: const Duration(milliseconds: 200),
               ),
-              decoration: InputDecoration(
-                hintText: 'Type to search products...',
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-              ),
+              // No explicit decoration - uses SmartSearchTheme automatically
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Theme.of(context).colorScheme.primaryContainer,
@@ -320,7 +321,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
               context,
               Icons.timer,
               'Debounced Search',
-              'Waits 300ms before searching to reduce API calls',
+              'Waits 1 second after typing stops before searching',
             ),
             _buildFeatureItem(
               context,
@@ -333,6 +334,18 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
               Icons.touch_app,
               'Tap to Dismiss',
               'Tap outside to close the overlay',
+            ),
+            _buildFeatureItem(
+              context,
+              Icons.palette,
+              'Theme Support',
+              'Uses SmartSearchTheme for light/dark mode styling',
+            ),
+            _buildFeatureItem(
+              context,
+              Icons.keyboard,
+              'Keyboard Navigation',
+              'Navigate with arrow keys, select with Enter',
             ),
           ],
         ),
