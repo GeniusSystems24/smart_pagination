@@ -3,20 +3,20 @@ part of '../../pagination.dart';
 /// Configuration for search behavior.
 class SmartSearchConfig {
   const SmartSearchConfig({
-    this.debounceDelay = const Duration(milliseconds: 300),
-    this.minSearchLength = 1,
-    this.searchOnEmpty = false,
+    this.debounceDelay = const Duration(seconds: 1),
+    this.minSearchLength = 0,
+    this.searchOnEmpty = true,
     this.clearOnClose = true,
     this.autoFocus = false,
   });
 
-  /// Delay before triggering search after user stops typing.
+  /// Delay before triggering search after user stops typing (default: 1 second).
   final Duration debounceDelay;
 
-  /// Minimum characters required to trigger search.
+  /// Minimum characters required to trigger search (default: 0 - search on any input).
   final int minSearchLength;
 
-  /// Whether to trigger search when input is empty.
+  /// Whether to trigger search when input is empty (default: true - fetch all data).
   final bool searchOnEmpty;
 
   /// Whether to clear search text when overlay is closed.

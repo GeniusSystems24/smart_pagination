@@ -108,9 +108,9 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
                 searchQuery: query,
               ),
               searchConfig: const SmartSearchConfig(
-                debounceDelay: Duration(milliseconds: 300),
-                minSearchLength: 1,
-                searchOnEmpty: false,
+                debounceDelay: Duration(seconds: 1), // Wait 1 second after typing stops
+                minSearchLength: 0, // Search on any input including empty
+                searchOnEmpty: true, // Fetch all data when search is empty
                 clearOnClose: false,
                 autoFocus: false,
               ),

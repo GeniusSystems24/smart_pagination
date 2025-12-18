@@ -112,15 +112,19 @@ class SmartSearchController<T> extends ChangeNotifier {
     // Reset focused index when search text changes
     _focusedIndex = -1;
 
-    // Check minimum length requirement
-    if (text.length < _config.minSearchLength && !_config.searchOnEmpty) {
-      if (text.isEmpty && _config.searchOnEmpty) {
-        _performSearch(text);
-      }
+    // If text is empty and searchOnEmpty is false, don't search
+    if (text.isEmpty && !_config.searchOnEmpty) {
       notifyListeners();
       return;
     }
 
+    // If text length is less than minimum and not empty, don't search yet
+    if (text.isNotEmpty && text.length < _config.minSearchLength) {
+      notifyListeners();
+      return;
+    }
+
+    // Always use debounce timer before searching
     _debounceTimer = Timer(_config.debounceDelay, () {
       _performSearch(text);
     });
@@ -156,6 +160,12 @@ class SmartSearchController<T> extends ChangeNotifier {
     if (_isOverlayVisible) return;
     _isOverlayVisible = true;
     // Preserve the focused index when reopening
+
+    // If cubit is in initial state and searchOnEmpty is true, trigger initial fetch
+    if (_cubit.state is SmartPaginationInitial && _config.searchOnEmpty) {
+      _performSearch(_textController.text);
+    }
+
     notifyListeners();
   }
 
