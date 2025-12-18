@@ -109,14 +109,14 @@ class SmartSearchBox<T> extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        return KeyboardListener(
-          focusNode: FocusNode(skipTraversal: true),
-          onKeyEvent: (event) {
-            // Handle keyboard navigation
+        return Focus(
+          skipTraversal: true,
+          onKeyEvent: (node, event) {
+            // Handle keyboard navigation and prevent propagation if handled
             if (controller.handleKeyEvent(event)) {
-              // Event was handled by the controller
-              return;
+              return KeyEventResult.handled;
             }
+            return KeyEventResult.ignored;
           },
           child: TextField(
             controller: controller.textController,
@@ -130,13 +130,9 @@ class SmartSearchBox<T> extends StatelessWidget {
             enabled: enabled,
             readOnly: readOnly,
             onSubmitted: (value) {
-              // If an item is focused, select it instead of triggering search
-              if (controller.hasItemFocus) {
-                controller.selectFocusedItem();
-              } else {
-                controller.searchNow();
-                onSubmitted?.call(value);
-              }
+              // This is called when Enter is pressed and not handled by Focus
+              controller.searchNow();
+              onSubmitted?.call(value);
             },
             onTap: () {
               controller.showOverlay();

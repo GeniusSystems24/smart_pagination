@@ -26,9 +26,11 @@ class SmartSearchController<T> extends ChangeNotifier {
     required SmartPaginationCubit<T> cubit,
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
+    ValueChanged<T>? onItemSelected,
   })  : _cubit = cubit,
         _searchRequestBuilder = searchRequestBuilder,
-        _config = config {
+        _config = config,
+        _onItemSelected = onItemSelected {
     _textController = TextEditingController();
     _focusNode = FocusNode();
     _textController.addListener(_onTextChanged);
@@ -38,6 +40,12 @@ class SmartSearchController<T> extends ChangeNotifier {
   final SmartPaginationCubit<T> _cubit;
   final PaginationRequest Function(String query) _searchRequestBuilder;
   final SmartSearchConfig _config;
+  ValueChanged<T>? _onItemSelected;
+
+  /// Sets the item selection callback.
+  set onItemSelected(ValueChanged<T>? callback) {
+    _onItemSelected = callback;
+  }
 
   late final TextEditingController _textController;
   late final FocusNode _focusNode;
@@ -302,8 +310,9 @@ class SmartSearchController<T> extends ChangeNotifier {
   }
 
   /// Selects an item from the search results.
-  /// This will hide the overlay and optionally clear the search.
+  /// This will hide the overlay, call the onItemSelected callback, and optionally clear the search.
   void selectItem(T item) {
+    _onItemSelected?.call(item);
     hideOverlay();
     unfocus();
   }

@@ -275,25 +275,31 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
     final focusedIndex = widget.controller.focusedIndex;
     if (focusedIndex < 0 || !_scrollController.hasClients) return;
 
+    // Add small padding to ensure item is fully visible
+    const padding = 8.0;
     final targetOffset = focusedIndex * _itemHeight;
     final viewportHeight = _scrollController.position.viewportDimension;
     final currentOffset = _scrollController.offset;
     final maxOffset = _scrollController.position.maxScrollExtent;
 
-    // Check if item is already visible
-    if (targetOffset >= currentOffset &&
-        targetOffset + _itemHeight <= currentOffset + viewportHeight) {
-      return; // Already visible
+    // Check if item is already fully visible with padding
+    final itemTop = targetOffset;
+    final itemBottom = targetOffset + _itemHeight;
+    final viewTop = currentOffset + padding;
+    final viewBottom = currentOffset + viewportHeight - padding;
+
+    if (itemTop >= viewTop && itemBottom <= viewBottom) {
+      return; // Already fully visible
     }
 
-    // Calculate the scroll position to center the item if possible
+    // Calculate the scroll position
     double newOffset;
-    if (targetOffset < currentOffset) {
-      // Item is above the viewport, scroll up
-      newOffset = targetOffset;
+    if (itemTop < viewTop) {
+      // Item is above the viewport, scroll up with padding
+      newOffset = targetOffset - padding;
     } else {
-      // Item is below the viewport, scroll down
-      newOffset = targetOffset - viewportHeight + _itemHeight;
+      // Item is below the viewport, scroll down with padding
+      newOffset = targetOffset - viewportHeight + _itemHeight + padding;
     }
 
     newOffset = newOffset.clamp(0.0, maxOffset);

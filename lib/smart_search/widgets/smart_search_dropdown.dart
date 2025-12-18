@@ -223,6 +223,7 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
       cubit: _cubit,
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
+      onItemSelected: widget.onItemSelected,
     );
   }
 
