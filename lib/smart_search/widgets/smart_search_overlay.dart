@@ -321,9 +321,9 @@ class _OverlayContent<T> extends StatelessWidget {
       bloc: controller.cubit,
       builder: (context, state) {
         return switch (state) {
-          SmartPaginationInitial<T>() => _buildInitialOrLoading(context),
           SmartPaginationError<T>(:final error) => _buildError(context, error),
           SmartPaginationLoaded<T>(:final items) => _buildResults(context, items),
+          _ => _buildInitialOrLoading(context),
         };
       },
     );
