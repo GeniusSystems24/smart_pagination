@@ -13,6 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 New powerful sorting functionality that allows programmatic control over item ordering:
 
+#### Sorted Insertion (Performance Fix) ⚡
+
+Item insertion methods now respect the active sort order by inserting items directly at the correct sorted position using binary search. This prevents visual flickering that occurred when items were added then re-sorted.
+
+**Improved Methods:**
+- `insertEmit()` - Inserts items at correct sorted position
+- `insertAllEmit()` - Uses efficient merge algorithm for batch insertions
+- `addOrUpdateEmit()` - Positions new items correctly; repositions updated items if sort field changed
+- `updateItemEmit()` - Repositions item if sort field changes
+- `updateWhereEmit()` - Batch repositions multiple updated items efficiently
+
+**Benefits:**
+- **No Visual Flickering**: Items appear directly in their final position
+- **Efficient Algorithm**: Binary search for single insertions, merge sort for batches
+- **Automatic**: Works transparently when sort order is active
+- **Backward Compatible**: Falls back to index-based insertion when no sorting is active
+
 **New Classes:**
 - `SortOrder<T>` - Defines how items should be sorted
 - `SortOrderCollection<T>` - Manages multiple sort orders with an active selection

@@ -212,6 +212,76 @@ class SmartPaginationCubit<T>
     return _orders!.sortItems(items);
   }
 
+  /// Finds the correct insertion index to maintain sort order using binary search.
+  ///
+  /// Returns the index where [item] should be inserted to maintain sorted order.
+  /// If no sorting is active, returns the [fallbackIndex].
+  int _findSortedInsertIndex(List<T> sortedList, T item, {int fallbackIndex = 0}) {
+    final order = _orders?.activeOrder;
+    if (order == null) {
+      return fallbackIndex.clamp(0, sortedList.length);
+    }
+
+    // Binary search to find insertion point
+    int low = 0;
+    int high = sortedList.length;
+
+    while (low < high) {
+      final mid = (low + high) ~/ 2;
+      final comparison = order.compare(item, sortedList[mid]);
+
+      if (comparison <= 0) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    return low;
+  }
+
+  /// Inserts multiple items into a sorted list while maintaining sort order.
+  ///
+  /// This is more efficient than inserting one by one for large batches,
+  /// as it sorts the new items first and then merges them.
+  List<T> _insertAllSorted(List<T> sortedList, List<T> newItems) {
+    final order = _orders?.activeOrder;
+    if (order == null) {
+      // No sorting active, just append items
+      return [...sortedList, ...newItems];
+    }
+
+    // Sort new items first
+    final sortedNewItems = List<T>.from(newItems)..sort(order.compare);
+
+    // Merge two sorted lists
+    final result = <T>[];
+    int i = 0;
+    int j = 0;
+
+    while (i < sortedList.length && j < sortedNewItems.length) {
+      if (order.compare(sortedList[i], sortedNewItems[j]) <= 0) {
+        result.add(sortedList[i]);
+        i++;
+      } else {
+        result.add(sortedNewItems[j]);
+        j++;
+      }
+    }
+
+    // Add remaining items
+    while (i < sortedList.length) {
+      result.add(sortedList[i]);
+      i++;
+    }
+    while (j < sortedNewItems.length) {
+      result.add(sortedNewItems[j]);
+      j++;
+    }
+
+    return result;
+  }
+
   // ==================== END SORTING / ORDERS ====================
 
   /// Returns true if data has expired based on the configured [dataAge].
@@ -559,7 +629,9 @@ class SmartPaginationCubit<T>
     if (currentState is! SmartPaginationLoaded<T>) return;
 
     final updated = List<T>.from(currentState.allItems);
-    final insertIndex = index.clamp(0, updated.length);
+
+    // Use sorted insertion if sorting is active, otherwise use the provided index
+    final insertIndex = _findSortedInsertIndex(updated, item, fallbackIndex: index);
     updated.insert(insertIndex, item);
     _onInsertionCallback?.call(updated);
 
@@ -584,9 +656,20 @@ class SmartPaginationCubit<T>
     final existingIndex = updated.indexWhere((element) => element == item);
 
     if (existingIndex != -1) {
-      updated[existingIndex] = item;
+      // Update existing item - if sorting is active, may need to reposition
+      final order = _orders?.activeOrder;
+      if (order != null) {
+        // Remove and re-insert at correct sorted position
+        updated.removeAt(existingIndex);
+        final newIndex = _findSortedInsertIndex(updated, item, fallbackIndex: existingIndex);
+        updated.insert(newIndex, item);
+      } else {
+        // No sorting, just update in place
+        updated[existingIndex] = item;
+      }
     } else {
-      final insertIndex = index.clamp(0, updated.length);
+      // New item - use sorted insertion if sorting is active
+      final insertIndex = _findSortedInsertIndex(updated, item, fallbackIndex: index);
       updated.insert(insertIndex, item);
     }
 
@@ -618,9 +701,14 @@ class SmartPaginationCubit<T>
     final currentState = state;
     if (currentState is! SmartPaginationLoaded<T>) return;
 
-    final updated = List<T>.from(currentState.allItems);
-    final insertIndex = index.clamp(0, updated.length);
-    updated.insertAll(insertIndex, items);
+    if (items.isEmpty) return;
+
+    final currentItems = List<T>.from(currentState.allItems);
+
+    // Use efficient merge if sorting is active, otherwise use simple insertAll
+    final updated = _orders?.activeOrder != null
+        ? _insertAllSorted(currentItems, items)
+        : (List<T>.from(currentItems)..insertAll(index.clamp(0, currentItems.length), items));
 
     _onInsertionCallback?.call(updated);
 
@@ -725,7 +813,17 @@ class SmartPaginationCubit<T>
 
     if (index == -1) return false;
 
-    updated[index] = updater(updated[index]);
+    final updatedItem = updater(updated[index]);
+
+    // If sorting is active, reposition the item to maintain sort order
+    final order = _orders?.activeOrder;
+    if (order != null) {
+      updated.removeAt(index);
+      final newIndex = _findSortedInsertIndex(updated, updatedItem, fallbackIndex: index);
+      updated.insert(newIndex, updatedItem);
+    } else {
+      updated[index] = updatedItem;
+    }
 
     _onInsertionCallback?.call(updated);
 
@@ -749,16 +847,45 @@ class SmartPaginationCubit<T>
     if (currentState is! SmartPaginationLoaded<T>) return 0;
 
     final updated = List<T>.from(currentState.allItems);
+    final order = _orders?.activeOrder;
     var updateCount = 0;
 
-    for (var i = 0; i < updated.length; i++) {
-      if (matcher(updated[i])) {
-        updated[i] = updater(updated[i]);
-        updateCount++;
-      }
-    }
+    if (order != null) {
+      // Collect items to update
+      final itemsToUpdate = <T>[];
+      final indicesToRemove = <int>[];
 
-    if (updateCount == 0) return 0;
+      for (var i = 0; i < updated.length; i++) {
+        if (matcher(updated[i])) {
+          itemsToUpdate.add(updater(updated[i]));
+          indicesToRemove.add(i);
+          updateCount++;
+        }
+      }
+
+      if (updateCount == 0) return 0;
+
+      // Remove items in reverse order to maintain indices
+      for (var i = indicesToRemove.length - 1; i >= 0; i--) {
+        updated.removeAt(indicesToRemove[i]);
+      }
+
+      // Re-insert updated items at correct sorted positions using merge
+      final result = _insertAllSorted(updated, itemsToUpdate);
+      updated
+        ..clear()
+        ..addAll(result);
+    } else {
+      // No sorting, update in place
+      for (var i = 0; i < updated.length; i++) {
+        if (matcher(updated[i])) {
+          updated[i] = updater(updated[i]);
+          updateCount++;
+        }
+      }
+
+      if (updateCount == 0) return 0;
+    }
 
     _onInsertionCallback?.call(updated);
 
