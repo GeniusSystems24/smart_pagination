@@ -7,6 +7,9 @@ class Product {
   final String category;
   final String imageUrl;
   final DateTime createdAt;
+  final double rating;
+  final int stock;
+
 
   const Product({
     required this.id,
@@ -16,6 +19,8 @@ class Product {
     required this.category,
     required this.imageUrl,
     required this.createdAt,
+    this.rating = 0.0,
+    this.stock = 0,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -27,6 +32,8 @@ class Product {
       category: json['category'] as String,
       imageUrl: json['imageUrl'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      rating: num.tryParse(json['rating'])?.toDouble() ?? 0.0,
+      stock: num.tryParse(json['stock'])?.toInt() ?? 0,
     );
   }
 
@@ -39,6 +46,8 @@ class Product {
       'category': category,
       'imageUrl': imageUrl,
       'createdAt': createdAt.toIso8601String(),
+      'rating': rating,
+      'stock': stock,
     };
   }
 

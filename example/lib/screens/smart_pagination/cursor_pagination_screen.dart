@@ -18,7 +18,7 @@ class CursorPaginationScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.teal.withOpacity(0.1),
+            color: Colors.teal.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.list_alt, color: Colors.teal),
@@ -40,14 +40,12 @@ class CursorPaginationScreen extends StatelessWidget {
                 pageSize: 15,
                 cursor: null, // Start with no cursor
               ),
-              provider: PaginationProvider.future(
-                (request) async {
-                  // Simulate cursor-based API call
-                  final products = await MockApiService.fetchProducts(request);
-                  // In real app, you'd use the cursor from response
-                  return products;
-                },
-              ),
+              provider: PaginationProvider.future((request) async {
+                // Simulate cursor-based API call
+                final products = await MockApiService.fetchProducts(request);
+                // In real app, you'd use the cursor from response
+                return products;
+              }),
               itemBuilder: (context, products, index) {
                 final product = products[index];
                 return _buildProductCard(product, index);
@@ -78,10 +76,7 @@ class CursorPaginationScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'Using cursor-based pagination',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -163,10 +158,7 @@ class CursorPaginationScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'No data available',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -212,10 +204,7 @@ class CursorPaginationScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.red.shade200,
-                      width: 1,
-                    ),
+                    border: Border.all(color: Colors.red.shade200, width: 1),
                   ),
                   child: Row(
                     children: [
@@ -289,10 +278,7 @@ class CursorPaginationScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         'Cursor-based pagination complete',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -315,7 +301,7 @@ class CursorPaginationScreen extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.teal.withOpacity(0.1),
+          color: Colors.teal.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -334,16 +320,13 @@ class CursorPaginationScreen extends StatelessWidget {
           Expanded(
             child: Text(
               product.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.2),
+              color: Colors.teal.withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -372,7 +355,7 @@ class CursorPaginationScreen extends StatelessWidget {
             'Cursor-based loading',
             style: TextStyle(
               fontSize: 11,
-              color: Colors.teal.withOpacity(0.7),
+              color: Colors.teal.withValues(alpha: 0.7),
               fontStyle: FontStyle.italic,
             ),
           ),

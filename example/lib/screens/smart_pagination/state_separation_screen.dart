@@ -19,7 +19,7 @@ class StateSeparationScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.indigo.withOpacity(0.1),
+            color: Colors.indigo.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.splitscreen, color: Colors.indigo),
@@ -307,7 +307,7 @@ class StateSeparationScreen extends StatelessWidget {
         width: 60,
         height: 60,
         decoration: BoxDecoration(
-          color: Colors.indigo.withOpacity(0.1),
+          color: Colors.indigo.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
@@ -337,7 +337,7 @@ class StateSeparationScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.indigo.withOpacity(0.1),
+              color: Colors.indigo.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(

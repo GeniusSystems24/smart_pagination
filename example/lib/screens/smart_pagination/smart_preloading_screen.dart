@@ -26,7 +26,7 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepPurple.withOpacity(0.1),
+            color: Colors.deepPurple.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.speed, color: Colors.deepPurple),
@@ -173,10 +173,10 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
                   padding: const EdgeInsets.all(20),
                   margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple.withOpacity(0.1),
+                    color: Colors.deepPurple.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.deepPurple.withOpacity(0.3),
+                      color: Colors.deepPurple.withValues(alpha:0.3),
                       width: 2,
                     ),
                   ),
@@ -218,10 +218,10 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.green.withOpacity(0.3),
+                      color: Colors.green.withValues(alpha:0.3),
                       width: 2,
                     ),
                   ),
@@ -291,8 +291,8 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
               height: 56,
               decoration: BoxDecoration(
                 color: willTrigger
-                    ? Colors.deepPurple.withOpacity(0.2)
-                    : Colors.grey.withOpacity(0.1),
+                    ? Colors.deepPurple.withValues(alpha:0.2)
+                    : Colors.grey.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(

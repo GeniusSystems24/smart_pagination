@@ -30,8 +30,8 @@ class SmartPaginationReorderableListView<T> extends SmartPagination<T> {
   /// Each item must have a unique key for reordering to work correctly.
   SmartPaginationReorderableListView.withProvider({
     super.key,
-    required PaginationRequest request,
-    required PaginationProvider<T> provider,
+    required super.request,
+    required super.provider,
     required super.itemBuilder,
     required super.onReorder,
     super.heightOfInitialLoadingAndEmptyWidget,
@@ -54,8 +54,8 @@ class SmartPaginationReorderableListView<T> extends SmartPagination<T> {
     super.beforeBuild,
     super.listBuilder,
     super.cacheExtent,
-    Widget? separator,
-    double spacing = 4,
+    super.separator,
+    super.spacing,
     super.firstPageLoadingBuilder,
     super.firstPageErrorBuilder,
     super.firstPageEmptyBuilder,
@@ -63,27 +63,15 @@ class SmartPaginationReorderableListView<T> extends SmartPagination<T> {
     super.loadMoreErrorBuilder,
     super.loadMoreNoMoreItemsBuilder,
     super.invisibleItemsThreshold,
-    SmartPaginationRefreshedChangeListener? refreshListener,
-    List<SmartPaginationFilterChangeListener<T>>? filterListeners,
-    OnInsertionCallback<T>? onInsertionCallback,
-    VoidCallback? onClear,
-    Logger? logger,
-    int maxPagesInMemory = 5,
-    RetryConfig? retryConfig,
+    super.refreshListener,
+    super.filterListeners,
+    super.onInsertionCallback,
+    super.onClear,
+    super.logger,
+    super.maxPagesInMemory,
+    super.retryConfig,
     Duration? dataAge,
-  }) : super.reorderableListViewWithProvider(
-          request: request,
-          provider: provider,
-          separator: separator,
-          spacing: spacing,
-          refreshListener: refreshListener,
-          filterListeners: filterListeners,
-          onInsertionCallback: onInsertionCallback,
-          onClear: onClear,
-          logger: logger,
-          maxPagesInMemory: maxPagesInMemory,
-          retryConfig: retryConfig,
-        );
+  }) : super.reorderableListViewWithProvider();
 
   /// Creates a SmartPaginationReorderableListView with an external cubit.
   ///
@@ -114,8 +102,8 @@ class SmartPaginationReorderableListView<T> extends SmartPagination<T> {
     super.beforeBuild,
     super.listBuilder,
     super.cacheExtent,
-    Widget? separator,
-    double spacing = 4,
+    super.separator,
+    super.spacing,
     super.firstPageLoadingBuilder,
     super.firstPageErrorBuilder,
     super.firstPageEmptyBuilder,
@@ -123,12 +111,7 @@ class SmartPaginationReorderableListView<T> extends SmartPagination<T> {
     super.loadMoreErrorBuilder,
     super.loadMoreNoMoreItemsBuilder,
     super.invisibleItemsThreshold,
-    SmartPaginationRefreshedChangeListener? refreshListener,
-    List<SmartPaginationFilterChangeListener<T>>? filterListeners,
-  }) : super.reorderableListViewWithCubit(
-          separator: separator,
-          spacing: spacing,
-          refreshListener: refreshListener,
-          filterListeners: filterListeners,
-        );
+    super.refreshListener,
+    super.filterListeners,
+  }) : super.reorderableListViewWithCubit();
 }

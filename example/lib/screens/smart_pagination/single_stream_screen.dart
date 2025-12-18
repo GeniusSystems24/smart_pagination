@@ -17,7 +17,7 @@ class SingleStreamScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.blue.withOpacity(0.1),
+            color: Colors.blue.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.stream, color: Colors.blue),
@@ -324,7 +324,7 @@ class SingleStreamScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -354,7 +354,7 @@ class SingleStreamScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.2),
+              color: Colors.orange.withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Row(

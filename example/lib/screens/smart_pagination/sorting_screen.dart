@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_pagination/pagination.dart';
 
-import '../../data/models/product_model.dart';
-import '../../data/data_provider.dart';
+import '../../models/product.dart';
+import '../../services/mock_api_service.dart';
 
 /// Example screen demonstrating the Sorting & Orders feature.
 ///
@@ -20,14 +20,14 @@ class SortingScreen extends StatefulWidget {
 }
 
 class _SortingScreenState extends State<SortingScreen> {
-  late final SmartPaginationCubit<ProductModel> _cubit;
+  late final SmartPaginationCubit<Product> _cubit;
 
   @override
   void initState() {
     super.initState();
 
     // Define available sort orders
-    final orders = SortOrderCollection<ProductModel>(
+    final orders = SortOrderCollection<Product>(
       orders: [
         SortOrder.byField(
           id: 'name_asc',
@@ -53,7 +53,7 @@ class _SortingScreenState extends State<SortingScreen> {
           fieldSelector: (p) => p.price,
           direction: SortDirection.descending,
         ),
-        SortOrder<ProductModel>(
+        SortOrder<Product>(
           id: 'custom',
           label: 'Custom (Rating then Price)',
           comparator: (a, b) {
@@ -68,12 +68,14 @@ class _SortingScreenState extends State<SortingScreen> {
     );
 
     // Create cubit with orders
-    _cubit = SmartPaginationCubit<ProductModel>(
+    _cubit = SmartPaginationCubit<Product>(
       request: const PaginationRequest(page: 1, pageSize: 15),
       provider: PaginationProvider.future(
-        (request) => DataProvider.fetchProducts(
-          page: request.page,
-          pageSize: request.pageSize ?? 15,
+        (request) => MockApiService.fetchProducts(
+          PaginationRequest(
+            page: request.page,
+            pageSize: request.pageSize ?? 15,
+          ),
         ),
       ),
       orders: orders,
@@ -109,9 +111,9 @@ class _SortingScreenState extends State<SortingScreen> {
             tooltip: 'Clear Sorting',
             onPressed: () {
               _cubit.clearOrder();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sorting cleared')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Sorting cleared')));
             },
           ),
         ],
@@ -129,51 +131,59 @@ class _SortingScreenState extends State<SortingScreen> {
                 const Text('Sort by: '),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: BlocBuilder<SmartPaginationCubit<ProductModel>,
-                      SmartPaginationState<ProductModel>>(
-                    bloc: _cubit,
-                    builder: (context, state) {
-                      return DropdownButton<String>(
-                        value: _cubit.activeOrderId,
-                        isExpanded: true,
-                        hint: const Text('Select sort order'),
-                        items: [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('None (Original Order)'),
-                          ),
-                          ..._cubit.availableOrders.map((order) {
-                            return DropdownMenuItem(
-                              value: order.id,
-                              child: Text(order.label),
-                            );
-                          }),
-                        ],
-                        onChanged: (orderId) {
-                          if (orderId == null) {
-                            _cubit.clearOrder();
-                          } else {
-                            _cubit.setActiveOrder(orderId);
-                          }
+                  child:
+                      BlocBuilder<
+                        SmartPaginationCubit<Product>,
+                        SmartPaginationState<Product>
+                      >(
+                        bloc: _cubit,
+                        builder: (context, state) {
+                          return DropdownButton<String>(
+                            value: _cubit.activeOrderId,
+                            isExpanded: true,
+                            hint: const Text('Select sort order'),
+                            items: [
+                              const DropdownMenuItem(
+                                value: null,
+                                child: Text('None (Original Order)'),
+                              ),
+                              ..._cubit.availableOrders.map((order) {
+                                return DropdownMenuItem(
+                                  value: order.id,
+                                  child: Text(order.label),
+                                );
+                              }),
+                            ],
+                            onChanged: (orderId) {
+                              if (orderId == null) {
+                                _cubit.clearOrder();
+                              } else {
+                                _cubit.setActiveOrder(orderId);
+                              }
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
+                      ),
                 ),
               ],
             ),
           ),
 
           // Current order indicator
-          BlocBuilder<SmartPaginationCubit<ProductModel>,
-              SmartPaginationState<ProductModel>>(
+          BlocBuilder<
+            SmartPaginationCubit<Product>,
+            SmartPaginationState<Product>
+          >(
             bloc: _cubit,
             builder: (context, state) {
-              if (state is SmartPaginationLoaded<ProductModel>) {
+              if (state is SmartPaginationLoaded<Product>) {
                 final activeOrder = _cubit.activeOrder;
                 return Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   color: Theme.of(context).colorScheme.primaryContainer,
                   child: Text(
                     activeOrder != null
@@ -197,7 +207,10 @@ class _SortingScreenState extends State<SortingScreen> {
               itemBuilder: (context, items, index) {
                 final product = items[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -211,14 +224,20 @@ class _SortingScreenState extends State<SortingScreen> {
                     title: Text(product.name),
                     subtitle: Row(
                       children: [
-                        Icon(Icons.star, size: 16, color: Colors.amber.shade700),
+                        Icon(
+                          Icons.star,
+                          size: 16,
+                          color: Colors.amber.shade700,
+                        ),
                         const SizedBox(width: 4),
-                        Text('${product.rating.toStringAsFixed(1)}'),
+                        Text(product.rating.toStringAsFixed(1)),
                         const SizedBox(width: 16),
                         Text(
                           'Stock: ${product.stock}',
                           style: TextStyle(
-                            color: product.stock > 10 ? Colors.green : Colors.orange,
+                            color: product.stock > 10
+                                ? Colors.green
+                                : Colors.orange,
                           ),
                         ),
                       ],
@@ -233,12 +252,8 @@ class _SortingScreenState extends State<SortingScreen> {
                   ),
                 );
               },
-              emptyWidget: const Center(
-                child: Text('No products found'),
-              ),
-              loadingWidget: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              emptyWidget: const Center(child: Text('No products found')),
+              loadingWidget: const Center(child: CircularProgressIndicator()),
             ),
           ),
         ],

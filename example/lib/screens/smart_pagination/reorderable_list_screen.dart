@@ -72,7 +72,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.purple.withOpacity(0.1),
+            color: Colors.purple.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.drag_indicator, color: Colors.purple),
@@ -218,7 +218,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.1),
+                color: Colors.purple.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
@@ -248,7 +248,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.2),
+                color: Colors.purple.withValues(alpha:0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -351,7 +351,7 @@ class _PriorityTasksScreenState extends State<PriorityTasksScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepPurple.withOpacity(0.1),
+            color: Colors.deepPurple.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.priority_high, color: Colors.deepPurple),

@@ -219,7 +219,7 @@ class SmartPaginationCubit<T>
   /// If no data has been fetched yet, returns false.
   bool get isDataExpired {
     if (_dataAge == null || _lastFetchTime == null) return false;
-    return DateTime.now().difference(_lastFetchTime!) > _dataAge!;
+    return DateTime.now().difference(_lastFetchTime!) > _dataAge;
   }
 
   /// Checks if data has expired and resets the cubit if so.
@@ -258,7 +258,7 @@ class SmartPaginationCubit<T>
   /// Gets the current expiration DateTime based on lastFetchTime and dataAge.
   DateTime? _getDataExpiredAt() {
     if (_dataAge == null || _lastFetchTime == null) return null;
-    return _lastFetchTime!.add(_dataAge!);
+    return _lastFetchTime!.add(_dataAge);
   }
 
   bool get _hasReachedEnd => _currentMeta != null && !_currentMeta!.hasNext;
@@ -408,7 +408,7 @@ class SmartPaginationCubit<T>
           loadMoreError: null, // Clear any previous error
           fetchedAt: _lastFetchTime,
           dataExpiredAt: _dataAge != null && _lastFetchTime != null
-              ? _lastFetchTime!.add(_dataAge!)
+              ? _lastFetchTime!.add(_dataAge)
               : null,
           activeOrderId: _orders?.activeOrderId,
         ),
@@ -511,7 +511,7 @@ class SmartPaginationCubit<T>
             loadMoreError: null,
             fetchedAt: _lastFetchTime,
             dataExpiredAt: _dataAge != null && _lastFetchTime != null
-                ? _lastFetchTime!.add(_dataAge!)
+                ? _lastFetchTime!.add(_dataAge)
                 : null,
             activeOrderId: _orders?.activeOrderId,
           ),
@@ -816,7 +816,7 @@ class SmartPaginationCubit<T>
           hasReachedEnd: true,
           lastUpdate: DateTime.now(),
           fetchedAt: _lastFetchTime,
-          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
+          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge) : null,
         ),
       );
     } else {
@@ -838,7 +838,7 @@ class SmartPaginationCubit<T>
           isLoadingMore: false,
           loadMoreError: null,
           fetchedAt: _lastFetchTime,
-          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
+          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge) : null,
         ),
       );
     }

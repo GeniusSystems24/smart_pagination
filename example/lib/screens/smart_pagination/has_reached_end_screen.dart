@@ -26,7 +26,7 @@ class _HasReachedEndScreenState extends State<HasReachedEndScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.check_circle, color: Colors.orange),
@@ -46,8 +46,8 @@ class _HasReachedEndScreenState extends State<HasReachedEndScreen> {
             duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             color: _hasReachedEnd
-                ? Colors.green.withOpacity(0.2)
-                : Colors.blue.withOpacity(0.2),
+                ? Colors.green.withValues(alpha:0.2)
+                : Colors.blue.withValues(alpha:0.2),
             child: Row(
               children: [
                 Icon(
@@ -135,7 +135,7 @@ class _HasReachedEndScreenState extends State<HasReachedEndScreen> {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.1),
+          color: Colors.orange.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -194,7 +194,7 @@ class _HasReachedEndScreenState extends State<HasReachedEndScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: Colors.orange.withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -243,7 +243,7 @@ class HasReachedEndCallbackScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepOrange.withOpacity(0.1),
+            color: Colors.deepOrange.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.event_available, color: Colors.deepOrange),
@@ -301,7 +301,7 @@ class HasReachedEndCallbackScreen extends StatelessWidget {
                       Icon(
                         Icons.check_circle_outline,
                         size: 48,
-                        color: Colors.green.withOpacity(0.5),
+                        color: Colors.green.withValues(alpha:0.5),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -338,7 +338,7 @@ class HasReachedEndCallbackScreen extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.deepOrange.withOpacity(0.1),
+          color: Colors.deepOrange.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(

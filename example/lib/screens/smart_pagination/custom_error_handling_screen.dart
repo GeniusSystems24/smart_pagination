@@ -344,7 +344,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.red.withOpacity(0.3),
+                              color: Colors.red.withValues(alpha:0.3),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),

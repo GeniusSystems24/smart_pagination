@@ -18,7 +18,7 @@ class MergedStreamsScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepPurple.withOpacity(0.1),
+            color: Colors.deepPurple.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.merge_type, color: Colors.deepPurple),
@@ -265,7 +265,7 @@ class MergedStreamsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha:0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: color, width: 2),
           ),
@@ -327,7 +327,7 @@ class MergedStreamsScreen extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: categoryColor.withOpacity(0.1),
+          color: categoryColor.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(categoryIcon, color: categoryColor, size: 28),
@@ -346,7 +346,7 @@ class MergedStreamsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: categoryColor.withOpacity(0.2),
+              color: categoryColor.withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -403,7 +403,7 @@ class MergedStreamsScreen extends StatelessWidget {
           Icon(
             Icons.trending_up,
             size: 16,
-            color: Colors.green.withOpacity(0.6),
+            color: Colors.green.withValues(alpha:0.6),
           ),
         ],
       ),

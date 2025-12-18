@@ -18,7 +18,7 @@ class HorizontalListScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepOrange.withOpacity(0.1),
+            color: Colors.deepOrange.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.swipe_left, color: Colors.deepOrange),
@@ -269,7 +269,7 @@ class HorizontalListScreen extends StatelessWidget {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.deepOrange.withOpacity(0.1),
+                  color: Colors.deepOrange.withValues(alpha:0.1),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
@@ -278,7 +278,7 @@ class HorizontalListScreen extends StatelessWidget {
                   child: Icon(
                     Icons.shopping_bag,
                     size: 64,
-                    color: Colors.deepOrange.withOpacity(0.5),
+                    color: Colors.deepOrange.withValues(alpha:0.5),
                   ),
                 ),
               ),

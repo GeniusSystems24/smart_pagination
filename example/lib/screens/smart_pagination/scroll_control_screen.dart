@@ -73,7 +73,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.indigo.withOpacity(0.1),
+            color: Colors.indigo.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.keyboard_arrow_down, color: Colors.indigo),
@@ -427,7 +427,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: Colors.indigo.withOpacity(0.1),
+                color: Colors.indigo.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
@@ -464,7 +464,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.withOpacity(0.2),
+                          color: Colors.indigo.withValues(alpha:0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

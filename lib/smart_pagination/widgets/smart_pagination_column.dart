@@ -25,8 +25,8 @@ class SmartPaginationColumn<T> extends SmartPagination<T> {
   /// Use [itemBuilder] to define how each item should be rendered.
   SmartPaginationColumn.withProvider({
     super.key,
-    required PaginationRequest request,
-    required PaginationProvider<T> provider,
+    required super.request,
+    required super.provider,
     required super.itemBuilder,
     super.heightOfInitialLoadingAndEmptyWidget,
     super.onError,
@@ -43,8 +43,8 @@ class SmartPaginationColumn<T> extends SmartPagination<T> {
     super.allowImplicitScrolling,
     super.scrollController,
     super.cacheExtent,
-    Widget? separator,
-    double spacing = 4,
+    super.separator,
+    super.spacing,
     super.firstPageLoadingBuilder,
     super.firstPageErrorBuilder,
     super.firstPageEmptyBuilder,
@@ -52,27 +52,15 @@ class SmartPaginationColumn<T> extends SmartPagination<T> {
     super.loadMoreErrorBuilder,
     super.loadMoreNoMoreItemsBuilder,
     super.invisibleItemsThreshold,
-    SmartPaginationRefreshedChangeListener? refreshListener,
-    List<SmartPaginationFilterChangeListener<T>>? filterListeners,
-    OnInsertionCallback<T>? onInsertionCallback,
-    VoidCallback? onClear,
-    Logger? logger,
-    int maxPagesInMemory = 5,
-    RetryConfig? retryConfig,
+    super.refreshListener,
+    super.filterListeners,
+    super.onInsertionCallback,
+    super.onClear,
+    super.logger,
+    super.maxPagesInMemory,
+    super.retryConfig,
     Duration? dataAge,
-  }) : super.columnWithProvider(
-          request: request,
-          provider: provider,
-          separator: separator,
-          spacing: spacing,
-          refreshListener: refreshListener,
-          filterListeners: filterListeners,
-          onInsertionCallback: onInsertionCallback,
-          onClear: onClear,
-          logger: logger,
-          maxPagesInMemory: maxPagesInMemory,
-          retryConfig: retryConfig,
-        );
+  }) : super.columnWithProvider();
 
   /// Creates a SmartPaginationColumn with an external cubit.
   ///
@@ -97,8 +85,8 @@ class SmartPaginationColumn<T> extends SmartPagination<T> {
     super.allowImplicitScrolling,
     super.scrollController,
     super.cacheExtent,
-    Widget? separator,
-    double spacing = 4,
+    super.separator,
+    super.spacing,
     super.firstPageLoadingBuilder,
     super.firstPageErrorBuilder,
     super.firstPageEmptyBuilder,
@@ -106,12 +94,7 @@ class SmartPaginationColumn<T> extends SmartPagination<T> {
     super.loadMoreErrorBuilder,
     super.loadMoreNoMoreItemsBuilder,
     super.invisibleItemsThreshold,
-    SmartPaginationRefreshedChangeListener? refreshListener,
-    List<SmartPaginationFilterChangeListener<T>>? filterListeners,
-  }) : super.columnWithCubit(
-          separator: separator,
-          spacing: spacing,
-          refreshListener: refreshListener,
-          filterListeners: filterListeners,
-        );
+    super.refreshListener,
+    super.filterListeners,
+  }) : super.columnWithCubit();
 }

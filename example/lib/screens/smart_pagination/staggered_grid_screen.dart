@@ -18,7 +18,7 @@ class StaggeredGridScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepPurple.withOpacity(0.1),
+            color: Colors.deepPurple.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.view_quilt, color: Colors.deepPurple),
@@ -258,7 +258,7 @@ class StaggeredGridScreen extends StatelessWidget {
               height: imageHeight,
               decoration: BoxDecoration(
                 color: Colors.primaries[index % Colors.primaries.length]
-                    .withOpacity(0.2),
+                    .withValues(alpha:0.2),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
@@ -270,7 +270,7 @@ class StaggeredGridScreen extends StatelessWidget {
                       Icons.shopping_bag_outlined,
                       size: 60,
                       color: Colors.primaries[index % Colors.primaries.length]
-                          .withOpacity(0.5),
+                          .withValues(alpha:0.5),
                     ),
                   ),
                   // Category badge
@@ -283,7 +283,7 @@ class StaggeredGridScreen extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha:0.9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -303,7 +303,7 @@ class StaggeredGridScreen extends StatelessWidget {
                     right: 8,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha:0.9),
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(

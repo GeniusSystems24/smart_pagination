@@ -50,12 +50,19 @@ class _NetworkErrorsExampleState extends State<NetworkErrorsExample> {
     // Throw different error types based on selection
     switch (_selectedErrorType) {
       case 'network':
-        throw NetworkException('Unable to connect to server. Please check your internet connection.');
+        throw NetworkException(
+          'Unable to connect to server. Please check your internet connection.',
+        );
       case 'timeout':
         await Future.delayed(const Duration(milliseconds: 500));
-        throw TimeoutException('Request timed out. The server took too long to respond.');
+        throw TimeoutException(
+          'Request timed out. The server took too long to respond.',
+        );
       case 'server':
-        throw ServerException(500, 'Internal server error. Our team has been notified.');
+        throw ServerException(
+          500,
+          'Internal server error. Our team has been notified.',
+        );
       case 'notfound':
         throw ServerException(404, 'The requested resource was not found.');
       case 'unauthorized':
@@ -126,30 +133,26 @@ class _NetworkErrorsExampleState extends State<NetworkErrorsExample> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: color,
-              ),
+              child: Icon(icon, size: 64, color: color),
             ),
             const SizedBox(height: 24),
             Text(
               title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
@@ -174,9 +177,7 @@ class _NetworkErrorsExampleState extends State<NetworkErrorsExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Network Errors'),
-      ),
+      appBar: AppBar(title: const Text('Network Errors')),
       body: Column(
         children: [
           // Error type selector
@@ -189,21 +190,38 @@ class _NetworkErrorsExampleState extends State<NetworkErrorsExample> {
               children: [
                 const Text(
                   'Select Error Type:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _buildErrorTypeChip('network', 'No Connection', Icons.wifi_off),
-                    _buildErrorTypeChip('timeout', 'Timeout', Icons.access_time),
-                    _buildErrorTypeChip('server', '500 Error', Icons.error_outline),
-                    _buildErrorTypeChip('notfound', '404 Error', Icons.search_off),
-                    _buildErrorTypeChip('unauthorized', '401 Error', Icons.lock),
+                    _buildErrorTypeChip(
+                      'network',
+                      'No Connection',
+                      Icons.wifi_off,
+                    ),
+                    _buildErrorTypeChip(
+                      'timeout',
+                      'Timeout',
+                      Icons.access_time,
+                    ),
+                    _buildErrorTypeChip(
+                      'server',
+                      '500 Error',
+                      Icons.error_outline,
+                    ),
+                    _buildErrorTypeChip(
+                      'notfound',
+                      '404 Error',
+                      Icons.search_off,
+                    ),
+                    _buildErrorTypeChip(
+                      'unauthorized',
+                      '401 Error',
+                      Icons.lock,
+                    ),
                   ],
                 ),
               ],
@@ -237,11 +255,7 @@ class _NetworkErrorsExampleState extends State<NetworkErrorsExample> {
       selected: isSelected,
       label: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 4),
-          Text(label),
-        ],
+        children: [Icon(icon, size: 16), const SizedBox(width: 4), Text(label)],
       ),
       onSelected: (selected) {
         if (selected) {

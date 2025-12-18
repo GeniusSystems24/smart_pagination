@@ -14,7 +14,9 @@ import '../../models/product.dart';
 class CustomErrorWidgetsExample extends StatelessWidget {
   const CustomErrorWidgetsExample({super.key});
 
-  Future<List<Product>> _fetchProductsWithError(PaginationRequest request) async {
+  Future<List<Product>> _fetchProductsWithError(
+    PaginationRequest request,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 800));
     throw Exception('Network error: Unable to connect to server');
   }
@@ -59,18 +61,18 @@ class CustomErrorWidgetsExample extends StatelessWidget {
         _buildInfoBanner(
           'Material Design Style',
           'Full-featured error display with icon, title, message, and action button.\n'
-          'Best for: First page errors with ample screen space.',
+              'Best for: First page errors with ample screen space.',
           Colors.blue,
         ),
         Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
-              key: const Key('material_error'),
-              request: PaginationRequest(page: 1, pageSize: 20),
-              provider: PaginationProvider.future(_fetchProductsWithError),
-              itemBuilder: (context, products, index) {
-                final product = products[index];
-                return ListTile(title: Text(product.name));
-              },
+          child: SmartPagination<Product>.listViewWithProvider(
+            key: const Key('material_error'),
+            request: PaginationRequest(page: 1, pageSize: 20),
+            provider: PaginationProvider.future(_fetchProductsWithError),
+            itemBuilder: (context, products, index) {
+              final product = products[index];
+              return ListTile(title: Text(product.name));
+            },
             firstPageErrorBuilder: (context, error, retry) {
               return CustomErrorBuilder.material(
                 context: context,
@@ -96,18 +98,18 @@ class CustomErrorWidgetsExample extends StatelessWidget {
         _buildInfoBanner(
           'Compact Style',
           'Space-efficient inline error widget with horizontal layout.\n'
-          'Best for: Load more errors with limited vertical space.',
+              'Best for: Load more errors with limited vertical space.',
           Colors.orange,
         ),
         Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
-              key: const Key('compact_error'),
-              request: PaginationRequest(page: 1, pageSize: 20),
-              provider: PaginationProvider.future(_fetchProductsWithError),
-              itemBuilder: (context, products, index) {
-                final product = products[index];
-                return ListTile(title: Text(product.name));
-              },
+          child: SmartPagination<Product>.listViewWithProvider(
+            key: const Key('compact_error'),
+            request: PaginationRequest(page: 1, pageSize: 20),
+            provider: PaginationProvider.future(_fetchProductsWithError),
+            itemBuilder: (context, products, index) {
+              final product = products[index];
+              return ListTile(title: Text(product.name));
+            },
             firstPageErrorBuilder: (context, error, retry) {
               return Center(
                 child: CustomErrorBuilder.compact(
@@ -133,25 +135,26 @@ class CustomErrorWidgetsExample extends StatelessWidget {
         _buildInfoBanner(
           'Card Style',
           'Error displayed in a Material card with elevation and rounded corners.\n'
-          'Best for: Grid views or when you want a distinct error card.',
+              'Best for: Grid views or when you want a distinct error card.',
           Colors.green,
         ),
         Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
-              key: const Key('card_error'),
-              request: PaginationRequest(page: 1, pageSize: 20),
-              provider: PaginationProvider.future(_fetchProductsWithError),
-              itemBuilder: (context, products, index) {
-                final product = products[index];
-                return ListTile(title: Text(product.name));
-              },
+          child: SmartPagination<Product>.listViewWithProvider(
+            key: const Key('card_error'),
+            request: PaginationRequest(page: 1, pageSize: 20),
+            provider: PaginationProvider.future(_fetchProductsWithError),
+            itemBuilder: (context, products, index) {
+              final product = products[index];
+              return ListTile(title: Text(product.name));
+            },
             firstPageErrorBuilder: (context, error, retry) {
               return CustomErrorBuilder.card(
                 context: context,
                 error: error,
                 onRetry: retry,
                 title: 'Products Unavailable',
-                message: 'We couldn\'t load the products at this time. Please check your connection.',
+                message:
+                    'We couldn\'t load the products at this time. Please check your connection.',
                 elevation: 8,
               );
             },
@@ -168,18 +171,18 @@ class CustomErrorWidgetsExample extends StatelessWidget {
         _buildInfoBanner(
           'Minimal Style',
           'Minimalist error display with just message and retry icon button.\n'
-          'Best for: Very limited space scenarios.',
+              'Best for: Very limited space scenarios.',
           Colors.purple,
         ),
         Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
-              key: const Key('minimal_error'),
-              request: PaginationRequest(page: 1, pageSize: 20),
-              provider: PaginationProvider.future(_fetchProductsWithError),
-              itemBuilder: (context, products, index) {
-                final product = products[index];
-                return ListTile(title: Text(product.name));
-              },
+          child: SmartPagination<Product>.listViewWithProvider(
+            key: const Key('minimal_error'),
+            request: PaginationRequest(page: 1, pageSize: 20),
+            provider: PaginationProvider.future(_fetchProductsWithError),
+            itemBuilder: (context, products, index) {
+              final product = products[index];
+              return ListTile(title: Text(product.name));
+            },
             firstPageErrorBuilder: (context, error, retry) {
               return Center(
                 child: CustomErrorBuilder.minimal(
@@ -203,18 +206,18 @@ class CustomErrorWidgetsExample extends StatelessWidget {
         _buildInfoBanner(
           'Snackbar Style',
           'Bottom-aligned error that doesn\'t block content.\n'
-          'Best for: Non-intrusive error messages.',
+              'Best for: Non-intrusive error messages.',
           Colors.indigo,
         ),
         Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
-              key: const Key('snackbar_error'),
-              request: PaginationRequest(page: 1, pageSize: 20),
-              provider: PaginationProvider.future(_fetchProductsWithError),
-              itemBuilder: (context, products, index) {
-                final product = products[index];
-                return ListTile(title: Text(product.name));
-              },
+          child: SmartPagination<Product>.listViewWithProvider(
+            key: const Key('snackbar_error'),
+            request: PaginationRequest(page: 1, pageSize: 20),
+            provider: PaginationProvider.future(_fetchProductsWithError),
+            itemBuilder: (context, products, index) {
+              final product = products[index];
+              return ListTile(title: Text(product.name));
+            },
             firstPageErrorBuilder: (context, error, retry) {
               return Stack(
                 children: [
@@ -224,10 +227,7 @@ class CustomErrorWidgetsExample extends StatelessWidget {
                     child: const Center(
                       child: Text(
                         'Content would appear here',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                     ),
                   ),
@@ -255,28 +255,25 @@ class CustomErrorWidgetsExample extends StatelessWidget {
         _buildInfoBanner(
           'Completely Custom',
           'Build your own error widget from scratch with complete control.\n'
-          'Best for: Specific branding or unique design requirements.',
+              'Best for: Specific branding or unique design requirements.',
           Colors.red,
         ),
         Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
-              key: const Key('custom_error'),
-              request: PaginationRequest(page: 1, pageSize: 20),
-              provider: PaginationProvider.future(_fetchProductsWithError),
-              itemBuilder: (context, products, index) {
-                final product = products[index];
-                return ListTile(title: Text(product.name));
-              },
+          child: SmartPagination<Product>.listViewWithProvider(
+            key: const Key('custom_error'),
+            request: PaginationRequest(page: 1, pageSize: 20),
+            provider: PaginationProvider.future(_fetchProductsWithError),
+            itemBuilder: (context, products, index) {
+              final product = products[index];
+              return ListTile(title: Text(product.name));
+            },
             firstPageErrorBuilder: (context, error, retry) {
               return Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Colors.purple[100]!,
-                      Colors.pink[100]!,
-                    ],
+                    colors: [Colors.purple[100]!, Colors.pink[100]!],
                   ),
                 ),
                 child: Center(
@@ -297,7 +294,7 @@ class CustomErrorWidgetsExample extends StatelessWidget {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.purple.withOpacity(0.3),
+                                    color: Colors.purple.withValues(alpha: 0.3),
                                     blurRadius: 20,
                                     spreadRadius: 5,
                                   ),
@@ -332,10 +329,7 @@ class CustomErrorWidgetsExample extends StatelessWidget {
                         child: Text(
                           'Something unexpected happened',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.black87,
-                          ),
+                          style: TextStyle(fontSize: 18, color: Colors.black87),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -349,7 +343,7 @@ class CustomErrorWidgetsExample extends StatelessWidget {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.purple.withOpacity(0.3),
+                              color: Colors.purple.withValues(alpha: 0.3),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -402,10 +396,8 @@ class CustomErrorWidgetsExample extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border(
-          bottom: BorderSide(color: color.withOpacity(0.3)),
-        ),
+        color: color.withValues(alpha: 0.1),
+        border: Border(bottom: BorderSide(color: color.withValues(alpha: 0.3))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

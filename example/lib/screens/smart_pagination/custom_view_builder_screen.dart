@@ -18,7 +18,7 @@ class CustomViewBuilderScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.teal.withOpacity(0.1),
+            color: Colors.teal.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.dashboard_customize, color: Colors.teal),
@@ -115,7 +115,7 @@ class CustomViewBuilderScreen extends StatelessWidget {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.teal.withOpacity(0.1),
+                      color: Colors.teal.withValues(alpha:0.1),
                       border: Border(
                         left: BorderSide(
                           color: Colors.teal,
@@ -195,10 +195,10 @@ class CustomViewBuilderScreen extends StatelessWidget {
                 ? Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.green.withOpacity(0.3),
+                        color: Colors.green.withValues(alpha:0.3),
                         width: 2,
                       ),
                     ),
@@ -207,7 +207,7 @@ class CustomViewBuilderScreen extends StatelessWidget {
                         Icon(
                           Icons.check_circle,
                           size: 48,
-                          color: Colors.green.withOpacity(0.7),
+                          color: Colors.green.withValues(alpha:0.7),
                         ),
                         const SizedBox(height: 12),
                         const Text(
@@ -268,7 +268,7 @@ class CustomViewBuilderScreen extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.teal.withOpacity(0.1),
+                color: Colors.teal.withValues(alpha:0.1),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
@@ -277,7 +277,7 @@ class CustomViewBuilderScreen extends StatelessWidget {
                 child: Icon(
                   Icons.shopping_bag_outlined,
                   size: 48,
-                  color: Colors.teal.withOpacity(0.5),
+                  color: Colors.teal.withValues(alpha:0.5),
                 ),
               ),
             ),
@@ -376,7 +376,7 @@ class CustomTableViewScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.indigo.withOpacity(0.1),
+            color: Colors.indigo.withValues(alpha:0.1),
             child: const Row(
               children: [
                 Icon(Icons.table_chart, color: Colors.indigo),
@@ -405,7 +405,7 @@ class CustomTableViewScreen extends StatelessWidget {
                     children: [
                       // Table Header
                       Container(
-                        color: Colors.indigo.withOpacity(0.1),
+                        color: Colors.indigo.withValues(alpha:0.1),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
@@ -453,7 +453,7 @@ class CustomTableViewScreen extends StatelessWidget {
                         final product = entry.value;
                         return Container(
                           color: index.isEven
-                              ? Colors.grey.withOpacity(0.05)
+                              ? Colors.grey.withValues(alpha:0.05)
                               : Colors.transparent,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -478,7 +478,7 @@ class CustomTableViewScreen extends StatelessWidget {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.indigo.withOpacity(0.1),
+                                    color: Colors.indigo.withValues(alpha:0.1),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
