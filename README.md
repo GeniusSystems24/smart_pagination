@@ -1,25 +1,45 @@
 # Smart Pagination
 
-[![Pub Version](https://img.shields.io/badge/pub-v0.0.5-blue)](https://pub.dev/packages/smart_pagination)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Flutter](https://img.shields.io/badge/flutter-3.9.0+-02569B?logo=flutter)](https://flutter.dev)
+<p align="center">
+  <a href="https://pub.dev/packages/smart_pagination"><img src="https://img.shields.io/pub/v/smart_pagination.svg?label=pub&color=blue" alt="Pub Version"></a>
+  <a href="https://github.com/GeniusSystems24/smart_pagination/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/flutter-3.9.0+-02569B?logo=flutter" alt="Flutter"></a>
+  <a href="https://github.com/GeniusSystems24/smart_pagination/actions"><img src="https://img.shields.io/badge/tests-60%2B%20passed-brightgreen" alt="Tests"></a>
+</p>
 
-A powerful, flexible, and easy-to-use Flutter pagination library with built-in **BLoC state management**, **advanced error handling**, and **beautiful UI components**. Perfect for REST APIs, real-time streams, and complex data requirements.
+<p align="center">
+  <b>A powerful, flexible, and production-ready Flutter pagination library</b><br>
+  Built-in BLoC state management | Advanced error handling | Beautiful UI components
+</p>
+
+<p align="center">
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-widget-classes">Widget Classes</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-example-app">Examples</a>
+</p>
+
+---
 
 > **Transport agnostic**: Bring your own async function and enjoy consistent, production-ready pagination UI.
 
 ## ✨ Why Smart Pagination?
 
-- 🚀 **Zero boilerplate** - Get paginated lists running in minutes with minimal code
-- 🎨 **6+ view types** - ListView, GridView, PageView, StaggeredGrid, and more
-- 🛡️ **Production-ready error handling** - 6 beautiful error widget styles included
-- ⚡ **Smart preloading** - Automatically loads data before users reach the end
-- 🔄 **Real-time support** - Works seamlessly with Streams and Futures
-- 📱 **State separation** - Different UI for first page vs load more states
-- 🎛️ **Data operations** - Programmatic add, remove, update, clear via cubit
-- 🧩 **Highly customizable** - Every aspect can be customized to match your design
-- 🎯 **Type-safe** - Full generic type support throughout the library
-- 🧪 **Well tested** - 60+ unit tests ensuring reliability
+| Feature | Description |
+|---------|-------------|
+| 🚀 **Zero Boilerplate** | Get paginated lists running in minutes with minimal code |
+| 🎯 **7 Widget Classes** | `SmartPaginationListView`, `GridView`, `Column`, `Row`, `PageView`, `StaggeredGrid`, `ReorderableList` |
+| 🎨 **6+ View Types** | ListView, GridView, PageView, StaggeredGrid, Column, Row, Custom |
+| 🛡️ **Error Handling** | 6 pre-built error widget styles with state separation |
+| ⚡ **Smart Preloading** | Automatically loads data before users reach the end |
+| 🔄 **Real-time Support** | Works seamlessly with Streams, Futures, and merged streams |
+| 📱 **State Separation** | Different UI for first page vs load more states |
+| 🎛️ **Data Operations** | Programmatic add, remove, update, clear via cubit |
+| ⏰ **Data Age** | Automatic data expiration and refresh for global cubits |
+| 🧩 **Customizable** | Every aspect can be customized to match your design |
+| 🎯 **Type-safe** | Full generic type support throughout the library |
+| 🧪 **Well Tested** | 60+ unit tests ensuring reliability |
 
 ---
 
@@ -46,7 +66,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^0.0.7
+  smart_pagination: ^0.1.3
 ```
 
 Install it:
@@ -165,21 +185,52 @@ SmartPagination<Product>.withProvider(
 
 ## 🎯 Widget Classes
 
-Smart Pagination provides **specialized widget classes** for each view type, offering a cleaner and more intuitive API:
+<table>
+<tr>
+<td><b>Widget Class</b></td>
+<td><b>Layout</b></td>
+<td><b>Use Case</b></td>
+</tr>
+<tr>
+<td><code>SmartPaginationListView</code></td>
+<td>Vertical/horizontal list</td>
+<td>Standard lists, feeds, messages</td>
+</tr>
+<tr>
+<td><code>SmartPaginationGridView</code></td>
+<td>Multi-column grid</td>
+<td>Product catalogs, image galleries</td>
+</tr>
+<tr>
+<td><code>SmartPaginationColumn</code></td>
+<td>Non-scrollable column</td>
+<td>Embedded in scroll views</td>
+</tr>
+<tr>
+<td><code>SmartPaginationRow</code></td>
+<td>Non-scrollable row</td>
+<td>Tags, chips, horizontal items</td>
+</tr>
+<tr>
+<td><code>SmartPaginationPageView</code></td>
+<td>Swipeable pages</td>
+<td>Onboarding, image carousels</td>
+</tr>
+<tr>
+<td><code>SmartPaginationStaggeredGridView</code></td>
+<td>Masonry layout</td>
+<td>Pinterest-style, mixed sizes</td>
+</tr>
+<tr>
+<td><code>SmartPaginationReorderableListView</code></td>
+<td>Drag-and-drop list</td>
+<td>Task lists, priorities</td>
+</tr>
+</table>
 
-| Widget Class | Layout Type | Use Case |
-|--------------|-------------|----------|
-| `SmartPaginationListView` | Vertical/horizontal list | Standard lists, feeds, messages |
-| `SmartPaginationGridView` | Multi-column grid | Product catalogs, image galleries |
-| `SmartPaginationColumn` | Non-scrollable column | Embedded in scroll views |
-| `SmartPaginationRow` | Non-scrollable horizontal row | Tags, chips, horizontal items |
-| `SmartPaginationPageView` | Swipeable pages | Onboarding, image carousels |
-| `SmartPaginationStaggeredGridView` | Masonry layout | Pinterest-style, mixed sizes |
-| `SmartPaginationReorderableListView` | Drag-and-drop list | Task lists, priorities |
+### Constructor Pattern
 
-### Using Specialized Widget Classes
-
-Each widget class provides two constructors:
+Each widget class provides **two constructors**:
 
 ```dart
 // With Provider (creates cubit internally)
@@ -2963,6 +3014,6 @@ SOFTWARE.
 
 Made with ❤️ by [Genius Systems](https://github.com/GeniusSystems24)
 
-[⬆ Back to Top](#custom-pagination)
+[⬆ Back to Top](#smart-pagination)
 
 </div>
