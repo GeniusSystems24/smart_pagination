@@ -39,6 +39,7 @@
 | ⏰ **Data Age** | Automatic data expiration and refresh for global cubits |
 | 📊 **Sorting & Orders** | Programmatic sorting with multiple configurable orders |
 | 🔍 **Smart Search** | Search box with auto-positioning overlay dropdown |
+| 🎨 **Theme Support** | ThemeExtension with light/dark mode and full customization |
 | 🧩 **Customizable** | Every aspect can be customized to match your design |
 | 🎯 **Type-safe** | Full generic type support throughout the library |
 | 🧪 **Well Tested** | 60+ unit tests ensuring reliability |
@@ -70,7 +71,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.1.0
+  smart_pagination: ^2.2.0
 ```
 
 Install it:
@@ -737,6 +738,75 @@ SmartSearchDropdown<Product>.withProvider(
   ),
 )
 ```
+
+### SmartSearchTheme (Light & Dark Mode)
+
+SmartSearch widgets support theming via Flutter's `ThemeExtension` pattern:
+
+```dart
+// Add to your MaterialApp
+MaterialApp(
+  theme: ThemeData.light().copyWith(
+    extensions: [SmartSearchTheme.light()],
+  ),
+  darkTheme: ThemeData.dark().copyWith(
+    extensions: [SmartSearchTheme.dark()],
+  ),
+)
+```
+
+**Custom Theme:**
+
+```dart
+SmartSearchTheme(
+  // Search Box
+  searchBoxBackgroundColor: Colors.grey[100],
+  searchBoxTextColor: Colors.black87,
+  searchBoxHintColor: Colors.grey[500],
+  searchBoxBorderColor: Colors.grey[300],
+  searchBoxFocusedBorderColor: Colors.blue,
+  searchBoxIconColor: Colors.grey[600],
+
+  // Overlay
+  overlayBackgroundColor: Colors.white,
+  overlayBorderRadius: BorderRadius.circular(12),
+  overlayElevation: 8,
+
+  // Items
+  itemHoverColor: Colors.grey[100],
+  itemFocusedColor: Colors.blue.withOpacity(0.1),
+  itemDividerColor: Colors.grey[200],
+
+  // States
+  loadingIndicatorColor: Colors.blue,
+  emptyStateIconColor: Colors.grey[400],
+  errorIconColor: Colors.red,
+
+  // Scrollbar
+  scrollbarColor: Colors.grey[400],
+  scrollbarThickness: 6,
+)
+```
+
+**Access Theme in Widgets:**
+
+```dart
+// Get theme with fallback to light theme
+final theme = SmartSearchTheme.of(context);
+
+// Get theme or null if not set
+final theme = SmartSearchTheme.maybeOf(context);
+```
+
+**Theme Properties:**
+
+| Category | Properties |
+|----------|------------|
+| **Search Box** | `searchBoxBackgroundColor`, `searchBoxTextColor`, `searchBoxHintColor`, `searchBoxBorderColor`, `searchBoxFocusedBorderColor`, `searchBoxIconColor`, `searchBoxCursorColor`, `searchBoxBorderRadius` |
+| **Overlay** | `overlayBackgroundColor`, `overlayBorderColor`, `overlayBorderRadius`, `overlayElevation`, `overlayShadowColor` |
+| **Items** | `itemBackgroundColor`, `itemHoverColor`, `itemFocusedColor`, `itemSelectedColor`, `itemTextColor`, `itemSubtitleColor`, `itemIconColor`, `itemDividerColor` |
+| **States** | `loadingIndicatorColor`, `emptyStateIconColor`, `emptyStateTextColor`, `errorIconColor`, `errorTextColor`, `errorButtonColor` |
+| **Scrollbar** | `scrollbarColor`, `scrollbarThickness`, `scrollbarRadius` |
 
 ---
 
