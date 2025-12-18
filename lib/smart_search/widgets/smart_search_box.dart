@@ -145,24 +145,42 @@ class SmartSearchBox<T> extends StatelessWidget {
   }
 
   InputDecoration _buildDecoration(BuildContext context) {
-    final theme = Theme.of(context);
+    final searchTheme = SmartSearchTheme.of(context);
 
-    final defaultBorder = borderRadius != null
-        ? OutlineInputBorder(
-            borderRadius: borderRadius!,
-            borderSide: BorderSide(color: theme.dividerColor),
-          )
-        : null;
+    final effectiveBorderRadius =
+        borderRadius ??
+        searchTheme.searchBoxBorderRadius ??
+        BorderRadius.circular(12);
 
-    final baseDecoration = decoration ??
+    final defaultBorder = OutlineInputBorder(
+      borderRadius: effectiveBorderRadius,
+      borderSide: BorderSide(
+        color: searchTheme.searchBoxBorderColor ?? Colors.grey[300]!,
+      ),
+    );
+
+    final focusedDefaultBorder = OutlineInputBorder(
+      borderRadius: effectiveBorderRadius,
+      borderSide: BorderSide(
+        color:
+            searchTheme.searchBoxFocusedBorderColor ??
+            Theme.of(context).primaryColor,
+        width: 2,
+      ),
+    );
+
+    final baseDecoration =
+        decoration ??
         InputDecoration(
           hintText: 'Search...',
+          hintStyle: TextStyle(color: searchTheme.searchBoxHintColor),
           filled: filled ?? true,
-          fillColor: fillColor ?? theme.inputDecorationTheme.fillColor,
-          contentPadding: contentPadding ??
+          fillColor: fillColor ?? searchTheme.searchBoxBackgroundColor,
+          contentPadding:
+              contentPadding ??
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           border: border ?? defaultBorder,
-          focusedBorder: focusedBorder,
+          focusedBorder: focusedBorder ?? focusedDefaultBorder,
           enabledBorder: enabledBorder ?? defaultBorder,
         );
 
@@ -179,7 +197,11 @@ class SmartSearchBox<T> extends StatelessWidget {
       } else {
         suffixWidgets.add(
           IconButton(
-            icon: const Icon(Icons.clear, size: 20),
+            icon: Icon(
+              Icons.clear,
+              size: 20,
+              color: searchTheme.searchBoxIconColor,
+            ),
             onPressed: controller.clearSearch,
             splashRadius: 20,
           ),
@@ -200,7 +222,10 @@ class SmartSearchBox<T> extends StatelessWidget {
     }
 
     return baseDecoration.copyWith(
-      prefixIcon: prefixIcon ?? baseDecoration.prefixIcon ?? const Icon(Icons.search),
+      prefixIcon:
+          prefixIcon ??
+          baseDecoration.prefixIcon ??
+          Icon(Icons.search, color: searchTheme.searchBoxIconColor),
       suffixIcon: suffixIconWidget,
     );
   }

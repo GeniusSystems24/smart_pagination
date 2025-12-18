@@ -363,25 +363,12 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
           top: positionData.offset.dy,
           child: FadeTransition(
             opacity: widget.fadeAnimation,
-            child: Material(
-              elevation: widget.config.elevation,
-              borderRadius: BorderRadius.circular(widget.config.borderRadius),
-              clipBehavior: Clip.antiAlias,
-              child: Container(
-                width: positionData.size.width,
-                constraints: BoxConstraints(
-                  maxHeight: positionData.size.height,
-                ),
-                decoration:
-                    widget.overlayDecoration ??
-                    BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(
-                        widget.config.borderRadius,
-                      ),
-                    ),
-                child: _buildContent(context),
-              ),
+            child: _ThemedOverlayContainer(
+              config: widget.config,
+              overlayDecoration: widget.overlayDecoration,
+              width: positionData.size.width,
+              maxHeight: positionData.size.height,
+              child: _buildContent(context),
             ),
           ),
         ),
@@ -418,9 +405,17 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
       return widget.loadingBuilder!(context);
     }
 
-    return const Padding(
-      padding: EdgeInsets.all(24),
-      child: Center(child: CircularProgressIndicator.adaptive()),
+    final searchTheme = SmartSearchTheme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: CircularProgressIndicator.adaptive(
+          valueColor: AlwaysStoppedAnimation<Color>(
+            searchTheme.loadingIndicatorColor ?? Theme.of(context).primaryColor,
+          ),
+        ),
+      ),
     );
   }
 
@@ -429,6 +424,8 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
       return widget.errorBuilder!(context, error);
     }
 
+    final searchTheme = SmartSearchTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -436,17 +433,22 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
         children: [
           Icon(
             Icons.error_outline,
-            color: Theme.of(context).colorScheme.error,
+            color: searchTheme.errorIconColor ?? Theme.of(context).colorScheme.error,
             size: 32,
           ),
           const SizedBox(height: 8),
           Text(
             'An error occurred',
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+            style: TextStyle(
+              color: searchTheme.errorTextColor ?? Theme.of(context).colorScheme.error,
+            ),
           ),
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => widget.controller.searchNow(),
+            style: TextButton.styleFrom(
+              foregroundColor: searchTheme.errorButtonColor,
+            ),
             child: const Text('Retry'),
           ),
         ],
@@ -460,7 +462,7 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
     }
 
     final focusedIndex = widget.controller.focusedIndex;
-    final theme = Theme.of(context);
+    final searchTheme = SmartSearchTheme.of(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -468,37 +470,43 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
       children: [
         if (widget.headerBuilder != null) widget.headerBuilder!(context),
         Flexible(
-          child: ListView.separated(
+          child: Scrollbar(
             controller: _scrollController,
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: items.length,
-            separatorBuilder:
-                widget.separatorBuilder ??
-                (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final isFocused = index == focusedIndex;
-
-              return _FocusableItem<T>(
-                item: item,
-                isFocused: isFocused,
-                focusedDecoration:
-                    widget.focusedItemDecoration ??
-                    BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(
-                        alpha: 0.3,
+            thumbVisibility: true,
+            thickness: searchTheme.scrollbarThickness ?? 6,
+            radius: searchTheme.scrollbarRadius ?? const Radius.circular(3),
+            child: ListView.separated(
+              controller: _scrollController,
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: items.length,
+              separatorBuilder:
+                  widget.separatorBuilder ??
+                  (context, index) => Divider(
+                        height: 1,
+                        color: searchTheme.itemDividerColor,
                       ),
-                    ),
-                onTap: () => widget.onItemSelected(item),
-                onHover: (hovering) {
-                  if (hovering) {
-                    widget.controller.setFocusedIndex(index);
-                  }
-                },
-                child: widget.itemBuilder(context, item),
-              );
-            },
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final isFocused = index == focusedIndex;
+
+                return _FocusableItem<T>(
+                  item: item,
+                  isFocused: isFocused,
+                  focusedColor: searchTheme.itemFocusedColor ??
+                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  hoverColor: searchTheme.itemHoverColor,
+                  focusedDecoration: widget.focusedItemDecoration,
+                  onTap: () => widget.onItemSelected(item),
+                  onHover: (hovering) {
+                    if (hovering) {
+                      widget.controller.setFocusedIndex(index);
+                    }
+                  },
+                  child: widget.itemBuilder(context, item),
+                );
+              },
+            ),
           ),
         ),
         if (widget.footerBuilder != null) widget.footerBuilder!(context),
@@ -511,6 +519,8 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
       return widget.emptyBuilder!(context);
     }
 
+    final searchTheme = SmartSearchTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Center(
@@ -520,12 +530,14 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
             Icon(
               Icons.search_off,
               size: 48,
-              color: Theme.of(context).disabledColor,
+              color: searchTheme.emptyStateIconColor ?? Theme.of(context).disabledColor,
             ),
             const SizedBox(height: 8),
             Text(
               'No results found',
-              style: TextStyle(color: Theme.of(context).disabledColor),
+              style: TextStyle(
+                color: searchTheme.emptyStateTextColor ?? Theme.of(context).disabledColor,
+              ),
             ),
           ],
         ),
@@ -534,35 +546,106 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
   }
 }
 
+/// Themed container for the overlay dropdown.
+class _ThemedOverlayContainer extends StatelessWidget {
+  const _ThemedOverlayContainer({
+    required this.config,
+    required this.width,
+    required this.maxHeight,
+    required this.child,
+    this.overlayDecoration,
+  });
+
+  final SmartSearchOverlayConfig config;
+  final BoxDecoration? overlayDecoration;
+  final double width;
+  final double maxHeight;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final searchTheme = SmartSearchTheme.of(context);
+
+    final effectiveBorderRadius = searchTheme.overlayBorderRadius ??
+        BorderRadius.circular(config.borderRadius);
+
+    final effectiveElevation = searchTheme.overlayElevation ?? config.elevation;
+
+    return Material(
+      elevation: effectiveElevation,
+      shadowColor: searchTheme.overlayShadowColor,
+      borderRadius: effectiveBorderRadius,
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        width: width,
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        decoration: overlayDecoration ??
+            BoxDecoration(
+              color: searchTheme.overlayBackgroundColor ?? Theme.of(context).cardColor,
+              borderRadius: effectiveBorderRadius,
+              border: searchTheme.overlayBorderColor != null
+                  ? Border.all(color: searchTheme.overlayBorderColor!)
+                  : null,
+            ),
+        child: child,
+      ),
+    );
+  }
+}
+
 /// A focusable item widget that shows visual feedback when focused or hovered.
-class _FocusableItem<T> extends StatelessWidget {
+class _FocusableItem<T> extends StatefulWidget {
   const _FocusableItem({
     required this.item,
     required this.isFocused,
-    required this.focusedDecoration,
+    required this.focusedColor,
     required this.onTap,
     required this.onHover,
     required this.child,
+    this.hoverColor,
+    this.focusedDecoration,
   });
 
   final T item;
   final bool isFocused;
-  final BoxDecoration focusedDecoration;
+  final Color focusedColor;
+  final Color? hoverColor;
+  final BoxDecoration? focusedDecoration;
   final VoidCallback onTap;
   final ValueChanged<bool> onHover;
   final Widget child;
 
   @override
+  State<_FocusableItem<T>> createState() => _FocusableItemState<T>();
+}
+
+class _FocusableItemState<T> extends State<_FocusableItem<T>> {
+  bool _isHovering = false;
+
+  @override
   Widget build(BuildContext context) {
+    final effectiveDecoration = widget.focusedDecoration ??
+        BoxDecoration(
+          color: widget.isFocused
+              ? widget.focusedColor
+              : (_isHovering ? widget.hoverColor : null),
+        );
+
     return MouseRegion(
-      onEnter: (_) => onHover(true),
-      onExit: (_) => onHover(false),
+      onEnter: (_) {
+        setState(() => _isHovering = true);
+        widget.onHover(true);
+      },
+      onExit: (_) {
+        setState(() => _isHovering = false);
+        widget.onHover(false);
+      },
       child: GestureDetector(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
-          decoration: isFocused ? focusedDecoration : null,
-          child: child,
+          decoration: widget.isFocused || _isHovering ? effectiveDecoration : null,
+          child: widget.child,
         ),
       ),
     );

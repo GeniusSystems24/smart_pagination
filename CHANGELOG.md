@@ -5,7 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.1] - 2025-12-18
+## [2.2.0] - 2025-12-18
+
+### Added
+
+#### SmartSearchTheme - ThemeExtension Support 🎨
+
+New powerful theming system for SmartSearch widgets using Flutter's ThemeExtension pattern.
+
+**Light & Dark Theme Support:**
+```dart
+MaterialApp(
+  theme: ThemeData.light().copyWith(
+    extensions: [SmartSearchTheme.light()],
+  ),
+  darkTheme: ThemeData.dark().copyWith(
+    extensions: [SmartSearchTheme.dark()],
+  ),
+)
+```
+
+**Comprehensive Theme Properties:**
+
+| Category | Properties |
+|----------|------------|
+| **Search Box** | `searchBoxBackgroundColor`, `searchBoxTextColor`, `searchBoxHintColor`, `searchBoxBorderColor`, `searchBoxFocusedBorderColor`, `searchBoxIconColor`, `searchBoxCursorColor`, `searchBoxBorderRadius`, `searchBoxElevation`, `searchBoxShadowColor` |
+| **Overlay** | `overlayBackgroundColor`, `overlayBorderColor`, `overlayBorderRadius`, `overlayElevation`, `overlayShadowColor` |
+| **Items** | `itemBackgroundColor`, `itemHoverColor`, `itemFocusedColor`, `itemSelectedColor`, `itemTextColor`, `itemSubtitleColor`, `itemIconColor`, `itemDividerColor` |
+| **States** | `loadingIndicatorColor`, `emptyStateIconColor`, `emptyStateTextColor`, `errorIconColor`, `errorTextColor`, `errorButtonColor` |
+| **Scrollbar** | `scrollbarColor`, `scrollbarThickness`, `scrollbarRadius` |
+
+**Factory Constructors:**
+- `SmartSearchTheme.light()` - Modern light theme with Indigo accent colors
+- `SmartSearchTheme.dark()` - Dark theme with purple accent colors
+
+**Accessing Theme:**
+```dart
+// Get theme with fallback to light
+final theme = SmartSearchTheme.of(context);
+
+// Get theme or null
+final theme = SmartSearchTheme.maybeOf(context);
+```
+
+**Custom Theme Example:**
+```dart
+SmartSearchTheme(
+  searchBoxBackgroundColor: Colors.grey[100],
+  searchBoxTextColor: Colors.black87,
+  searchBoxFocusedBorderColor: Colors.blue,
+  overlayBackgroundColor: Colors.white,
+  itemFocusedColor: Colors.blue.withOpacity(0.1),
+  itemHoverColor: Colors.grey[200],
+  loadingIndicatorColor: Colors.blue,
+  // ... more properties
+)
+```
+
+**Theme Interpolation:**
+- Full `lerp` support for smooth theme transitions
+- Animated theme switching support
+
+### Changed
+
+- **SmartSearchBox**: Now uses `SmartSearchTheme` for default styling
+- **SmartSearchOverlay**: Uses theme for overlay container, items, and state widgets
+- **_FocusableItem**: Now supports hover color from theme
+- **Scrollbar**: Added theme-aware scrollbar to results list
+- **Example App**: Added theme toggle button in Search Dropdown screen
+
+### Updated
+
+- Version bumped to 2.2.0
+- Package description updated to include ThemeExtension support
+
+---
+
+## [2.1.0] - 2025-12-18
 
 ### Added
 
