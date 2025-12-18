@@ -45,6 +45,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     this.loadMoreError,
     this.fetchedAt,
     this.dataExpiredAt,
+    this.activeOrderId,
   }) : lastUpdate = lastUpdate ?? DateTime.now();
 
   final List<T> items;
@@ -69,6 +70,9 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
   /// Timestamp when data will expire (null if no expiration configured)
   final DateTime? dataExpiredAt;
 
+  /// The ID of the currently active sort order (null if no sorting applied)
+  final String? activeOrderId;
+
   SmartPaginationLoaded<T> copyWith({
     List<T>? items,
     List<T>? allItems,
@@ -79,6 +83,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     Exception? loadMoreError,
     DateTime? fetchedAt,
     DateTime? dataExpiredAt,
+    String? activeOrderId,
   }) {
     final updatedAllItems = allItems ?? this.allItems;
     final updatedItems = items ?? this.items;
@@ -93,6 +98,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
       loadMoreError: loadMoreError ?? this.loadMoreError,
       fetchedAt: fetchedAt ?? this.fetchedAt,
       dataExpiredAt: dataExpiredAt ?? this.dataExpiredAt,
+      activeOrderId: activeOrderId ?? this.activeOrderId,
     );
   }
 

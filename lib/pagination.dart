@@ -77,6 +77,7 @@ part 'core/controller/controller.dart';
 // data
 part 'data/models/pagination_meta.dart';
 part 'data/models/pagination_request.dart';
+part 'data/models/sort_order.dart';
 
 part 'smart_pagination/pagination.dart';
 

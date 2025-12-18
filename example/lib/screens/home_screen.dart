@@ -24,6 +24,7 @@ import 'smart_pagination/smart_preloading_screen.dart';
 import 'smart_pagination/custom_error_handling_screen.dart';
 import 'smart_pagination/data_operations_screen.dart';
 import 'smart_pagination/data_age_screen.dart';
+import 'smart_pagination/sorting_screen.dart';
 
 // Error handling examples
 import 'errors/basic_error_example.dart';
@@ -274,6 +275,15 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.timer,
             color: Colors.deepOrange,
             onTap: () => _navigate(context, const DataAgeScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildExampleCard(
+            context,
+            title: 'Sorting & Orders',
+            description: 'Programmatic sorting with configurable orders',
+            icon: Icons.sort,
+            color: Colors.indigo,
+            onTap: () => _navigate(context, const SortingScreen()),
           ),
           const SizedBox(height: 32),
           _buildHeader('Error Handling Examples'),

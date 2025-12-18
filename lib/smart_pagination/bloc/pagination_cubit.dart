@@ -12,6 +12,7 @@ class SmartPaginationCubit<T>
     Logger? logger,
     RetryConfig? retryConfig,
     Duration? dataAge,
+    SortOrderCollection<T>? orders,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -20,6 +21,7 @@ class SmartPaginationCubit<T>
        _logger = logger ?? Logger(),
        _retryHandler = retryConfig != null ? RetryHandler(retryConfig) : null,
        _dataAge = dataAge,
+       _orders = orders,
        initialRequest = request,
        _currentRequest = request,
        super(SmartPaginationInitial<T>());
@@ -32,6 +34,7 @@ class SmartPaginationCubit<T>
   final Logger _logger;
   final RetryHandler? _retryHandler;
   final Duration? _dataAge;
+  SortOrderCollection<T>? _orders;
 
   @override
   final PaginationRequest initialRequest;
@@ -51,6 +54,165 @@ class SmartPaginationCubit<T>
 
   /// Returns the timestamp of the last successful data fetch.
   DateTime? get lastFetchTime => _lastFetchTime;
+
+  // ==================== SORTING / ORDERS ====================
+
+  /// Returns the current sort order collection.
+  SortOrderCollection<T>? get orders => _orders;
+
+  /// Returns the currently active sort order.
+  SortOrder<T>? get activeOrder => _orders?.activeOrder;
+
+  /// Returns the ID of the currently active sort order.
+  String? get activeOrderId => _orders?.activeOrderId;
+
+  /// Returns all available sort orders.
+  List<SortOrder<T>> get availableOrders => _orders?.orders ?? [];
+
+  /// Sets the sort order collection.
+  ///
+  /// This replaces the entire orders collection. If you want to just
+  /// change the active order, use [setActiveOrder] instead.
+  void setOrders(SortOrderCollection<T>? orders) {
+    _orders = orders;
+    _applySortingToCurrentState();
+  }
+
+  /// Sets the active sort order by ID and re-sorts the current items.
+  ///
+  /// Returns true if the order was found and set, false otherwise.
+  ///
+  /// Example:
+  /// ```dart
+  /// cubit.setActiveOrder('price'); // Sort by price
+  /// cubit.setActiveOrder('name');  // Sort by name
+  /// ```
+  bool setActiveOrder(String orderId) {
+    if (_orders == null) {
+      _logger.w('Cannot set active order: no orders collection configured');
+      return false;
+    }
+
+    if (_orders!.setActiveOrder(orderId)) {
+      _logger.d('Active sort order changed to: $orderId');
+      _applySortingToCurrentState();
+      return true;
+    }
+
+    _logger.w('Sort order not found: $orderId');
+    return false;
+  }
+
+  /// Resets to the default sort order and re-sorts the current items.
+  ///
+  /// Example:
+  /// ```dart
+  /// cubit.resetOrder(); // Reset to default sorting
+  /// ```
+  void resetOrder() {
+    if (_orders == null) return;
+
+    _orders!.resetToDefault();
+    _logger.d('Sort order reset to default: ${_orders!.defaultOrderId}');
+    _applySortingToCurrentState();
+  }
+
+  /// Clears the active sort order (items will be in their original order).
+  ///
+  /// Example:
+  /// ```dart
+  /// cubit.clearOrder(); // Remove sorting, show original order
+  /// ```
+  void clearOrder() {
+    if (_orders == null) return;
+
+    _orders!.clearActiveOrder();
+    _logger.d('Sort order cleared');
+    _applySortingToCurrentState();
+  }
+
+  /// Adds a new sort order to the collection.
+  ///
+  /// Example:
+  /// ```dart
+  /// cubit.addSortOrder(SortOrder.byField(
+  ///   id: 'rating',
+  ///   label: 'Rating',
+  ///   fieldSelector: (p) => p.rating,
+  ///   direction: SortDirection.descending,
+  /// ));
+  /// ```
+  void addSortOrder(SortOrder<T> order) {
+    _orders ??= SortOrderCollection<T>(orders: []);
+    _orders!.addOrder(order);
+    _logger.d('Sort order added: ${order.id}');
+  }
+
+  /// Removes a sort order from the collection.
+  ///
+  /// Returns true if the order was found and removed, false otherwise.
+  bool removeSortOrder(String orderId) {
+    if (_orders == null) return false;
+
+    if (_orders!.removeOrder(orderId)) {
+      _logger.d('Sort order removed: $orderId');
+      _applySortingToCurrentState();
+      return true;
+    }
+    return false;
+  }
+
+  /// Sorts items using a one-time comparator without changing the active order.
+  ///
+  /// This is useful for temporary sorting that doesn't persist.
+  ///
+  /// Example:
+  /// ```dart
+  /// cubit.sortBy((a, b) => a.price.compareTo(b.price));
+  /// ```
+  void sortBy(ItemComparator<T> comparator) {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return;
+
+    final sorted = List<T>.from(currentState.items)..sort(comparator);
+    final sortedAll = List<T>.from(currentState.allItems)..sort(comparator);
+
+    emit(
+      currentState.copyWith(
+        items: sorted,
+        allItems: sortedAll,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+  }
+
+  /// Applies current sorting to the current state.
+  void _applySortingToCurrentState() {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return;
+
+    final sortedItems = _applySorting(currentState.items);
+    final sortedAllItems = _applySorting(currentState.allItems);
+
+    emit(
+      currentState.copyWith(
+        items: sortedItems,
+        allItems: sortedAllItems,
+        activeOrderId: _orders?.activeOrderId,
+        lastUpdate: DateTime.now(),
+      ),
+    );
+  }
+
+  /// Applies the active sort order to a list of items.
+  List<T> _applySorting(List<T> items) {
+    if (_orders == null || _orders!.activeOrder == null) {
+      return items;
+    }
+    return _orders!.sortItems(items);
+  }
+
+  // ==================== END SORTING / ORDERS ====================
 
   /// Returns true if data has expired based on the configured [dataAge].
   /// If [dataAge] is null, data never expires.
@@ -221,6 +383,10 @@ class SmartPaginationCubit<T>
       final aggregated = _applyListBuilder(
         _pages.expand((page) => page).toList(),
       );
+
+      // Apply sorting if orders are configured
+      final sortedItems = _applySorting(aggregated);
+
       final hasNext = _computeHasNext(pageItems, request.pageSize);
       final meta = PaginationMeta(
         page: request.page,
@@ -230,12 +396,12 @@ class SmartPaginationCubit<T>
       );
       _currentMeta = meta;
 
-      _onInsertionCallback?.call(aggregated);
+      _onInsertionCallback?.call(sortedItems);
 
       emit(
         SmartPaginationLoaded<T>(
-          items: List<T>.from(aggregated),
-          allItems: aggregated,
+          items: List<T>.from(sortedItems),
+          allItems: sortedItems,
           meta: meta,
           hasReachedEnd: !hasNext,
           isLoadingMore: false, // Clear loading flag on success
@@ -244,6 +410,7 @@ class SmartPaginationCubit<T>
           dataExpiredAt: _dataAge != null && _lastFetchTime != null
               ? _lastFetchTime!.add(_dataAge!)
               : null,
+          activeOrderId: _orders?.activeOrderId,
         ),
       );
 
@@ -323,7 +490,8 @@ class SmartPaginationCubit<T>
     _streamSubscription = stream.listen(
       (items) {
         final aggregated = _applyListBuilder(items);
-        _onInsertionCallback?.call(aggregated);
+        final sortedItems = _applySorting(aggregated);
+        _onInsertionCallback?.call(sortedItems);
 
         final meta = PaginationMeta(
           page: request.page,
@@ -335,8 +503,8 @@ class SmartPaginationCubit<T>
 
         emit(
           SmartPaginationLoaded<T>(
-            items: List<T>.from(aggregated),
-            allItems: aggregated,
+            items: List<T>.from(sortedItems),
+            allItems: sortedItems,
             meta: meta,
             hasReachedEnd: !meta.hasNext,
             isLoadingMore: false,
@@ -345,6 +513,7 @@ class SmartPaginationCubit<T>
             dataExpiredAt: _dataAge != null && _lastFetchTime != null
                 ? _lastFetchTime!.add(_dataAge!)
                 : null,
+            activeOrderId: _orders?.activeOrderId,
           ),
         );
       },

@@ -5,6 +5,105 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2025-12-18
+
+### Added
+
+#### Sorting & Orders Feature 📊
+
+New powerful sorting functionality that allows programmatic control over item ordering:
+
+**New Classes:**
+- `SortOrder<T>` - Defines how items should be sorted
+- `SortOrderCollection<T>` - Manages multiple sort orders with an active selection
+- `SortDirection` - Enum for ascending/descending direction
+
+**Cubit Constructor Parameter:**
+- `orders: SortOrderCollection<T>?` - Set initial sorting configuration
+
+**New Cubit Methods:**
+- `setActiveOrder(String orderId)` - Change the active sort order
+- `resetOrder()` - Reset to default sort order
+- `clearOrder()` - Remove sorting (show original order)
+- `addSortOrder(SortOrder<T> order)` - Add a new sort order dynamically
+- `removeSortOrder(String orderId)` - Remove a sort order
+- `sortBy(ItemComparator<T> comparator)` - One-time sort with custom comparator
+- `setOrders(SortOrderCollection<T>? orders)` - Replace entire orders collection
+
+**New Cubit Properties:**
+- `orders` - Get current sort order collection
+- `activeOrder` - Get currently active sort order
+- `activeOrderId` - Get ID of active sort order
+- `availableOrders` - Get list of all available sort orders
+
+**State Updates:**
+- `SmartPaginationLoaded.activeOrderId` - Track current sort order in state
+
+### Usage Examples
+
+```dart
+// Define sort orders
+final orders = SortOrderCollection<Product>(
+  orders: [
+    SortOrder.byField(
+      id: 'name',
+      label: 'Name (A-Z)',
+      fieldSelector: (p) => p.name,
+      direction: SortDirection.ascending,
+    ),
+    SortOrder.byField(
+      id: 'price_low',
+      label: 'Price: Low to High',
+      fieldSelector: (p) => p.price,
+      direction: SortDirection.ascending,
+    ),
+    SortOrder.byField(
+      id: 'price_high',
+      label: 'Price: High to Low',
+      fieldSelector: (p) => p.price,
+      direction: SortDirection.descending,
+    ),
+    SortOrder<Product>(
+      id: 'custom',
+      label: 'Custom Sort',
+      comparator: (a, b) => a.rating.compareTo(b.rating),
+    ),
+  ],
+  defaultOrderId: 'name',
+);
+
+// Create cubit with orders
+final cubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  orders: orders,
+);
+
+// Change sort order programmatically
+cubit.setActiveOrder('price_low');  // Sort by price ascending
+cubit.setActiveOrder('price_high'); // Sort by price descending
+cubit.resetOrder();                 // Reset to default (name)
+cubit.clearOrder();                 // Remove sorting
+
+// Add new sort order dynamically
+cubit.addSortOrder(SortOrder.byField(
+  id: 'newest',
+  label: 'Newest First',
+  fieldSelector: (p) => p.createdAt,
+  direction: SortDirection.descending,
+));
+
+// One-time custom sort
+cubit.sortBy((a, b) => a.stock.compareTo(b.stock));
+
+// Access current order in state
+if (state is SmartPaginationLoaded<Product>) {
+  print('Current sort: ${state.activeOrderId}');
+}
+```
+
+---
+
 ## [0.1.3] - 2025-12-17
 
 ### Added

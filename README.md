@@ -37,6 +37,7 @@
 | 📱 **State Separation** | Different UI for first page vs load more states |
 | 🎛️ **Data Operations** | Programmatic add, remove, update, clear via cubit |
 | ⏰ **Data Age** | Automatic data expiration and refresh for global cubits |
+| 📊 **Sorting & Orders** | Programmatic sorting with multiple configurable orders |
 | 🧩 **Customizable** | Every aspect can be customized to match your design |
 | 🎯 **Type-safe** | Full generic type support throughout the library |
 | 🧪 **Well Tested** | 60+ unit tests ensuring reliability |
@@ -51,6 +52,7 @@
 - [Features](#-features)
 - [Data Operations](#-data-operations)
 - [Data Age & Expiration](#-data-age--expiration)
+- [Sorting & Orders](#-sorting--orders)
 - [Error Handling](#-error-handling)
 - [View Types](#-view-types)
 - [Advanced Usage](#-advanced-usage)
@@ -66,7 +68,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^0.1.3
+  smart_pagination: ^0.1.4
 ```
 
 Install it:
@@ -827,6 +829,167 @@ class ProductsScreen extends StatelessWidget {
 | `Duration(minutes: 30)` | Standard content lists |
 | `Duration(hours: 1)` | Relatively static content |
 | `null` (default) | Never expires automatically |
+
+---
+
+## 📊 Sorting & Orders
+
+The `orders` feature provides powerful programmatic control over item sorting. Configure sort orders at initialization or modify them dynamically at runtime.
+
+### Basic Usage
+
+```dart
+// Define sort orders
+final orders = SortOrderCollection<Product>(
+  orders: [
+    SortOrder.byField(
+      id: 'name_asc',
+      label: 'Name (A-Z)',
+      fieldSelector: (p) => p.name,
+      direction: SortDirection.ascending,
+    ),
+    SortOrder.byField(
+      id: 'price_low',
+      label: 'Price: Low to High',
+      fieldSelector: (p) => p.price,
+      direction: SortDirection.ascending,
+    ),
+    SortOrder.byField(
+      id: 'price_high',
+      label: 'Price: High to Low',
+      fieldSelector: (p) => p.price,
+      direction: SortDirection.descending,
+    ),
+  ],
+  defaultOrderId: 'name_asc',
+);
+
+// Create cubit with orders
+final cubit = SmartPaginationCubit<Product>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  orders: orders,
+);
+```
+
+### Changing Sort Order
+
+```dart
+// Change sort order programmatically
+cubit.setActiveOrder('price_low');  // Sort by price (low to high)
+cubit.setActiveOrder('price_high'); // Sort by price (high to low)
+
+// Reset to default order
+cubit.resetOrder();
+
+// Clear sorting (original server order)
+cubit.clearOrder();
+```
+
+### Custom Comparator
+
+```dart
+// Using custom comparator for complex sorting
+final customOrder = SortOrder<Product>(
+  id: 'rating_stock',
+  label: 'Rating & Stock',
+  comparator: (a, b) {
+    // Sort by rating first, then by stock
+    final ratingCompare = b.rating.compareTo(a.rating);
+    if (ratingCompare != 0) return ratingCompare;
+    return b.stock.compareTo(a.stock);
+  },
+);
+
+cubit.addSortOrder(customOrder);
+cubit.setActiveOrder('rating_stock');
+```
+
+### Dynamic Sort Orders
+
+```dart
+// Add sort order at runtime
+cubit.addSortOrder(SortOrder.byField(
+  id: 'newest',
+  label: 'Newest First',
+  fieldSelector: (p) => p.createdAt,
+  direction: SortDirection.descending,
+));
+
+// Remove sort order
+cubit.removeSortOrder('newest');
+
+// Replace entire orders collection
+cubit.setOrders(newOrdersCollection);
+```
+
+### One-Time Sort
+
+```dart
+// Sort without changing active order
+cubit.sortBy((a, b) => a.stock.compareTo(b.stock));
+```
+
+### Accessing Sort State
+
+```dart
+// Get current active order
+final activeOrder = cubit.activeOrder;
+final activeOrderId = cubit.activeOrderId;
+
+// Get all available orders
+final allOrders = cubit.availableOrders;
+
+// Access from state
+BlocBuilder<SmartPaginationCubit<Product>, SmartPaginationState<Product>>(
+  builder: (context, state) {
+    if (state is SmartPaginationLoaded<Product>) {
+      print('Current sort: ${state.activeOrderId}');
+    }
+    return YourWidget();
+  },
+)
+```
+
+### Sort Order Dropdown Example
+
+```dart
+DropdownButton<String>(
+  value: cubit.activeOrderId,
+  items: cubit.availableOrders.map((order) {
+    return DropdownMenuItem(
+      value: order.id,
+      child: Text(order.label),
+    );
+  }).toList(),
+  onChanged: (orderId) {
+    if (orderId != null) {
+      cubit.setActiveOrder(orderId);
+    }
+  },
+)
+```
+
+### Available Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `orders` | `SortOrderCollection<T>?` | Current sort order collection |
+| `activeOrder` | `SortOrder<T>?` | Currently active sort order |
+| `activeOrderId` | `String?` | ID of active sort order |
+| `availableOrders` | `List<SortOrder<T>>` | All available sort orders |
+
+### Available Methods
+
+| Method | Description |
+|--------|-------------|
+| `setActiveOrder(String id)` | Set active sort by ID |
+| `resetOrder()` | Reset to default order |
+| `clearOrder()` | Remove sorting |
+| `addSortOrder(SortOrder order)` | Add new sort order |
+| `removeSortOrder(String id)` | Remove sort order |
+| `sortBy(comparator)` | One-time custom sort |
+| `setOrders(collection)` | Replace orders collection |
 
 ---
 
