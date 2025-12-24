@@ -6,7 +6,7 @@
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/flutter-3.9.0+-02569B?logo=flutter" alt="Flutter"></a>
   <a href="https://github.com/GeniusSystems24/smart_pagination/actions"><img src="https://img.shields.io/badge/tests-60%2B%20passed-brightgreen" alt="Tests"></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Platform-All-blueviolet?style=for-the-badge" alt="Platform"></a>
-  <a href="https://geniussystems24.github.io/auto_suggest_box_example"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Online-success?style=for-the-badge" alt="Live Demo"></a>
+  <a href="https://geniussystems24.github.io/smart_pagination"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Online-success?style=for-the-badge" alt="Live Demo"></a>
 </p>
 
 <p align="center">
