@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2025-12-28
+
+### Changed
+
+#### Parameter Rename: initialSelectedItem → initialSelectedValue 🔄
+
+Renamed `initialSelectedItem` to `initialSelectedValue` for consistency and clarity.
+
+```dart
+// Before (v2.3.0 - v2.3.1)
+SmartSearchDropdown<Product>.withProvider(
+  initialSelectedItem: preSelectedProduct,
+  // ...
+)
+
+// After (v2.3.2+)
+SmartSearchDropdown<Product>.withProvider(
+  initialSelectedValue: preSelectedProduct,
+  // ...
+)
+```
+
+#### Removed: initialValue Parameter ❌
+
+The `initialValue` parameter (added in v2.3.1) has been removed. Use `initialSelectedValue` instead to pre-select an item.
+
+#### SmartSearchTheme Auto-Detection 🎨
+
+`SmartSearchTheme.of(context)` now automatically detects the system theme (light/dark) when no explicit theme extension is provided.
+
+**Before (v2.3.1):**
+```dart
+// Always fell back to light theme
+SmartSearchTheme.of(context); // → SmartSearchTheme.light()
+```
+
+**After (v2.3.2):**
+```dart
+// Now respects system brightness
+SmartSearchTheme.of(context);
+// → SmartSearchTheme.dark() if system is in dark mode
+// → SmartSearchTheme.light() if system is in light mode
+```
+
+This means SmartSearch widgets will automatically adapt to the system theme without requiring explicit `SmartSearchTheme.dark()` or `SmartSearchTheme.light()` configuration.
+
+---
+
 ## [2.3.1] - 2025-12-28
 
 ### Added
@@ -16,7 +64,6 @@ New form-related features for SmartSearchDropdown to enable form validation and 
 **New Parameters:**
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `initialValue` | `String?` | Initial text value for the search box |
 | `validator` | `String? Function(String?)?` | Form validation function (enables TextFormField) |
 | `textInputAction` | `TextInputAction` | Keyboard action button (default: search) |
 | `inputFormatters` | `List<TextInputFormatter>?` | Input formatters for text formatting |
@@ -30,7 +77,6 @@ New form-related features for SmartSearchDropdown to enable form validation and 
 ```dart
 SmartSearchDropdown<Product>.withProvider(
   // ... other properties
-  initialValue: 'Initial search text',
   validator: (value) {
     if (value == null || value.isEmpty) {
       return 'Please enter a search term';

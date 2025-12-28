@@ -9,7 +9,7 @@ import '../../services/mock_api_service.dart';
 ///
 /// This screen shows how to:
 /// - Use SmartSearchDropdown inside a Form with validation
-/// - Use initialValue for pre-populated search text
+/// - Use initialSelectedValue for pre-selected items
 /// - Use inputFormatters for input restrictions
 /// - Handle form submission with validation
 /// - Configure keyboard options (textInputAction, textCapitalization)
@@ -356,7 +356,7 @@ class _FormValidationSearchScreenState
           children: [
             Icon(Icons.info_outline),
             SizedBox(width: 8),
-            Text('v2.3.1 Features'),
+            Text('v2.3.2 Features'),
           ],
         ),
         content: const SingleChildScrollView(
@@ -365,9 +365,9 @@ class _FormValidationSearchScreenState
             mainAxisSize: MainAxisSize.min,
             children: [
               _FeatureItem(
-                icon: Icons.text_fields,
-                title: 'initialValue',
-                description: 'Set initial text in the search box',
+                icon: Icons.select_all,
+                title: 'initialSelectedValue',
+                description: 'Pre-select an item when widget loads',
               ),
               _FeatureItem(
                 icon: Icons.check_circle_outline,
@@ -385,9 +385,9 @@ class _FormValidationSearchScreenState
                 description: 'Restrict or format input text',
               ),
               _FeatureItem(
-                icon: Icons.text_format,
-                title: 'textCapitalization',
-                description: 'Auto-capitalize text input',
+                icon: Icons.dark_mode,
+                title: 'Auto Theme',
+                description: 'Automatic dark/light theme based on system',
               ),
               _FeatureItem(
                 icon: Icons.straighten,

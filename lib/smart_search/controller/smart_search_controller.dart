@@ -28,22 +28,16 @@ class SmartSearchController<T> extends ChangeNotifier {
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
     ValueChanged<T>? onItemSelected,
-    T? initialSelectedItem,
-    String? initialValue,
+    T? initialSelectedValue,
   })  : _cubit = cubit,
         _searchRequestBuilder = searchRequestBuilder,
         _config = config,
         _onItemSelected = onItemSelected,
-        _selectedItem = initialSelectedItem {
-    _textController = TextEditingController(text: initialValue);
+        _selectedItem = initialSelectedValue {
+    _textController = TextEditingController();
     _focusNode = FocusNode();
     _textController.addListener(_onTextChanged);
     _focusNode.addListener(_onFocusChanged);
-
-    // If initial value is provided and searchOnEmpty or has text, trigger initial search
-    if (initialValue != null && initialValue.isNotEmpty) {
-      _lastSearchQuery = initialValue;
-    }
   }
 
   final SmartPaginationCubit<T> _cubit;

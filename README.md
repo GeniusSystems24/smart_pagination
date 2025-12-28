@@ -71,7 +71,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.3.1
+  smart_pagination: ^2.3.2
 ```
 
 Install it:
@@ -771,7 +771,7 @@ SmartSearchDropdown<Product>.withProvider(
 |-----------|-------------|
 | `showSelected` | When true, shows selected item instead of search box |
 | `selectedItemBuilder` | Custom builder for the selected item display |
-| `initialSelectedItem` | Pre-selected item to display on widget load |
+| `initialSelectedValue` | Pre-selected item to display on widget load |
 
 **Controller Methods:**
 
@@ -793,8 +793,8 @@ SmartSearchDropdown supports form validation and input formatting for integratio
 SmartSearchDropdown<Product>.withProvider(
   // ... other properties
 
-  // Initial value for the search box
-  initialValue: 'Default search text',
+  // Pre-select an item
+  initialSelectedValue: preSelectedProduct,
 
   // Form validation
   validator: (value) {
@@ -831,7 +831,7 @@ SmartSearchDropdown<Product>.withProvider(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `initialValue` | `String?` | Initial text value for the search box |
+| `initialSelectedValue` | `T?` | Pre-selected item to display on widget load |
 | `validator` | `String? Function(String?)?` | Form validation function (uses TextFormField) |
 | `autovalidateMode` | `AutovalidateMode?` | When to validate the input |
 | `inputFormatters` | `List<TextInputFormatter>?` | Input formatters for text formatting |

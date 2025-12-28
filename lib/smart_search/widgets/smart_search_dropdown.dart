@@ -86,8 +86,7 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.overlayDecoration,
     this.showSelected = false,
     this.selectedItemBuilder,
-    this.initialSelectedItem,
-    this.initialValue,
+    this.initialSelectedValue,
     this.validator,
     this.textInputAction = TextInputAction.search,
     this.inputFormatters,
@@ -138,8 +137,7 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.overlayDecoration,
     this.showSelected = false,
     this.selectedItemBuilder,
-    this.initialSelectedItem,
-    this.initialValue,
+    this.initialSelectedValue,
     this.validator,
     this.textInputAction = TextInputAction.search,
     this.inputFormatters,
@@ -242,14 +240,11 @@ class SmartSearchDropdown<T> extends StatefulWidget {
   final Widget Function(BuildContext context, T item, VoidCallback onClear)?
       selectedItemBuilder;
 
-  /// The initially selected item.
+  /// The initially selected value.
   ///
   /// When provided, the widget will start with this item selected if
   /// [showSelected] is true.
-  final T? initialSelectedItem;
-
-  /// Initial text value for the search box.
-  final String? initialValue;
+  final T? initialSelectedValue;
 
   /// Validator function for form validation.
   ///
@@ -325,8 +320,7 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
       onItemSelected: widget.onItemSelected,
-      initialSelectedItem: widget.initialSelectedItem,
-      initialValue: widget.initialValue,
+      initialSelectedValue: widget.initialSelectedValue,
     );
   }
 
