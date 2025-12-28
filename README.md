@@ -71,7 +71,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.3.0
+  smart_pagination: ^2.3.1
 ```
 
 Install it:
@@ -783,6 +783,93 @@ if (controller.hasSelectedItem) { ... }
 // Programmatic control
 controller.setSelectedItem(product);
 controller.clearSelection(); // Shows search box again
+```
+
+### Form Validation & Input Formatting
+
+SmartSearchDropdown supports form validation and input formatting for integration with Flutter forms:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+
+  // Initial value for the search box
+  initialValue: 'Default search text',
+
+  // Form validation
+  validator: (value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a search term';
+    }
+    if (value.length < 3) {
+      return 'Search term must be at least 3 characters';
+    }
+    return null;
+  },
+  autovalidateMode: AutovalidateMode.onUserInteraction,
+
+  // Input formatting
+  inputFormatters: [
+    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+    LengthLimitingTextInputFormatter(50),
+  ],
+  maxLength: 50,
+
+  // Keyboard options
+  textInputAction: TextInputAction.search,
+  textCapitalization: TextCapitalization.words,
+  keyboardType: TextInputType.text,
+
+  // Text change callback
+  onChanged: (value) {
+    print('Search text: $value');
+  },
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `initialValue` | `String?` | Initial text value for the search box |
+| `validator` | `String? Function(String?)?` | Form validation function (uses TextFormField) |
+| `autovalidateMode` | `AutovalidateMode?` | When to validate the input |
+| `inputFormatters` | `List<TextInputFormatter>?` | Input formatters for text formatting |
+| `maxLength` | `int?` | Maximum input length |
+| `textInputAction` | `TextInputAction` | Keyboard action button (default: search) |
+| `textCapitalization` | `TextCapitalization` | Text capitalization behavior |
+| `keyboardType` | `TextInputType` | Type of keyboard to display |
+| `onChanged` | `ValueChanged<String>?` | Called when text changes |
+
+**Usage in Forms:**
+
+```dart
+final _formKey = GlobalKey<FormState>();
+
+Form(
+  key: _formKey,
+  child: Column(
+    children: [
+      SmartSearchDropdown<Product>.withProvider(
+        // ... properties
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Required field';
+          }
+          return null;
+        },
+      ),
+      ElevatedButton(
+        onPressed: () {
+          if (_formKey.currentState!.validate()) {
+            // Form is valid
+          }
+        },
+        child: Text('Submit'),
+      ),
+    ],
+  ),
+)
 ```
 
 ### SmartSearchTheme (Light & Dark Mode)

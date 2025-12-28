@@ -26,6 +26,7 @@ import 'smart_pagination/data_operations_screen.dart';
 import 'smart_pagination/data_age_screen.dart';
 import 'smart_pagination/sorting_screen.dart';
 import 'smart_pagination/search_dropdown_screen.dart';
+import 'smart_pagination/form_validation_search_screen.dart';
 
 // Error handling examples
 import 'errors/basic_error_example.dart';
@@ -279,6 +280,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           icon: Icons.search_rounded,
           color: Color(0xFF7C3AED),
           screen: SearchDropdownScreen(),
+        ),
+        _ExampleItem(
+          title: 'Form Validation Search',
+          description: 'Search with form validation & formatters',
+          icon: Icons.fact_check_rounded,
+          color: Color(0xFF059669),
+          screen: FormValidationSearchScreen(),
         ),
       ],
     ),
