@@ -105,7 +105,7 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
 
   /// Whether max selections has been reached.
   bool get isMaxSelectionsReached =>
-      _maxSelections != null && _selectedItems.length >= _maxSelections!;
+      _maxSelections != null && _selectedItems.length >= _maxSelections;
 
   /// Sets the selection changed callback.
   set onSelectionChanged(ValueChanged<List<T>>? callback) {
@@ -374,7 +374,7 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
   void setSelectedItems(List<T> items) {
     _selectedItems.clear();
     if (_maxSelections != null) {
-      _selectedItems.addAll(items.take(_maxSelections!));
+      _selectedItems.addAll(items.take(_maxSelections));
     } else {
       _selectedItems.addAll(items);
     }

@@ -21,7 +21,6 @@ import 'smart_pagination/custom_view_builder_screen.dart';
 import 'smart_pagination/reorderable_list_screen.dart';
 import 'smart_pagination/state_separation_screen.dart';
 import 'smart_pagination/smart_preloading_screen.dart';
-import 'smart_pagination/custom_error_handling_screen.dart';
 import 'smart_pagination/data_operations_screen.dart';
 import 'smart_pagination/data_age_screen.dart';
 import 'smart_pagination/sorting_screen.dart';
