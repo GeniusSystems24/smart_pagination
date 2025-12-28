@@ -291,10 +291,17 @@ class SmartSearchTheme extends ThemeExtension<SmartSearchTheme> {
 
   /// Gets the SmartSearchTheme from the current context.
   ///
-  /// Falls back to light theme if no theme extension is found.
+  /// Falls back to light or dark theme based on the system brightness
+  /// if no theme extension is found.
   static SmartSearchTheme of(BuildContext context) {
-    return Theme.of(context).extension<SmartSearchTheme>() ??
-        SmartSearchTheme.light();
+    final theme = Theme.of(context).extension<SmartSearchTheme>();
+    if (theme != null) return theme;
+
+    // Fall back to system theme based on brightness
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark
+        ? SmartSearchTheme.dark()
+        : SmartSearchTheme.light();
   }
 
   /// Gets the SmartSearchTheme from the current context, or null if not found.

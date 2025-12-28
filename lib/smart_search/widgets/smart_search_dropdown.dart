@@ -28,6 +28,21 @@ part of '../../pagination.dart';
 /// )
 /// ```
 ///
+/// Example with showSelected mode:
+/// ```dart
+/// SmartSearchDropdown<Product>.withProvider(
+///   // ... other properties
+///   showSelected: true,
+///   selectedItemBuilder: (context, product, onClear) => ListTile(
+///     title: Text(product.name),
+///     trailing: IconButton(
+///       icon: Icon(Icons.close),
+///       onPressed: onClear,
+///     ),
+///   ),
+/// )
+/// ```
+///
 /// Example with external cubit:
 /// ```dart
 /// SmartSearchDropdown<Product>.withCubit(
@@ -69,6 +84,17 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.headerBuilder,
     this.footerBuilder,
     this.overlayDecoration,
+    this.showSelected = false,
+    this.selectedItemBuilder,
+    this.initialSelectedValue,
+    this.validator,
+    this.textInputAction = TextInputAction.search,
+    this.inputFormatters,
+    this.autovalidateMode,
+    this.onChanged,
+    this.maxLength,
+    this.textCapitalization = TextCapitalization.none,
+    this.keyboardType = TextInputType.text,
     ListBuilder<T>? listBuilder,
     OnInsertionCallback<T>? onInsertionCallback,
     int maxPagesInMemory = 5,
@@ -109,6 +135,17 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.headerBuilder,
     this.footerBuilder,
     this.overlayDecoration,
+    this.showSelected = false,
+    this.selectedItemBuilder,
+    this.initialSelectedValue,
+    this.validator,
+    this.textInputAction = TextInputAction.search,
+    this.inputFormatters,
+    this.autovalidateMode,
+    this.onChanged,
+    this.maxLength,
+    this.textCapitalization = TextCapitalization.none,
+    this.keyboardType = TextInputType.text,
   })  : _cubit = cubit,
         _request = null,
         _provider = null,
@@ -185,6 +222,65 @@ class SmartSearchDropdown<T> extends StatefulWidget {
   /// Decoration for the overlay container.
   final BoxDecoration? overlayDecoration;
 
+  /// Whether to show the selected item instead of the search box after selection.
+  ///
+  /// When true, selecting an item will replace the search box with the selected
+  /// item display. Tapping on the selected item will clear the selection and
+  /// show the search box again.
+  final bool showSelected;
+
+  /// Builder for displaying the selected item when [showSelected] is true.
+  ///
+  /// The builder receives:
+  /// - `context`: The build context
+  /// - `item`: The selected item
+  /// - `onClear`: Callback to clear the selection and show the search box
+  ///
+  /// If not provided, a default display using [itemBuilder] will be used.
+  final Widget Function(BuildContext context, T item, VoidCallback onClear)?
+      selectedItemBuilder;
+
+  /// The initially selected value.
+  ///
+  /// When provided, the widget will start with this item selected if
+  /// [showSelected] is true.
+  final T? initialSelectedValue;
+
+  /// Validator function for form validation.
+  ///
+  /// Returns an error string if validation fails, null otherwise.
+  /// When provided, a TextFormField is used instead of TextField.
+  final String? Function(String?)? validator;
+
+  /// The action button on the keyboard (e.g., search, done, next).
+  final TextInputAction textInputAction;
+
+  /// Input formatters to restrict or format input.
+  ///
+  /// Example:
+  /// ```dart
+  /// inputFormatters: [
+  ///   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+  ///   LengthLimitingTextInputFormatter(50),
+  /// ]
+  /// ```
+  final List<TextInputFormatter>? inputFormatters;
+
+  /// When to validate the input.
+  final AutovalidateMode? autovalidateMode;
+
+  /// Called when the text changes.
+  final ValueChanged<String>? onChanged;
+
+  /// Maximum length of the input.
+  final int? maxLength;
+
+  /// Text capitalization behavior.
+  final TextCapitalization textCapitalization;
+
+  /// The type of keyboard to display.
+  final TextInputType keyboardType;
+
   @override
   State<SmartSearchDropdown<T>> createState() => _SmartSearchDropdownState<T>();
 }
@@ -224,6 +320,7 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
       onItemSelected: widget.onItemSelected,
+      initialSelectedValue: widget.initialSelectedValue,
     );
   }
 
@@ -236,24 +333,126 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return SmartSearchOverlay<T>(
-      controller: _searchController!,
+    return ListenableBuilder(
+      listenable: _searchController!,
+      builder: (context, _) {
+        // Show selected item if showSelected is true and an item is selected
+        if (widget.showSelected && _searchController!.hasSelectedItem) {
+          return _buildSelectedItemDisplay(context);
+        }
+
+        // Show the search overlay
+        return SmartSearchOverlay<T>(
+          controller: _searchController!,
+          itemBuilder: widget.itemBuilder,
+          onItemSelected: widget.onItemSelected,
+          searchBoxDecoration: widget.decoration,
+          overlayConfig: widget.overlayConfig,
+          loadingBuilder: widget.loadingBuilder,
+          emptyBuilder: widget.emptyBuilder,
+          errorBuilder: widget.errorBuilder,
+          separatorBuilder: widget.separatorBuilder,
+          headerBuilder: widget.headerBuilder,
+          footerBuilder: widget.footerBuilder,
+          overlayDecoration: widget.overlayDecoration,
+          searchBoxStyle: widget.style,
+          searchBoxPrefixIcon: widget.prefixIcon,
+          searchBoxSuffixIcon: widget.suffixIcon,
+          showClearButton: widget.showClearButton,
+          searchBoxBorderRadius: widget.borderRadius,
+          searchBoxValidator: widget.validator,
+          searchBoxInputFormatters: widget.inputFormatters,
+          searchBoxAutovalidateMode: widget.autovalidateMode,
+          searchBoxOnChanged: widget.onChanged,
+          searchBoxMaxLength: widget.maxLength,
+          searchBoxTextInputAction: widget.textInputAction,
+          searchBoxTextCapitalization: widget.textCapitalization,
+          searchBoxKeyboardType: widget.keyboardType,
+        );
+      },
+    );
+  }
+
+  Widget _buildSelectedItemDisplay(BuildContext context) {
+    final selectedItem = _searchController!.selectedItem!;
+    final searchTheme = SmartSearchTheme.of(context);
+
+    // Use custom selectedItemBuilder if provided
+    if (widget.selectedItemBuilder != null) {
+      return widget.selectedItemBuilder!(
+        context,
+        selectedItem,
+        () => _searchController!.clearSelection(),
+      );
+    }
+
+    // Default selected item display
+    return _DefaultSelectedItemDisplay<T>(
+      item: selectedItem,
       itemBuilder: widget.itemBuilder,
-      onItemSelected: widget.onItemSelected,
-      searchBoxDecoration: widget.decoration,
-      overlayConfig: widget.overlayConfig,
-      loadingBuilder: widget.loadingBuilder,
-      emptyBuilder: widget.emptyBuilder,
-      errorBuilder: widget.errorBuilder,
-      separatorBuilder: widget.separatorBuilder,
-      headerBuilder: widget.headerBuilder,
-      footerBuilder: widget.footerBuilder,
-      overlayDecoration: widget.overlayDecoration,
-      searchBoxStyle: widget.style,
-      searchBoxPrefixIcon: widget.prefixIcon,
-      searchBoxSuffixIcon: widget.suffixIcon,
-      showClearButton: widget.showClearButton,
-      searchBoxBorderRadius: widget.borderRadius,
+      onClear: () => _searchController!.clearSelection(),
+      borderRadius: widget.borderRadius ?? searchTheme.searchBoxBorderRadius,
+      backgroundColor: searchTheme.searchBoxBackgroundColor,
+      borderColor: searchTheme.searchBoxBorderColor,
+      iconColor: searchTheme.searchBoxIconColor,
+    );
+  }
+}
+
+/// Default display widget for selected items.
+class _DefaultSelectedItemDisplay<T> extends StatelessWidget {
+  const _DefaultSelectedItemDisplay({
+    required this.item,
+    required this.itemBuilder,
+    required this.onClear,
+    this.borderRadius,
+    this.backgroundColor,
+    this.borderColor,
+    this.iconColor,
+  });
+
+  final T item;
+  final Widget Function(BuildContext context, T item) itemBuilder;
+  final VoidCallback onClear;
+  final BorderRadius? borderRadius;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(12);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onClear,
+        borderRadius: effectiveBorderRadius,
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor ?? Theme.of(context).cardColor,
+            borderRadius: effectiveBorderRadius,
+            border: Border.all(
+              color: borderColor ?? Colors.grey[300]!,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: itemBuilder(context, item),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.close,
+                  size: 20,
+                  color: iconColor ?? Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

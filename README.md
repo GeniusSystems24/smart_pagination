@@ -7,6 +7,8 @@
   <a href="https://github.com/GeniusSystems24/smart_pagination/actions"><img src="https://img.shields.io/badge/tests-60%2B%20passed-brightgreen" alt="Tests"></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Platform-All-blueviolet?style=for-the-badge" alt="Platform"></a>
   <a href="https://geniussystems24.github.io/smart_pagination"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Online-success?style=for-the-badge" alt="Live Demo"></a>
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Platform-All-blueviolet?style=for-the-badge" alt="Platform"></a>
+  <a href="https://geniussystems24.github.io/smart_pagination"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Online-success?style=for-the-badge" alt="Live Demo"></a>
 </p>
 
 <p align="center">
@@ -73,7 +75,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.2.1
+  smart_pagination: ^2.2.0
 ```
 
 Install it:
@@ -735,6 +737,139 @@ SmartSearchDropdown<Product>.withProvider(
         color: Colors.black26,
         blurRadius: 10,
         offset: Offset(0, 4),
+      ),
+    ],
+  ),
+)
+```
+
+### Show Selected Mode
+
+Display the selected item instead of the search box after selection:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  showSelected: true,
+  selectedItemBuilder: (context, product, onClear) => Container(
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: ListTile(
+      leading: CircleAvatar(child: Text(product.name[0])),
+      title: Text(product.name),
+      subtitle: Text('\$${product.price}'),
+      trailing: IconButton(
+        icon: Icon(Icons.close),
+        onPressed: onClear, // Clears selection and shows search box
+      ),
+    ),
+  ),
+)
+```
+
+**Parameters:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `showSelected` | When true, shows selected item instead of search box |
+| `selectedItemBuilder` | Custom builder for the selected item display |
+| `initialSelectedValue` | Pre-selected item to display on widget load |
+
+**Controller Methods:**
+
+```dart
+// Access selected item
+final item = controller.selectedItem;
+if (controller.hasSelectedItem) { ... }
+
+// Programmatic control
+controller.setSelectedItem(product);
+controller.clearSelection(); // Shows search box again
+```
+
+### Form Validation & Input Formatting
+
+SmartSearchDropdown supports form validation and input formatting for integration with Flutter forms:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+
+  // Pre-select an item
+  initialSelectedValue: preSelectedProduct,
+
+  // Form validation
+  validator: (value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a search term';
+    }
+    if (value.length < 3) {
+      return 'Search term must be at least 3 characters';
+    }
+    return null;
+  },
+  autovalidateMode: AutovalidateMode.onUserInteraction,
+
+  // Input formatting
+  inputFormatters: [
+    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+    LengthLimitingTextInputFormatter(50),
+  ],
+  maxLength: 50,
+
+  // Keyboard options
+  textInputAction: TextInputAction.search,
+  textCapitalization: TextCapitalization.words,
+  keyboardType: TextInputType.text,
+
+  // Text change callback
+  onChanged: (value) {
+    print('Search text: $value');
+  },
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `initialSelectedValue` | `T?` | Pre-selected item to display on widget load |
+| `validator` | `String? Function(String?)?` | Form validation function (uses TextFormField) |
+| `autovalidateMode` | `AutovalidateMode?` | When to validate the input |
+| `inputFormatters` | `List<TextInputFormatter>?` | Input formatters for text formatting |
+| `maxLength` | `int?` | Maximum input length |
+| `textInputAction` | `TextInputAction` | Keyboard action button (default: search) |
+| `textCapitalization` | `TextCapitalization` | Text capitalization behavior |
+| `keyboardType` | `TextInputType` | Type of keyboard to display |
+| `onChanged` | `ValueChanged<String>?` | Called when text changes |
+
+**Usage in Forms:**
+
+```dart
+final _formKey = GlobalKey<FormState>();
+
+Form(
+  key: _formKey,
+  child: Column(
+    children: [
+      SmartSearchDropdown<Product>.withProvider(
+        // ... properties
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Required field';
+          }
+          return null;
+        },
+      ),
+      ElevatedButton(
+        onPressed: () {
+          if (_formKey.currentState!.validate()) {
+            // Form is valid
+          }
+        },
+        child: Text('Submit'),
       ),
     ],
   ),
