@@ -5,6 +5,88 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-12-18
+
+### Added
+
+#### Show Selected Mode for SmartSearchDropdown 🎯
+
+New `showSelected` feature that displays the selected item instead of the search box after selection.
+
+**Basic Usage:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  showSelected: true,
+  onItemSelected: (product) {
+    print('Selected: ${product.name}');
+  },
+)
+```
+
+**Custom Selected Item Display:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  showSelected: true,
+  selectedItemBuilder: (context, product, onClear) => Container(
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: ListTile(
+      leading: CircleAvatar(child: Text(product.name[0])),
+      title: Text(product.name),
+      subtitle: Text('\$${product.price}'),
+      trailing: IconButton(
+        icon: Icon(Icons.close),
+        onPressed: onClear, // Clears selection and shows search box
+      ),
+    ),
+  ),
+)
+```
+
+**With Initial Selection:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  showSelected: true,
+  initialSelectedItem: preSelectedProduct,
+)
+```
+
+**New Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `showSelected` | `bool` | When true, shows selected item instead of search box |
+| `selectedItemBuilder` | `Widget Function(context, item, onClear)?` | Custom builder for selected item display |
+| `initialSelectedItem` | `T?` | Pre-selected item to display on widget load |
+
+**New Controller Methods:**
+```dart
+// Get selected item
+final item = controller.selectedItem;
+
+// Check if item is selected
+if (controller.hasSelectedItem) { ... }
+
+// Set selected item programmatically
+controller.setSelectedItem(product);
+
+// Clear selection and show search box
+controller.clearSelection();
+controller.clearSelection(requestFocus: false); // Don't auto-focus
+```
+
+**Behavior:**
+- When `showSelected: true` and an item is selected, the search box is replaced with the selected item display
+- Tapping on the selected item (or the clear button) clears the selection and shows the search box again
+- The selected item is automatically styled using `SmartSearchTheme` colors
+- If `selectedItemBuilder` is not provided, a default display using `itemBuilder` is used
+
+---
+
 ## [2.2.0] - 2025-12-18
 
 ### Added

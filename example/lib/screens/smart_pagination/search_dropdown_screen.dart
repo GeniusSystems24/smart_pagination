@@ -227,6 +227,95 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
             ),
             const SizedBox(height: 32),
 
+            // Search dropdown with showSelected mode
+            Text(
+              'Search with Show Selected',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'When you select an item, it replaces the search box. '
+              'Tap on the selected item to search again.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            SmartSearchDropdown<Product>.withProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
+              provider: PaginationProvider.future(
+                (request) => MockApiService.searchProducts(
+                  request.searchQuery ?? '',
+                  pageSize: request.pageSize ?? 10,
+                ),
+              ),
+              searchRequestBuilder: (query) => PaginationRequest(
+                page: 1,
+                pageSize: 10,
+                searchQuery: query,
+              ),
+              searchConfig: const SmartSearchConfig(
+                debounceDelay: Duration(seconds: 1),
+                minSearchLength: 0,
+                searchOnEmpty: true,
+                clearOnClose: false,
+              ),
+              overlayConfig: const SmartSearchOverlayConfig(
+                maxHeight: 250,
+                borderRadius: 12,
+                elevation: 8,
+              ),
+              // Enable showSelected mode
+              showSelected: true,
+              // Custom selected item builder (optional)
+              selectedItemBuilder: (context, product, onClear) => Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Text(
+                      product.name.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  title: Text(
+                    product.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: onClear,
+                    tooltip: 'Clear selection',
+                  ),
+                ),
+              ),
+              itemBuilder: (context, product) => ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  child: Text(
+                    product.name.substring(0, 1).toUpperCase(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+                title: Text(product.name),
+                subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+              ),
+              onItemSelected: (product) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Selected: ${product.name}'),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+
             // Selected product card
             if (_selectedProduct != null) ...[
               Text(
@@ -346,6 +435,12 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
               Icons.keyboard,
               'Keyboard Navigation',
               'Navigate with arrow keys, select with Enter',
+            ),
+            _buildFeatureItem(
+              context,
+              Icons.check_circle,
+              'Show Selected Mode',
+              'Display selected item instead of search box',
             ),
           ],
         ),

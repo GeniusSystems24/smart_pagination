@@ -71,7 +71,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.2.0
+  smart_pagination: ^2.3.0
 ```
 
 Install it:
@@ -737,6 +737,52 @@ SmartSearchDropdown<Product>.withProvider(
     ],
   ),
 )
+```
+
+### Show Selected Mode
+
+Display the selected item instead of the search box after selection:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  showSelected: true,
+  selectedItemBuilder: (context, product, onClear) => Container(
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: ListTile(
+      leading: CircleAvatar(child: Text(product.name[0])),
+      title: Text(product.name),
+      subtitle: Text('\$${product.price}'),
+      trailing: IconButton(
+        icon: Icon(Icons.close),
+        onPressed: onClear, // Clears selection and shows search box
+      ),
+    ),
+  ),
+)
+```
+
+**Parameters:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `showSelected` | When true, shows selected item instead of search box |
+| `selectedItemBuilder` | Custom builder for the selected item display |
+| `initialSelectedItem` | Pre-selected item to display on widget load |
+
+**Controller Methods:**
+
+```dart
+// Access selected item
+final item = controller.selectedItem;
+if (controller.hasSelectedItem) { ... }
+
+// Programmatic control
+controller.setSelectedItem(product);
+controller.clearSelection(); // Shows search box again
 ```
 
 ### SmartSearchTheme (Light & Dark Mode)

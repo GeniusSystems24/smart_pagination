@@ -28,6 +28,21 @@ part of '../../pagination.dart';
 /// )
 /// ```
 ///
+/// Example with showSelected mode:
+/// ```dart
+/// SmartSearchDropdown<Product>.withProvider(
+///   // ... other properties
+///   showSelected: true,
+///   selectedItemBuilder: (context, product, onClear) => ListTile(
+///     title: Text(product.name),
+///     trailing: IconButton(
+///       icon: Icon(Icons.close),
+///       onPressed: onClear,
+///     ),
+///   ),
+/// )
+/// ```
+///
 /// Example with external cubit:
 /// ```dart
 /// SmartSearchDropdown<Product>.withCubit(
@@ -69,6 +84,9 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.headerBuilder,
     this.footerBuilder,
     this.overlayDecoration,
+    this.showSelected = false,
+    this.selectedItemBuilder,
+    this.initialSelectedItem,
     ListBuilder<T>? listBuilder,
     OnInsertionCallback<T>? onInsertionCallback,
     int maxPagesInMemory = 5,
@@ -109,6 +127,9 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.headerBuilder,
     this.footerBuilder,
     this.overlayDecoration,
+    this.showSelected = false,
+    this.selectedItemBuilder,
+    this.initialSelectedItem,
   })  : _cubit = cubit,
         _request = null,
         _provider = null,
@@ -185,6 +206,30 @@ class SmartSearchDropdown<T> extends StatefulWidget {
   /// Decoration for the overlay container.
   final BoxDecoration? overlayDecoration;
 
+  /// Whether to show the selected item instead of the search box after selection.
+  ///
+  /// When true, selecting an item will replace the search box with the selected
+  /// item display. Tapping on the selected item will clear the selection and
+  /// show the search box again.
+  final bool showSelected;
+
+  /// Builder for displaying the selected item when [showSelected] is true.
+  ///
+  /// The builder receives:
+  /// - `context`: The build context
+  /// - `item`: The selected item
+  /// - `onClear`: Callback to clear the selection and show the search box
+  ///
+  /// If not provided, a default display using [itemBuilder] will be used.
+  final Widget Function(BuildContext context, T item, VoidCallback onClear)?
+      selectedItemBuilder;
+
+  /// The initially selected item.
+  ///
+  /// When provided, the widget will start with this item selected if
+  /// [showSelected] is true.
+  final T? initialSelectedItem;
+
   @override
   State<SmartSearchDropdown<T>> createState() => _SmartSearchDropdownState<T>();
 }
@@ -224,6 +269,7 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
       onItemSelected: widget.onItemSelected,
+      initialSelectedItem: widget.initialSelectedItem,
     );
   }
 
@@ -236,24 +282,118 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return SmartSearchOverlay<T>(
-      controller: _searchController!,
+    return ListenableBuilder(
+      listenable: _searchController!,
+      builder: (context, _) {
+        // Show selected item if showSelected is true and an item is selected
+        if (widget.showSelected && _searchController!.hasSelectedItem) {
+          return _buildSelectedItemDisplay(context);
+        }
+
+        // Show the search overlay
+        return SmartSearchOverlay<T>(
+          controller: _searchController!,
+          itemBuilder: widget.itemBuilder,
+          onItemSelected: widget.onItemSelected,
+          searchBoxDecoration: widget.decoration,
+          overlayConfig: widget.overlayConfig,
+          loadingBuilder: widget.loadingBuilder,
+          emptyBuilder: widget.emptyBuilder,
+          errorBuilder: widget.errorBuilder,
+          separatorBuilder: widget.separatorBuilder,
+          headerBuilder: widget.headerBuilder,
+          footerBuilder: widget.footerBuilder,
+          overlayDecoration: widget.overlayDecoration,
+          searchBoxStyle: widget.style,
+          searchBoxPrefixIcon: widget.prefixIcon,
+          searchBoxSuffixIcon: widget.suffixIcon,
+          showClearButton: widget.showClearButton,
+          searchBoxBorderRadius: widget.borderRadius,
+        );
+      },
+    );
+  }
+
+  Widget _buildSelectedItemDisplay(BuildContext context) {
+    final selectedItem = _searchController!.selectedItem!;
+    final searchTheme = SmartSearchTheme.of(context);
+
+    // Use custom selectedItemBuilder if provided
+    if (widget.selectedItemBuilder != null) {
+      return widget.selectedItemBuilder!(
+        context,
+        selectedItem,
+        () => _searchController!.clearSelection(),
+      );
+    }
+
+    // Default selected item display
+    return _DefaultSelectedItemDisplay<T>(
+      item: selectedItem,
       itemBuilder: widget.itemBuilder,
-      onItemSelected: widget.onItemSelected,
-      searchBoxDecoration: widget.decoration,
-      overlayConfig: widget.overlayConfig,
-      loadingBuilder: widget.loadingBuilder,
-      emptyBuilder: widget.emptyBuilder,
-      errorBuilder: widget.errorBuilder,
-      separatorBuilder: widget.separatorBuilder,
-      headerBuilder: widget.headerBuilder,
-      footerBuilder: widget.footerBuilder,
-      overlayDecoration: widget.overlayDecoration,
-      searchBoxStyle: widget.style,
-      searchBoxPrefixIcon: widget.prefixIcon,
-      searchBoxSuffixIcon: widget.suffixIcon,
-      showClearButton: widget.showClearButton,
-      searchBoxBorderRadius: widget.borderRadius,
+      onClear: () => _searchController!.clearSelection(),
+      borderRadius: widget.borderRadius ?? searchTheme.searchBoxBorderRadius,
+      backgroundColor: searchTheme.searchBoxBackgroundColor,
+      borderColor: searchTheme.searchBoxBorderColor,
+      iconColor: searchTheme.searchBoxIconColor,
+    );
+  }
+}
+
+/// Default display widget for selected items.
+class _DefaultSelectedItemDisplay<T> extends StatelessWidget {
+  const _DefaultSelectedItemDisplay({
+    required this.item,
+    required this.itemBuilder,
+    required this.onClear,
+    this.borderRadius,
+    this.backgroundColor,
+    this.borderColor,
+    this.iconColor,
+  });
+
+  final T item;
+  final Widget Function(BuildContext context, T item) itemBuilder;
+  final VoidCallback onClear;
+  final BorderRadius? borderRadius;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(12);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onClear,
+        borderRadius: effectiveBorderRadius,
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor ?? Theme.of(context).cardColor,
+            borderRadius: effectiveBorderRadius,
+            border: Border.all(
+              color: borderColor ?? Colors.grey[300]!,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: itemBuilder(context, item),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.close,
+                  size: 20,
+                  color: iconColor ?? Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

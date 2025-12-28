@@ -9,6 +9,7 @@ part of '../../pagination.dart';
 /// - Overlay visibility state
 /// - Keyboard navigation (up/down arrows)
 /// - Focus state persistence
+/// - Selected item state (for showSelected mode)
 ///
 /// Example:
 /// ```dart
@@ -27,10 +28,12 @@ class SmartSearchController<T> extends ChangeNotifier {
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
     ValueChanged<T>? onItemSelected,
+    T? initialSelectedItem,
   })  : _cubit = cubit,
         _searchRequestBuilder = searchRequestBuilder,
         _config = config,
-        _onItemSelected = onItemSelected {
+        _onItemSelected = onItemSelected,
+        _selectedItem = initialSelectedItem {
     _textController = TextEditingController();
     _focusNode = FocusNode();
     _textController.addListener(_onTextChanged);
@@ -58,6 +61,9 @@ class SmartSearchController<T> extends ChangeNotifier {
   /// The index of the currently focused item in the results list.
   int _focusedIndex = -1;
 
+  /// The currently selected item (for showSelected mode).
+  T? _selectedItem;
+
   /// The connected pagination cubit.
   SmartPaginationCubit<T> get cubit => _cubit;
 
@@ -82,6 +88,9 @@ class SmartSearchController<T> extends ChangeNotifier {
   /// Whether the search field has focus.
   bool get hasFocus => _focusNode.hasFocus;
 
+  /// Alias for hasFocus for consistency.
+  bool get isFocused => _focusNode.hasFocus;
+
   /// Whether the search field has text.
   bool get hasText => _textController.text.isNotEmpty;
 
@@ -90,6 +99,12 @@ class SmartSearchController<T> extends ChangeNotifier {
 
   /// Whether an item is currently focused.
   bool get hasItemFocus => _focusedIndex >= 0;
+
+  /// The currently selected item (for showSelected mode).
+  T? get selectedItem => _selectedItem;
+
+  /// Whether an item is currently selected.
+  bool get hasSelectedItem => _selectedItem != null;
 
   /// Returns the currently focused item, or null if none.
   T? get focusedItem {
@@ -310,11 +325,31 @@ class SmartSearchController<T> extends ChangeNotifier {
   }
 
   /// Selects an item from the search results.
-  /// This will hide the overlay, call the onItemSelected callback, and optionally clear the search.
+  /// This will store the selected item, hide the overlay, call the onItemSelected callback,
+  /// and optionally clear the search.
   void selectItem(T item) {
+    _selectedItem = item;
     _onItemSelected?.call(item);
     hideOverlay();
     unfocus();
+    notifyListeners();
+  }
+
+  /// Sets the selected item programmatically.
+  void setSelectedItem(T? item) {
+    _selectedItem = item;
+    notifyListeners();
+  }
+
+  /// Clears the selected item and shows the search box.
+  /// Optionally requests focus on the search field.
+  void clearSelection({bool requestFocus = true}) {
+    _selectedItem = null;
+    clearSearch();
+    if (requestFocus) {
+      this.requestFocus();
+    }
+    notifyListeners();
   }
 
   /// Handles keyboard events for navigation.
