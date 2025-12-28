@@ -27,6 +27,10 @@ import 'smart_pagination/data_age_screen.dart';
 import 'smart_pagination/sorting_screen.dart';
 import 'smart_pagination/search_dropdown_screen.dart';
 import 'smart_pagination/form_validation_search_screen.dart';
+import 'smart_pagination/multi_select_search_screen.dart';
+import 'smart_pagination/keyboard_navigation_search_screen.dart';
+import 'smart_pagination/search_theming_screen.dart';
+import 'smart_pagination/async_search_states_screen.dart';
 
 // Error handling examples
 import 'errors/basic_error_example.dart';
@@ -274,6 +278,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           color: Color(0xFF4F46E5),
           screen: SortingScreen(),
         ),
+      ],
+    ),
+    _ExampleCategory(
+      title: 'Search',
+      subtitle: 'Smart search components',
+      icon: Icons.search_rounded,
+      items: [
         _ExampleItem(
           title: 'Search Dropdown',
           description: 'Search with auto-positioning overlay',
@@ -282,11 +293,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           screen: SearchDropdownScreen(),
         ),
         _ExampleItem(
-          title: 'Form Validation Search',
-          description: 'Search with form validation & formatters',
+          title: 'Multi-Select Search',
+          description: 'Search and select multiple items',
+          icon: Icons.checklist_rounded,
+          color: Color(0xFFDC2626),
+          screen: MultiSelectSearchScreen(),
+        ),
+        _ExampleItem(
+          title: 'Form Validation',
+          description: 'Search with validators & formatters',
           icon: Icons.fact_check_rounded,
           color: Color(0xFF059669),
           screen: FormValidationSearchScreen(),
+        ),
+        _ExampleItem(
+          title: 'Keyboard Navigation',
+          description: 'Arrow keys, Enter, Escape shortcuts',
+          icon: Icons.keyboard_rounded,
+          color: Color(0xFF2563EB),
+          screen: KeyboardNavigationSearchScreen(),
+        ),
+        _ExampleItem(
+          title: 'Search Theming',
+          description: 'Light, dark & custom themes',
+          icon: Icons.palette_rounded,
+          color: Color(0xFFEC4899),
+          screen: SearchThemingScreen(),
+        ),
+        _ExampleItem(
+          title: 'Async States',
+          description: 'Loading, empty & error states',
+          icon: Icons.hourglass_empty_rounded,
+          color: Color(0xFFF59E0B),
+          screen: AsyncSearchStatesScreen(),
         ),
       ],
     ),

@@ -5,6 +5,102 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2025-12-28
+
+### Added
+
+#### SmartSearchMultiDropdown - Multi-Selection Search 🎯
+
+New widget for selecting multiple items from search results with continuous search capability.
+
+**Key Features:**
+- Search and select multiple items
+- Search box remains visible after selection (for continuous searching)
+- Selected items displayed below the search box with individual remove buttons
+- Maximum selections limit support
+- Custom selected item builder for chip styling
+- Configurable wrap/scroll for selected items display
+
+**Basic Usage:**
+```dart
+SmartSearchMultiDropdown<Product>.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+  ),
+  showSelected: true,
+  onSelectionChanged: (products) {
+    print('Selected ${products.length} items');
+  },
+)
+```
+
+**With Max Selections:**
+```dart
+SmartSearchMultiDropdown<Product>.withProvider(
+  // ... other properties
+  maxSelections: 5, // Limit to 5 items
+  onSelectionChanged: (products) {
+    // Handle selection
+  },
+)
+```
+
+**Custom Selected Item Builder:**
+```dart
+SmartSearchMultiDropdown<Product>.withProvider(
+  // ... other properties
+  selectedItemBuilder: (context, product, onRemove) => Chip(
+    label: Text(product.name),
+    onDeleted: onRemove,
+    deleteIcon: Icon(Icons.close, size: 18),
+  ),
+)
+```
+
+**New Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `onSelectionChanged` | `ValueChanged<List<T>>?` | Called when selection changes |
+| `initialSelectedValues` | `List<T>?` | Pre-selected items on widget load |
+| `maxSelections` | `int?` | Maximum number of selectable items |
+| `selectedItemBuilder` | `Widget Function(...)` | Custom builder for selected item chips |
+| `selectedItemsWrap` | `bool` | Wrap items or use horizontal scroll |
+| `selectedItemsSpacing` | `double` | Horizontal spacing between chips |
+| `selectedItemsRunSpacing` | `double` | Vertical spacing when wrapped |
+| `selectedItemsPadding` | `EdgeInsets` | Padding around selected items container |
+
+**Controller Methods:**
+
+```dart
+// Access controller
+final controller = SmartSearchMultiController<Product>(...);
+
+// Check selection
+controller.selectedItems; // List of selected items
+controller.selectionCount; // Number of selected items
+controller.hasSelectedItems; // Whether any items are selected
+controller.isMaxSelectionsReached; // Whether max limit reached
+controller.isItemSelected(item); // Check if specific item is selected
+
+// Modify selection
+controller.addItem(item); // Add item to selection
+controller.removeItem(item); // Remove item from selection
+controller.removeItemAt(index); // Remove item by index
+controller.toggleItemSelection(item); // Toggle selection state
+controller.clearAllSelections(); // Clear all selections
+controller.setSelectedItems([...]); // Set selection programmatically
+```
+
+---
+
 ## [2.3.2] - 2025-12-28
 
 ### Changed

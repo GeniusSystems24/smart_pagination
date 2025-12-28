@@ -75,7 +75,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.2.0
+  smart_pagination: ^2.4.0
 ```
 
 Install it:
@@ -874,6 +874,74 @@ Form(
     ],
   ),
 )
+```
+
+### SmartSearchMultiDropdown
+
+Multi-selection search dropdown that allows selecting multiple items from search results:
+
+```dart
+SmartSearchMultiDropdown<Product>.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+    subtitle: Text('\$${product.price}'),
+  ),
+  showSelected: true, // Show selected items below search box
+  maxSelections: 5, // Optional: limit selections
+  onSelectionChanged: (products) {
+    print('Selected ${products.length} items');
+  },
+)
+```
+
+**Custom Selected Item Display:**
+
+```dart
+SmartSearchMultiDropdown<Product>.withProvider(
+  // ... other properties
+  selectedItemBuilder: (context, product, onRemove) => Chip(
+    avatar: CircleAvatar(child: Text(product.name[0])),
+    label: Text(product.name),
+    onDeleted: onRemove,
+  ),
+  selectedItemsWrap: true, // Wrap items or horizontal scroll
+  selectedItemsSpacing: 8.0,
+  selectedItemsRunSpacing: 8.0,
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `onSelectionChanged` | `ValueChanged<List<T>>?` | Called when selection changes |
+| `initialSelectedValues` | `List<T>?` | Pre-selected items |
+| `maxSelections` | `int?` | Maximum selectable items |
+| `showSelected` | `bool` | Show selected items below search |
+| `selectedItemBuilder` | `Widget Function(...)` | Custom chip builder |
+| `selectedItemsWrap` | `bool` | Wrap items (true) or scroll (false) |
+
+**Controller Methods:**
+
+```dart
+// Selection state
+controller.selectedItems; // Get all selected items
+controller.selectionCount; // Number of selections
+controller.isItemSelected(item); // Check if item is selected
+controller.isMaxSelectionsReached; // Check if limit reached
+
+// Modify selection
+controller.addItem(item);
+controller.removeItem(item);
+controller.toggleItemSelection(item);
+controller.clearAllSelections();
 ```
 
 ### SmartSearchTheme (Light & Dark Mode)
