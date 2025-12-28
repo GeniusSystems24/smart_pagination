@@ -27,6 +27,7 @@ import 'smart_pagination/data_age_screen.dart';
 import 'smart_pagination/sorting_screen.dart';
 import 'smart_pagination/search_dropdown_screen.dart';
 import 'smart_pagination/form_validation_search_screen.dart';
+import 'smart_pagination/multi_select_search_screen.dart';
 
 // Error handling examples
 import 'errors/basic_error_example.dart';
@@ -287,6 +288,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           icon: Icons.fact_check_rounded,
           color: Color(0xFF059669),
           screen: FormValidationSearchScreen(),
+        ),
+        _ExampleItem(
+          title: 'Multi-Select Search',
+          description: 'Search and select multiple items',
+          icon: Icons.checklist_rounded,
+          color: Color(0xFFDC2626),
+          screen: MultiSelectSearchScreen(),
         ),
       ],
     ),

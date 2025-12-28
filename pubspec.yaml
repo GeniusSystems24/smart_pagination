@@ -7,7 +7,7 @@ description: >
   backoff, SmartSearchBox with auto-positioning overlay dropdown, keyboard navigation,
   ThemeExtension support (light/dark themes), and production-ready UI components.
   Zero boilerplate, highly customizable, type-safe, and well-tested.
-version: 2.3.2
+version: 2.4.0
 homepage: https://github.com/GeniusSystems24/smart_pagination
 repository: https://github.com/GeniusSystems24/smart_pagination
 issue_tracker: https://github.com/GeniusSystems24/smart_pagination/issues
