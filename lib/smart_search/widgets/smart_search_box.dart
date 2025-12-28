@@ -39,6 +39,13 @@ class SmartSearchBox<T> extends StatelessWidget {
     this.border,
     this.focusedBorder,
     this.enabledBorder,
+    this.validator,
+    this.inputFormatters,
+    this.autovalidateMode,
+    this.onChanged,
+    this.maxLength,
+    this.maxLengthEnforcement,
+    this.buildCounter,
   });
 
   /// The search controller managing this search box.
@@ -104,6 +111,37 @@ class SmartSearchBox<T> extends StatelessWidget {
   /// Border when enabled but not focused.
   final InputBorder? enabledBorder;
 
+  /// Validator function for form validation.
+  ///
+  /// Returns an error string if validation fails, null otherwise.
+  final String? Function(String?)? validator;
+
+  /// Input formatters to restrict or format input.
+  ///
+  /// Example:
+  /// ```dart
+  /// inputFormatters: [
+  ///   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+  ///   LengthLimitingTextInputFormatter(50),
+  /// ]
+  /// ```
+  final List<TextInputFormatter>? inputFormatters;
+
+  /// When to validate the input.
+  final AutovalidateMode? autovalidateMode;
+
+  /// Called when the text changes.
+  final ValueChanged<String>? onChanged;
+
+  /// Maximum length of the input.
+  final int? maxLength;
+
+  /// How to enforce the max length.
+  final MaxLengthEnforcement? maxLengthEnforcement;
+
+  /// Custom counter builder for showing character count.
+  final InputCounterWidgetBuilder? buildCounter;
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -118,27 +156,63 @@ class SmartSearchBox<T> extends StatelessWidget {
             }
             return KeyEventResult.ignored;
           },
-          child: TextField(
-            controller: controller.textController,
-            focusNode: controller.focusNode,
-            decoration: _buildDecoration(context),
-            style: style,
-            textCapitalization: textCapitalization,
-            textInputAction: textInputAction,
-            keyboardType: keyboardType,
-            autofocus: controller.config.autoFocus,
-            enabled: enabled,
-            readOnly: readOnly,
-            onSubmitted: (value) {
-              // This is called when Enter is pressed and not handled by Focus
-              controller.searchNow();
-              onSubmitted?.call(value);
-            },
-            onTap: () {
-              controller.showOverlay();
-              onTap?.call();
-            },
-          ),
+          child: validator != null
+              ? TextFormField(
+                  controller: controller.textController,
+                  focusNode: controller.focusNode,
+                  decoration: _buildDecoration(context),
+                  style: style,
+                  textCapitalization: textCapitalization,
+                  textInputAction: textInputAction,
+                  keyboardType: keyboardType,
+                  autofocus: controller.config.autoFocus,
+                  enabled: enabled,
+                  readOnly: readOnly,
+                  validator: validator,
+                  autovalidateMode: autovalidateMode ?? AutovalidateMode.disabled,
+                  inputFormatters: inputFormatters,
+                  maxLength: maxLength,
+                  maxLengthEnforcement: maxLengthEnforcement,
+                  buildCounter: buildCounter,
+                  onChanged: (value) {
+                    onChanged?.call(value);
+                  },
+                  onFieldSubmitted: (value) {
+                    controller.searchNow();
+                    onSubmitted?.call(value);
+                  },
+                  onTap: () {
+                    controller.showOverlay();
+                    onTap?.call();
+                  },
+                )
+              : TextField(
+                  controller: controller.textController,
+                  focusNode: controller.focusNode,
+                  decoration: _buildDecoration(context),
+                  style: style,
+                  textCapitalization: textCapitalization,
+                  textInputAction: textInputAction,
+                  keyboardType: keyboardType,
+                  autofocus: controller.config.autoFocus,
+                  enabled: enabled,
+                  readOnly: readOnly,
+                  inputFormatters: inputFormatters,
+                  maxLength: maxLength,
+                  maxLengthEnforcement: maxLengthEnforcement,
+                  buildCounter: buildCounter,
+                  onChanged: (value) {
+                    onChanged?.call(value);
+                  },
+                  onSubmitted: (value) {
+                    controller.searchNow();
+                    onSubmitted?.call(value);
+                  },
+                  onTap: () {
+                    controller.showOverlay();
+                    onTap?.call();
+                  },
+                ),
         );
       },
     );

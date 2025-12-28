@@ -87,6 +87,15 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.showSelected = false,
     this.selectedItemBuilder,
     this.initialSelectedItem,
+    this.initialValue,
+    this.validator,
+    this.textInputAction = TextInputAction.search,
+    this.inputFormatters,
+    this.autovalidateMode,
+    this.onChanged,
+    this.maxLength,
+    this.textCapitalization = TextCapitalization.none,
+    this.keyboardType = TextInputType.text,
     ListBuilder<T>? listBuilder,
     OnInsertionCallback<T>? onInsertionCallback,
     int maxPagesInMemory = 5,
@@ -130,6 +139,15 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.showSelected = false,
     this.selectedItemBuilder,
     this.initialSelectedItem,
+    this.initialValue,
+    this.validator,
+    this.textInputAction = TextInputAction.search,
+    this.inputFormatters,
+    this.autovalidateMode,
+    this.onChanged,
+    this.maxLength,
+    this.textCapitalization = TextCapitalization.none,
+    this.keyboardType = TextInputType.text,
   })  : _cubit = cubit,
         _request = null,
         _provider = null,
@@ -230,6 +248,44 @@ class SmartSearchDropdown<T> extends StatefulWidget {
   /// [showSelected] is true.
   final T? initialSelectedItem;
 
+  /// Initial text value for the search box.
+  final String? initialValue;
+
+  /// Validator function for form validation.
+  ///
+  /// Returns an error string if validation fails, null otherwise.
+  /// When provided, a TextFormField is used instead of TextField.
+  final String? Function(String?)? validator;
+
+  /// The action button on the keyboard (e.g., search, done, next).
+  final TextInputAction textInputAction;
+
+  /// Input formatters to restrict or format input.
+  ///
+  /// Example:
+  /// ```dart
+  /// inputFormatters: [
+  ///   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+  ///   LengthLimitingTextInputFormatter(50),
+  /// ]
+  /// ```
+  final List<TextInputFormatter>? inputFormatters;
+
+  /// When to validate the input.
+  final AutovalidateMode? autovalidateMode;
+
+  /// Called when the text changes.
+  final ValueChanged<String>? onChanged;
+
+  /// Maximum length of the input.
+  final int? maxLength;
+
+  /// Text capitalization behavior.
+  final TextCapitalization textCapitalization;
+
+  /// The type of keyboard to display.
+  final TextInputType keyboardType;
+
   @override
   State<SmartSearchDropdown<T>> createState() => _SmartSearchDropdownState<T>();
 }
@@ -270,6 +326,7 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
       config: widget.searchConfig,
       onItemSelected: widget.onItemSelected,
       initialSelectedItem: widget.initialSelectedItem,
+      initialValue: widget.initialValue,
     );
   }
 
@@ -309,6 +366,14 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
           searchBoxSuffixIcon: widget.suffixIcon,
           showClearButton: widget.showClearButton,
           searchBoxBorderRadius: widget.borderRadius,
+          searchBoxValidator: widget.validator,
+          searchBoxInputFormatters: widget.inputFormatters,
+          searchBoxAutovalidateMode: widget.autovalidateMode,
+          searchBoxOnChanged: widget.onChanged,
+          searchBoxMaxLength: widget.maxLength,
+          searchBoxTextInputAction: widget.textInputAction,
+          searchBoxTextCapitalization: widget.textCapitalization,
+          searchBoxKeyboardType: widget.keyboardType,
         );
       },
     );

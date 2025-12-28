@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2025-12-28
+
+### Added
+
+#### Enhanced SmartSearchDropdown Form Support 📝
+
+New form-related features for SmartSearchDropdown to enable form validation and input formatting.
+
+**New Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `initialValue` | `String?` | Initial text value for the search box |
+| `validator` | `String? Function(String?)?` | Form validation function (enables TextFormField) |
+| `textInputAction` | `TextInputAction` | Keyboard action button (default: search) |
+| `inputFormatters` | `List<TextInputFormatter>?` | Input formatters for text formatting |
+| `autovalidateMode` | `AutovalidateMode?` | When to validate the input |
+| `onChanged` | `ValueChanged<String>?` | Called when text changes |
+| `maxLength` | `int?` | Maximum input length |
+| `textCapitalization` | `TextCapitalization` | Text capitalization behavior |
+| `keyboardType` | `TextInputType` | Type of keyboard to display |
+
+**Usage with Validation:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  initialValue: 'Initial search text',
+  validator: (value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a search term';
+    }
+    return null;
+  },
+  autovalidateMode: AutovalidateMode.onUserInteraction,
+  textInputAction: TextInputAction.search,
+)
+```
+
+**Usage with Input Formatters:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  inputFormatters: [
+    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+    LengthLimitingTextInputFormatter(50),
+  ],
+  maxLength: 50,
+  textCapitalization: TextCapitalization.words,
+)
+```
+
+---
+
 ## [2.3.0] - 2025-12-18
 
 ### Added

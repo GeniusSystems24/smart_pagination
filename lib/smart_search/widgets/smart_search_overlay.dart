@@ -39,6 +39,14 @@ class SmartSearchOverlay<T> extends StatefulWidget {
     this.searchBoxSuffixIcon,
     this.showClearButton = true,
     this.searchBoxBorderRadius,
+    this.searchBoxValidator,
+    this.searchBoxInputFormatters,
+    this.searchBoxAutovalidateMode,
+    this.searchBoxOnChanged,
+    this.searchBoxMaxLength,
+    this.searchBoxTextInputAction = TextInputAction.search,
+    this.searchBoxTextCapitalization = TextCapitalization.none,
+    this.searchBoxKeyboardType = TextInputType.text,
   });
 
   /// The search controller managing the search state.
@@ -91,6 +99,30 @@ class SmartSearchOverlay<T> extends StatefulWidget {
 
   /// Border radius for the search box.
   final BorderRadius? searchBoxBorderRadius;
+
+  /// Validator function for form validation.
+  final String? Function(String?)? searchBoxValidator;
+
+  /// Input formatters to restrict or format input.
+  final List<TextInputFormatter>? searchBoxInputFormatters;
+
+  /// When to validate the input.
+  final AutovalidateMode? searchBoxAutovalidateMode;
+
+  /// Called when the text changes.
+  final ValueChanged<String>? searchBoxOnChanged;
+
+  /// Maximum length of the input.
+  final int? searchBoxMaxLength;
+
+  /// The action button on the keyboard.
+  final TextInputAction searchBoxTextInputAction;
+
+  /// Text capitalization behavior.
+  final TextCapitalization searchBoxTextCapitalization;
+
+  /// The type of keyboard to display.
+  final TextInputType searchBoxKeyboardType;
 
   @override
   State<SmartSearchOverlay<T>> createState() => _SmartSearchOverlayState<T>();
@@ -201,6 +233,14 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
         suffixIcon: widget.searchBoxSuffixIcon,
         showClearButton: widget.showClearButton,
         borderRadius: widget.searchBoxBorderRadius,
+        validator: widget.searchBoxValidator,
+        inputFormatters: widget.searchBoxInputFormatters,
+        autovalidateMode: widget.searchBoxAutovalidateMode,
+        onChanged: widget.searchBoxOnChanged,
+        maxLength: widget.searchBoxMaxLength,
+        textInputAction: widget.searchBoxTextInputAction,
+        textCapitalization: widget.searchBoxTextCapitalization,
+        keyboardType: widget.searchBoxKeyboardType,
       ),
     );
   }
