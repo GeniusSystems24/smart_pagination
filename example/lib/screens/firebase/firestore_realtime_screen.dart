@@ -169,7 +169,7 @@ class _FirestoreRealtimeScreenState extends State<FirestoreRealtimeScreen> {
 
           // Messages list
           Expanded(
-            child: SmartPagination.listViewWithProvider<RealtimeMessage>(
+            child: SmartPagination<RealtimeMessage>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 50),
               provider: PaginationProvider.stream(streamMessages),
               itemBuilder: (context, items, index) {

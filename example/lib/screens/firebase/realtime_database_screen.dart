@@ -59,31 +59,17 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
     await Future.delayed(const Duration(milliseconds: 600));
 
     final pageSize = request.pageSize ?? 20;
-    int endIndex = _allPosts.length;
+    final page = request.page;
 
-    // Use cursor for pagination (simulating endBefore)
-    if (request.cursor != null) {
-      final cursorTimestamp = request.cursor as DateTime;
-      endIndex = _allPosts.indexWhere(
-        (p) => p.timestamp.isBefore(cursorTimestamp) ||
-            p.timestamp.isAtSameMomentAs(cursorTimestamp),
-      );
-      if (endIndex == -1) endIndex = _allPosts.length;
+    // Calculate pagination (simulating limitToLast + endBefore)
+    final startIndex = (page - 1) * pageSize;
+    final endIndex = (startIndex + pageSize).clamp(0, _allPosts.length);
+
+    if (startIndex >= _allPosts.length) {
+      return [];
     }
 
-    final startIndex = (endIndex - pageSize).clamp(0, _allPosts.length);
-    final posts = _allPosts.sublist(startIndex, endIndex);
-
-    // Update cursor for next page
-    if (posts.isNotEmpty) {
-      request.cursor = posts.first.timestamp;
-      request.hasMore = startIndex > 0;
-    } else {
-      request.hasMore = false;
-    }
-
-    // Reverse to get newest first
-    return posts.reversed.toList();
+    return _allPosts.sublist(startIndex, endIndex);
   }
 
   String _timeAgo(DateTime date) {
@@ -129,8 +115,8 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
 
           // Posts list
           Expanded(
-            child: SmartPagination.listViewWithProvider<RTDBPost>(
-              request: PaginationRequest(page: 1, pageSize: 10),
+            child: SmartPagination<RTDBPost>.listViewWithProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(fetchPosts),
               itemBuilder: (context, items, index) {
                 final post = items[index];

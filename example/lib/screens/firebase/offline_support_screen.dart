@@ -231,7 +231,7 @@ class _OfflineSupportScreenState extends State<OfflineSupportScreen> {
 
           // Products list
           Expanded(
-            child: SmartPagination.listViewWithProvider<OfflineProduct>(
+            child: SmartPagination<OfflineProduct>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 30),
               provider: PaginationProvider.stream(streamProducts),
               itemBuilder: (context, items, index) {

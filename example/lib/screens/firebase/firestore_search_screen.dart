@@ -199,7 +199,9 @@ class _FirestoreSearchScreenState extends State<FirestoreSearchScreen> {
               overlayConfig: const SmartSearchOverlayConfig(
                 maxHeight: 300,
               ),
-              hintText: 'Type to search users...',
+              decoration: const InputDecoration(
+                hintText: 'Type to search users...',
+              ),
               showSelected: true,
               itemBuilder: (context, user) => ListTile(
                 leading: Stack(

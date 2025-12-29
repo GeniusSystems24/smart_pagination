@@ -104,24 +104,15 @@ class _FirestoreFiltersScreenState extends State<FirestoreFiltersScreen> {
 
     // Apply pagination
     final pageSize = request.pageSize ?? 20;
-    int startIndex = 0;
-
-    if (request.cursor != null) {
-      final cursorId = request.cursor as String;
-      startIndex = filtered.indexWhere((p) => p.id == cursorId) + 1;
-    }
-
+    final page = request.page;
+    final startIndex = (page - 1) * pageSize;
     final endIndex = (startIndex + pageSize).clamp(0, filtered.length);
-    final products = filtered.sublist(startIndex, endIndex);
 
-    if (products.isNotEmpty) {
-      request.cursor = products.last.id;
-      request.hasMore = endIndex < filtered.length;
-    } else {
-      request.hasMore = false;
+    if (startIndex >= filtered.length) {
+      return [];
     }
 
-    return products;
+    return filtered.sublist(startIndex, endIndex);
   }
 
   void _applyFilters() {
@@ -223,8 +214,8 @@ class _FirestoreFiltersScreenState extends State<FirestoreFiltersScreen> {
 
           // Products list
           Expanded(
-            child: SmartPagination.listViewWithProvider<FilteredProduct>(
-              request: PaginationRequest(page: 1, pageSize: 15),
+            child: SmartPagination<FilteredProduct>.listViewWithProvider(
+              request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(fetchFilteredProducts),
               refreshListener: _refreshListener,
               itemBuilder: (context, items, index) {

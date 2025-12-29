@@ -48,27 +48,17 @@ class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
     await Future.delayed(const Duration(milliseconds: 800));
 
     final pageSize = request.pageSize ?? 20;
-    int startIndex = 0;
+    final page = request.page;
 
-    // Use cursor for pagination (simulating startAfterDocument)
-    if (request.cursor != null) {
-      final cursorId = request.cursor as String;
-      startIndex =
-          _allProducts.indexWhere((p) => p.id == cursorId) + 1;
-    }
-
+    // Calculate pagination indices (simulating startAfterDocument)
+    final startIndex = (page - 1) * pageSize;
     final endIndex = (startIndex + pageSize).clamp(0, _allProducts.length);
-    final products = _allProducts.sublist(startIndex, endIndex);
 
-    // Update cursor for next page
-    if (products.isNotEmpty) {
-      request.cursor = products.last.id;
-      request.hasMore = endIndex < _allProducts.length;
-    } else {
-      request.hasMore = false;
+    if (startIndex >= _allProducts.length) {
+      return [];
     }
 
-    return products;
+    return _allProducts.sublist(startIndex, endIndex);
   }
 
   String _timeAgo(DateTime date) {
@@ -114,8 +104,8 @@ class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
 
           // Product list
           Expanded(
-            child: SmartPagination.listViewWithProvider<FirestoreProduct>(
-              request: PaginationRequest(page: 1, pageSize: 20),
+            child: SmartPagination<FirestoreProduct>.listViewWithProvider(
+              request: const PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(fetchProducts),
               itemBuilder: (context, items, index) {
                 final product = items[index];
