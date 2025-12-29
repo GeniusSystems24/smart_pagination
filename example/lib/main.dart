@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_pagination/pagination.dart';
 
-import 'screens/home_screen.dart';
+import 'router/app_router.dart';
 
 void main() {
   runApp(const PaginationExampleApp());
@@ -39,8 +39,9 @@ class _PaginationExampleAppState extends State<PaginationExampleApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       key: PaginationExampleApp.appKey,
+      routerConfig: appRouter,
       title: 'Smart Pagination Examples',
       debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
@@ -75,7 +76,6 @@ class _PaginationExampleAppState extends State<PaginationExampleApp> {
           SmartSearchTheme.dark(),
         ],
       ),
-      home: const HomeScreen(),
     );
   }
 }

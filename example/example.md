@@ -1,23 +1,148 @@
 # Smart Pagination Examples
 
-This document provides practical examples of using the Smart Pagination library.
+This document provides comprehensive examples of using the Smart Pagination library v2.4.0.
 
 ## Table of Contents
 
 - [Smart Pagination Examples](#smart-pagination-examples)
   - [Table of Contents](#table-of-contents)
+  - [Getting Started](#getting-started)
+  - [Project Structure](#project-structure)
+  - [Navigation with go\_router](#navigation-with-go_router)
   - [1. Basic ListView Example](#1-basic-listview-example)
   - [2. GridView with Custom Styling](#2-gridview-with-custom-styling)
-  - [3. PageView for Swipeable Content](#3-pageview-for-swipeable-content)
-  - [4. Filter and Search](#4-filter-and-search)
-  - [5. Pull-to-Refresh](#5-pull-to-refresh)
-  - [6. Custom Error Handling](#6-custom-error-handling)
-  - [7. Stream Updates (Real-time)](#7-stream-updates-real-time)
-  - [8. Programmatic Scrolling](#8-programmatic-scrolling)
-  - [9. Memory Management](#9-memory-management)
-  - [10. REST API Integration](#10-rest-api-integration)
-  - [11. Reorderable List](#11-reorderable-list)
+  - [3. Pull-to-Refresh](#3-pull-to-refresh)
+  - [4. Stream Updates (Real-time)](#4-stream-updates-real-time)
+  - [5. Cursor Pagination](#5-cursor-pagination)
+  - [6. Smart Search Dropdown](#6-smart-search-dropdown)
+  - [7. Multi-Select Search (v2.4.0)](#7-multi-select-search-v240)
+  - [8. Search Theming](#8-search-theming)
+  - [9. Keyboard Navigation](#9-keyboard-navigation)
+  - [10. Custom Error Handling](#10-custom-error-handling)
+  - [11. Data Operations](#11-data-operations)
+  - [12. Data Age \& Expiration](#12-data-age--expiration)
   - [Running the Examples](#running-the-examples)
+  - [Example Categories](#example-categories)
+
+---
+
+## Getting Started
+
+Add the required dependencies to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  smart_pagination: ^2.4.0
+  go_router: ^14.6.0  # For navigation
+  intl: ^0.19.0       # For date formatting
+```
+
+Import the package:
+
+```dart
+import 'package:smart_pagination/pagination.dart';
+```
+
+---
+
+## Project Structure
+
+The example app is organized into categories:
+
+```
+example/
+├── lib/
+│   ├── main.dart                    # App entry point with go_router
+│   ├── router/
+│   │   └── app_router.dart          # Route configuration
+│   ├── screens/
+│   │   ├── home_screen.dart         # Category navigation
+│   │   ├── smart_pagination/        # Pagination examples
+│   │   │   ├── basic_listview_screen.dart
+│   │   │   ├── gridview_screen.dart
+│   │   │   ├── search_dropdown_screen.dart
+│   │   │   ├── multi_select_search_screen.dart
+│   │   │   └── ...
+│   │   └── errors/                  # Error handling examples
+│   │       ├── basic_error_example.dart
+│   │       └── ...
+│   ├── models/
+│   │   └── product.dart
+│   └── services/
+│       └── mock_api_service.dart
+└── pubspec.yaml
+```
+
+---
+
+## Navigation with go_router
+
+The example app uses `go_router` for declarative routing:
+
+```dart
+// lib/router/app_router.dart
+import 'package:go_router/go_router.dart';
+
+class AppRoutes {
+  static const String home = '/';
+  static const String basicListView = '/basic/list-view';
+  static const String searchDropdown = '/search/dropdown';
+  static const String multiSelectSearch = '/search/multi-select';
+  // ... more routes
+}
+
+final GoRouter appRouter = GoRouter(
+  initialLocation: AppRoutes.home,
+  routes: [
+    GoRoute(
+      path: AppRoutes.home,
+      builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.basicListView,
+      pageBuilder: (context, state) => CustomTransitionPage(
+        child: const BasicListViewScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween(
+              begin: const Offset(1.0, 0.0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeInOutCubic,
+            )),
+            child: child,
+          );
+        },
+      ),
+    ),
+    // ... more routes
+  ],
+);
+
+// lib/main.dart
+class _PaginationExampleAppState extends State<PaginationExampleApp> {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: appRouter,
+      title: 'Smart Pagination Examples',
+      theme: ThemeData(
+        useMaterial3: true,
+        extensions: [SmartSearchTheme.light()],
+      ),
+      darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
+        extensions: [SmartSearchTheme.dark()],
+      ),
+    );
+  }
+}
+
+// Navigate using context.push()
+context.push(AppRoutes.searchDropdown);
+```
 
 ---
 
@@ -26,37 +151,7 @@ This document provides practical examples of using the Smart Pagination library.
 Simple pagination with a REST API:
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:smart_pagination/pagination.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-// Model
-class Product {
-  final String id;
-  final String name;
-  final double price;
-  final String imageUrl;
-
-  Product({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.imageUrl,
-  });
-
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'].toString(),
-      name: json['name'] as String,
-      price: (json['price'] as num).toDouble(),
-      imageUrl: json['image'] as String,
-    );
-  }
-}
-
-class ProductListPage extends StatelessWidget {
-  // Data provider function
+class BasicListViewScreen extends StatelessWidget {
   Future<List<Product>> fetchProducts(PaginationRequest request) async {
     final response = await http.get(
       Uri.parse(
@@ -69,17 +164,16 @@ class ProductListPage extends StatelessWidget {
       return (data['items'] as List)
           .map((item) => Product.fromJson(item))
           .toList();
-    } else {
-      throw Exception('Failed to load products');
     }
+    throw Exception('Failed to load products');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Products')),
+      appBar: AppBar(title: const Text('Products')),
       body: SmartPagination.listViewWithProvider<Product>(
-        request: PaginationRequest(page: 1, pageSize: 20),
+        request: const PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(fetchProducts),
         itemBuilder: (context, items, index) {
           final product = items[index];
@@ -87,10 +181,6 @@ class ProductListPage extends StatelessWidget {
             leading: Image.network(product.imageUrl, width: 50, height: 50),
             title: Text(product.name),
             subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-            trailing: Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              // Navigate to product details
-            },
           );
         },
       ),
@@ -106,33 +196,23 @@ class ProductListPage extends StatelessWidget {
 Display items in a grid layout:
 
 ```dart
-class PhotoGalleryPage extends StatelessWidget {
-  Future<List<Photo>> fetchPhotos(PaginationRequest request) async {
-    // Fetch photos from API
-    final response = await http.get(
-      Uri.parse('https://api.example.com/photos?page=${request.page}'),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['photos'] as List)
-          .map((item) => Photo.fromJson(item))
-          .toList();
-    }
-    throw Exception('Failed to load photos');
-  }
-
+class GridViewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Photo Gallery')),
-      body: SmartPagination.gridViewWithCubit(
-        cubit: SmartPaginationCubit<Photo>(
-          request: PaginationRequest(page: 1, pageSize: 20),
-          provider: PaginationProvider.future(fetchPhotos),
+      appBar: AppBar(title: const Text('Product Grid')),
+      body: SmartPagination.gridViewWithProvider<Product>(
+        request: const PaginationRequest(page: 1, pageSize: 20),
+        provider: PaginationProvider.future(fetchProducts),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.75,
         ),
+        padding: const EdgeInsets.all(16),
         itemBuilder: (context, items, index) {
-          final photo = items[index];
+          final product = items[index];
           return Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
@@ -142,19 +222,21 @@ class PhotoGalleryPage extends StatelessWidget {
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
                     child: Image.network(
-                      photo.url,
+                      product.imageUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
                     ),
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   child: Text(
-                    photo.title,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    product.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -163,13 +245,6 @@ class PhotoGalleryPage extends StatelessWidget {
             ),
           );
         },
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.75,
-        ),
-        padding: EdgeInsets.all(16),
       ),
     );
   }
@@ -178,242 +253,31 @@ class PhotoGalleryPage extends StatelessWidget {
 
 ---
 
-## 3. PageView for Swipeable Content
-
-Create a swipeable carousel:
-
-```dart
-class ArticleViewerPage extends StatelessWidget {
-  Future<List<Article>> fetchArticles(PaginationRequest request) async {
-    // Fetch articles
-    final response = await http.get(
-      Uri.parse('https://api.example.com/articles?page=${request.page}'),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['articles'] as List)
-          .map((item) => Article.fromJson(item))
-          .toList();
-    }
-    throw Exception('Failed to load articles');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Articles')),
-      body: SmartPagination.pageViewWithCubit(
-        cubit: SmartPaginationCubit<Article>(
-          request: PaginationRequest(page: 1, pageSize: 1), // One article at a time
-          provider: PaginationProvider.future(fetchArticles),
-        ),
-        itemBuilder: (context, items, index) {
-          final article = items[index];
-          return Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (article.imageUrl != null)
-                  Image.network(
-                    article.imageUrl!,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                SizedBox(height: 16),
-                Text(
-                  article.title,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  article.author,
-                  style: TextStyle(color: Colors.grey),
-                ),
-                SizedBox(height: 16),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Text(article.content),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-        onPageChanged: (index) {
-          print('Viewing article at index: $index');
-        },
-      ),
-    );
-  }
-}
-```
-
----
-
-## 4. Filter and Search
-
-Add search and filter functionality:
-
-```dart
-class SearchableProductsPage extends StatefulWidget {
-  @override
-  State<SearchableProductsPage> createState() => _SearchableProductsPageState();
-}
-
-class _SearchableProductsPageState extends State<SearchableProductsPage> {
-  final filterListener = SmartPaginationFilterChangeListener<Product>();
-  final searchController = TextEditingController();
-
-  Future<List<Product>> fetchProducts(PaginationRequest request) async {
-    final response = await http.get(
-      Uri.parse('https://api.example.com/products?page=${request.page}&limit=${request.pageSize}'),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['items'] as List)
-          .map((item) => Product.fromJson(item))
-          .toList();
-    }
-    throw Exception('Failed to load products');
-  }
-
-  void _onSearchChanged(String query) {
-    if (query.isEmpty) {
-      filterListener.searchTerm = null;
-    } else {
-      filterListener.searchTerm = (product) =>
-          product.name.toLowerCase().contains(query.toLowerCase());
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Search Products'),
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(60),
-          child: Padding(
-            padding: EdgeInsets.all(8),
-            child: TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText: 'Search products...',
-                prefixIcon: Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.clear),
-                  onPressed: () {
-                    searchController.clear();
-                    _onSearchChanged('');
-                  },
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onChanged: _onSearchChanged,
-            ),
-          ),
-        ),
-      ),
-      body: SmartPagination.listViewWithProvider<Product>(
-        request: PaginationRequest(page: 1, pageSize: 20),
-        provider: PaginationProvider.future(fetchProducts),
-        filterListeners: [filterListener],
-        itemBuilder: (context, items, index) {
-          final product = items[index];
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              title: Text(product.name),
-              subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-              trailing: Icon(Icons.arrow_forward_ios),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    filterListener.dispose();
-    searchController.dispose();
-    super.dispose();
-  }
-}
-```
-
----
-
-## 5. Pull-to-Refresh
+## 3. Pull-to-Refresh
 
 Implement refresh functionality:
 
 ```dart
-class RefreshableListPage extends StatefulWidget {
+class PullToRefreshScreen extends StatefulWidget {
   @override
-  State<RefreshableListPage> createState() => _RefreshableListPageState();
+  State<PullToRefreshScreen> createState() => _PullToRefreshScreenState();
 }
 
-class _RefreshableListPageState extends State<RefreshableListPage> {
+class _PullToRefreshScreenState extends State<PullToRefreshScreen> {
   final refreshListener = SmartPaginationRefreshedChangeListener();
-  late final SmartPaginationCubit<Product> cubit;
-
-  @override
-  void initState() {
-    super.initState();
-    cubit = SmartPaginationCubit<Product>(
-      request: PaginationRequest(page: 1, pageSize: 20),
-      provider: PaginationProvider.future(fetchProducts),
-    );
-  }
-
-  Future<List<Product>> fetchProducts(PaginationRequest request) async {
-    // Fetch products from API
-    final response = await http.get(
-      Uri.parse('https://api.example.com/products?page=${request.page}'),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['items'] as List)
-          .map((item) => Product.fromJson(item))
-          .toList();
-    }
-    throw Exception('Failed to load products');
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Pull to Refresh'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              refreshListener.refreshed = true;
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Pull to Refresh')),
       body: RefreshIndicator(
         onRefresh: () async {
           refreshListener.refreshed = true;
-          // Wait a bit for the refresh to complete
-          await Future.delayed(Duration(milliseconds: 500));
+          await Future.delayed(const Duration(milliseconds: 500));
         },
-        child: SmartPagination.withCubit(
-          cubit: cubit,
-          itemBuilderType: PaginateBuilderType.listView,
+        child: SmartPagination.listViewWithProvider<Product>(
+          request: const PaginationRequest(page: 1, pageSize: 20),
+          provider: PaginationProvider.future(fetchProducts),
           refreshListener: refreshListener,
           itemBuilder: (context, items, index) {
             final product = items[index];
@@ -430,7 +294,6 @@ class _RefreshableListPageState extends State<RefreshableListPage> {
   @override
   void dispose() {
     refreshListener.dispose();
-    cubit.dispose();
     super.dispose();
   }
 }
@@ -438,112 +301,12 @@ class _RefreshableListPageState extends State<RefreshableListPage> {
 
 ---
 
-## 6. Custom Error Handling
+## 4. Stream Updates (Real-time)
 
-Handle errors gracefully:
-
-```dart
-class ErrorHandlingPage extends StatelessWidget {
-  Future<List<Product>> fetchProducts(PaginationRequest request) async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://api.example.com/products?page=${request.page}'),
-      ).timeout(Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return (data['items'] as List)
-            .map((item) => Product.fromJson(item))
-            .toList();
-      } else if (response.statusCode == 404) {
-        throw Exception('Products not found');
-      } else {
-        throw Exception('Server error: ${response.statusCode}');
-      }
-    } on TimeoutException {
-      throw Exception('Request timed out. Please check your internet connection.');
-    } catch (e) {
-      throw Exception('Failed to load products: $e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Error Handling')),
-      body: SmartPagination.listViewWithProvider<Product>(
-        request: PaginationRequest(page: 1, pageSize: 20),
-        provider: PaginationProvider.future(fetchProducts),
-        itemBuilder: (context, items, index) {
-          final product = items[index];
-          return ListTile(
-            title: Text(product.name),
-            subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-          );
-        },
-        onError: (exception) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 80, color: Colors.red),
-                  SizedBox(height: 24),
-                  Text(
-                    'Oops! Something went wrong',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    exception.toString(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Trigger a refresh
-                    },
-                    icon: Icon(Icons.refresh),
-                    label: Text('Try Again'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-```
-
----
-
-## 7. Stream Updates (Real-time)
-
-Use streams for real-time updates (e.g., Firebase):
+Use streams for real-time updates:
 
 ```dart
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-class RealtimeMessagesPage extends StatelessWidget {
-  Future<List<Message>> fetchMessages(PaginationRequest request) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .limit(request.pageSize ?? 20)
-        .get();
-
-    return snapshot.docs
-        .map((doc) => Message.fromFirestore(doc))
-        .toList();
-  }
-
+class SingleStreamScreen extends StatelessWidget {
   Stream<List<Message>> streamMessages(PaginationRequest request) {
     return FirebaseFirestore.instance
         .collection('messages')
@@ -558,143 +321,570 @@ class RealtimeMessagesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Real-time Messages')),
+      appBar: AppBar(title: const Text('Real-time Messages')),
       body: SmartPagination.listViewWithProvider<Message>(
-        request: PaginationRequest(page: 1, pageSize: 50),
-        provider: PaginationProvider.future(fetchMessages),
-        provider: PaginationProvider.stream(streamMessages), // Real-time updates
+        request: const PaginationRequest(page: 1, pageSize: 50),
+        provider: PaginationProvider.stream(streamMessages),
         itemBuilder: (context, items, index) {
           final message = items[index];
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              leading: CircleAvatar(
-                child: Text(message.author[0]),
-              ),
-              title: Text(message.author),
-              subtitle: Text(message.content),
-              trailing: Text(
-                _formatTime(message.timestamp),
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ),
+          return ListTile(
+            leading: CircleAvatar(child: Text(message.author[0])),
+            title: Text(message.author),
+            subtitle: Text(message.content),
           );
         },
       ),
     );
-  }
-
-  String _formatTime(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inHours < 1) return '${difference.inMinutes}m ago';
-    if (difference.inDays < 1) return '${difference.inHours}h ago';
-    return '${difference.inDays}d ago';
   }
 }
 ```
 
 ---
 
-## 8. Programmatic Scrolling
+## 5. Cursor Pagination
 
-Scroll to specific items programmatically:
+Cursor-based pagination for real-time data:
 
 ```dart
-class ScrollControlPage extends StatefulWidget {
+class CursorPaginationScreen extends StatelessWidget {
   @override
-  State<ScrollControlPage> createState() => _ScrollControlPageState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Cursor Pagination')),
+      body: SmartPagination.listViewWithProvider<Post>(
+        request: const PaginationRequest(
+          page: 1,
+          pageSize: 20,
+          cursor: null, // Initial cursor
+        ),
+        provider: PaginationProvider.future((request) async {
+          final response = await api.fetchPosts(
+            cursor: request.cursor,
+            limit: request.pageSize,
+          );
+          // Update cursor for next page
+          request.cursor = response.nextCursor;
+          return response.posts;
+        }),
+        itemBuilder: (context, items, index) {
+          final post = items[index];
+          return ListTile(
+            title: Text(post.title),
+            subtitle: Text(post.content),
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
+---
+
+## 6. Smart Search Dropdown
+
+Search with auto-positioning overlay:
+
+```dart
+class SearchDropdownScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Search Dropdown')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            SmartSearchDropdown<Product>.withProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
+              provider: PaginationProvider.future(
+                (request) => MockApiService.searchProducts(
+                  request.searchQuery ?? '',
+                  pageSize: request.pageSize ?? 10,
+                ),
+              ),
+              searchRequestBuilder: (query) => PaginationRequest(
+                page: 1,
+                pageSize: 10,
+                searchQuery: query,
+              ),
+              searchConfig: const SmartSearchConfig(
+                debounceDelay: Duration(milliseconds: 300),
+                minSearchLength: 0,
+                searchOnEmpty: true,
+              ),
+              overlayConfig: const SmartSearchOverlayConfig(
+                maxHeight: 300,
+                borderRadius: 12,
+              ),
+              showSelected: true,
+              itemBuilder: (context, product) => ListTile(
+                leading: CircleAvatar(
+                  child: Text(product.name[0].toUpperCase()),
+                ),
+                title: Text(product.name),
+                subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+              ),
+              onItemSelected: (product) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Selected: ${product.name}')),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
+
+## 7. Multi-Select Search (v2.4.0)
+
+Search and select multiple items:
+
+```dart
+class MultiSelectSearchScreen extends StatefulWidget {
+  @override
+  State<MultiSelectSearchScreen> createState() => _MultiSelectSearchScreenState();
 }
 
-class _ScrollControlPageState extends State<ScrollControlPage> {
-  late final SmartPaginationController<Product> controller;
+class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
+  List<Product> _selectedProducts = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Multi-Select Search'),
+        actions: [
+          if (_selectedProducts.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear_all),
+              onPressed: () => setState(() => _selectedProducts.clear()),
+            ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Basic Multi-Select
+            SmartSearchMultiDropdown<Product>.withProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
+              provider: PaginationProvider.future(
+                (request) => MockApiService.searchProducts(
+                  request.searchQuery ?? '',
+                  pageSize: request.pageSize ?? 10,
+                ),
+              ),
+              searchRequestBuilder: (query) => PaginationRequest(
+                page: 1,
+                pageSize: 10,
+                searchQuery: query,
+              ),
+              searchConfig: const SmartSearchConfig(
+                debounceDelay: Duration(milliseconds: 500),
+                minSearchLength: 0,
+                searchOnEmpty: true,
+              ),
+              showSelected: true,
+              itemBuilder: (context, product) => ListTile(
+                leading: CircleAvatar(
+                  child: Text(product.name[0].toUpperCase()),
+                ),
+                title: Text(product.name),
+                subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+              ),
+              onSelectionChanged: (products) {
+                setState(() => _selectedProducts = products);
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // With Max Selections
+            SmartSearchMultiDropdown<Product>.withProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
+              provider: PaginationProvider.future(
+                (request) => MockApiService.searchProducts(
+                  request.searchQuery ?? '',
+                  pageSize: request.pageSize ?? 10,
+                ),
+              ),
+              searchRequestBuilder: (query) => PaginationRequest(
+                page: 1,
+                pageSize: 10,
+                searchQuery: query,
+              ),
+              showSelected: true,
+              maxSelections: 3, // Limit to 3 items
+              itemBuilder: (context, product) => ListTile(
+                title: Text(product.name),
+                subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+              ),
+              onSelectionChanged: (products) {
+                if (products.length == 3) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Maximum 3 items can be selected'),
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Custom Chip Style
+            SmartSearchMultiDropdown<Product>.withProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
+              provider: PaginationProvider.future(
+                (request) => MockApiService.searchProducts(
+                  request.searchQuery ?? '',
+                  pageSize: request.pageSize ?? 10,
+                ),
+              ),
+              searchRequestBuilder: (query) => PaginationRequest(
+                page: 1,
+                pageSize: 10,
+                searchQuery: query,
+              ),
+              showSelected: true,
+              selectedItemsWrap: true,
+              selectedItemsSpacing: 8,
+              selectedItemsRunSpacing: 8,
+              itemBuilder: (context, product) => ListTile(
+                title: Text(product.name),
+              ),
+              selectedItemBuilder: (context, product, onRemove) => Chip(
+                avatar: CircleAvatar(
+                  child: Text(product.name[0].toUpperCase()),
+                ),
+                label: Text(product.name),
+                deleteIcon: const Icon(Icons.close, size: 18),
+                onDeleted: onRemove,
+              ),
+              onSelectionChanged: (products) {},
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
+
+## 8. Search Theming
+
+Customize search appearance:
+
+```dart
+class SearchThemingScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Search Theming')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Auto Theme Detection (uses system brightness)
+            SmartSearchDropdown<Product>.withProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
+              provider: PaginationProvider.future(fetchProducts),
+              searchRequestBuilder: (query) => PaginationRequest(
+                page: 1,
+                pageSize: 10,
+                searchQuery: query,
+              ),
+              itemBuilder: (context, product) => ListTile(
+                title: Text(product.name),
+              ),
+              onItemSelected: (product) {},
+            ),
+            const SizedBox(height: 32),
+
+            // Custom Purple Theme
+            Theme(
+              data: Theme.of(context).copyWith(
+                extensions: [
+                  SmartSearchTheme(
+                    searchBoxBackgroundColor: const Color(0xFFF3E8FF),
+                    searchBoxTextColor: const Color(0xFF581C87),
+                    searchBoxHintColor: const Color(0xFF9333EA),
+                    searchBoxBorderColor: const Color(0xFFD8B4FE),
+                    searchBoxFocusedBorderColor: const Color(0xFF9333EA),
+                    searchBoxIconColor: const Color(0xFF9333EA),
+                    searchBoxCursorColor: const Color(0xFF9333EA),
+                    overlayBackgroundColor: Colors.white,
+                    overlayBorderColor: const Color(0xFFD8B4FE),
+                    itemHoverColor: const Color(0xFFF3E8FF),
+                    itemFocusedColor: const Color(0xFFE9D5FF),
+                    loadingIndicatorColor: const Color(0xFF9333EA),
+                  ),
+                ],
+              ),
+              child: SmartSearchDropdown<Product>.withProvider(
+                request: const PaginationRequest(page: 1, pageSize: 10),
+                provider: PaginationProvider.future(fetchProducts),
+                searchRequestBuilder: (query) => PaginationRequest(
+                  page: 1,
+                  pageSize: 10,
+                  searchQuery: query,
+                ),
+                itemBuilder: (context, product) => ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(0xFF9333EA),
+                    child: Text(
+                      product.name[0].toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  title: Text(product.name),
+                ),
+                onItemSelected: (product) {},
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+Available theme properties:
+- `searchBoxBackgroundColor`, `searchBoxTextColor`, `searchBoxHintColor`
+- `searchBoxBorderColor`, `searchBoxFocusedBorderColor`, `searchBoxIconColor`
+- `overlayBackgroundColor`, `overlayBorderColor`, `overlayElevation`
+- `itemBackgroundColor`, `itemHoverColor`, `itemFocusedColor`, `itemSelectedColor`
+- `loadingIndicatorColor`, `emptyStateIconColor`, `errorIconColor`
+
+---
+
+## 9. Keyboard Navigation
+
+Navigate search results with keyboard:
+
+```dart
+class KeyboardNavigationScreen extends StatefulWidget {
+  @override
+  State<KeyboardNavigationScreen> createState() => _KeyboardNavigationScreenState();
+}
+
+class _KeyboardNavigationScreenState extends State<KeyboardNavigationScreen> {
+  Product? _selectedProduct;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Keyboard Navigation')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Keyboard shortcuts info
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Keyboard Shortcuts:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    Text('↑↓ - Navigate items'),
+                    Text('Enter - Select item'),
+                    Text('Escape - Close dropdown'),
+                    Text('Home - First item'),
+                    Text('End - Last item'),
+                    Text('Page Up/Down - Jump 5 items'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            SmartSearchDropdown<Product>.withProvider(
+              request: const PaginationRequest(page: 1, pageSize: 10),
+              provider: PaginationProvider.future(fetchProducts),
+              searchRequestBuilder: (query) => PaginationRequest(
+                page: 1,
+                pageSize: 10,
+                searchQuery: query,
+              ),
+              showSelected: true,
+              itemBuilder: (context, product) => ListTile(
+                title: Text(product.name),
+                subtitle: Text(product.description),
+                trailing: Text('\$${product.price.toStringAsFixed(2)}'),
+              ),
+              onItemSelected: (product) {
+                setState(() => _selectedProduct = product);
+              },
+            ),
+
+            if (_selectedProduct != null) ...[
+              const SizedBox(height: 24),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.check_circle, color: Colors.green),
+                  title: Text('Selected: ${_selectedProduct!.name}'),
+                  subtitle: Text('\$${_selectedProduct!.price.toStringAsFixed(2)}'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
+
+## 10. Custom Error Handling
+
+Handle errors gracefully:
+
+```dart
+class CustomErrorScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Error Handling')),
+      body: SmartPagination.listViewWithProvider<Product>(
+        request: const PaginationRequest(page: 1, pageSize: 20),
+        provider: PaginationProvider.future(fetchProducts),
+        itemBuilder: (context, items, index) {
+          final product = items[index];
+          return ListTile(
+            title: Text(product.name),
+          );
+        },
+        onError: (exception) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 80, color: Colors.red),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Oops! Something went wrong',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    exception.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // Trigger retry
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Try Again'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
+---
+
+## 11. Data Operations
+
+Add, remove, update items programmatically:
+
+```dart
+class DataOperationsScreen extends StatefulWidget {
+  @override
+  State<DataOperationsScreen> createState() => _DataOperationsScreenState();
+}
+
+class _DataOperationsScreenState extends State<DataOperationsScreen> {
+  late final SmartPaginationCubit<Product> _cubit;
 
   @override
   void initState() {
     super.initState();
-    controller = SmartPaginationController.of(
-      request: PaginationRequest(page: 1, pageSize: 50),
+    _cubit = SmartPaginationCubit<Product>(
+      request: const PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(fetchProducts),
     );
   }
 
-  Future<List<Product>> fetchProducts(PaginationRequest request) async {
-    // Fetch products
-    final response = await http.get(
-      Uri.parse('https://api.example.com/products?page=${request.page}'),
+  void _addItem() {
+    _cubit.addItem(
+      Product(id: 'new', name: 'New Product', price: 99.99),
+      insertFirst: true,
     );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['items'] as List)
-          .map((item) => Product.fromJson(item))
-          .toList();
-    }
-    throw Exception('Failed to load products');
   }
 
-  void _scrollToTop() {
-    controller.scrollToIndex(0);
+  void _removeItem(Product product) {
+    _cubit.removeItem(product);
   }
 
-  void _scrollToMiddle() {
-    controller.scrollToIndex(25);
+  void _updateItem(Product product) {
+    _cubit.updateItem(
+      product,
+      product.copyWith(price: product.price + 10),
+    );
+  }
+
+  void _clearAll() {
+    _cubit.clearItems();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Scroll Control'),
+        title: const Text('Data Operations'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.arrow_upward),
-            onPressed: _scrollToTop,
-            tooltip: 'Scroll to top',
-          ),
+          IconButton(icon: const Icon(Icons.add), onPressed: _addItem),
+          IconButton(icon: const Icon(Icons.clear_all), onPressed: _clearAll),
         ],
       ),
       body: SmartPagination.withCubit(
-        cubit: controller.cubit,
+        cubit: _cubit,
         itemBuilderType: PaginateBuilderType.listView,
         itemBuilder: (context, items, index) {
           final product = items[index];
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          return Dismissible(
+            key: ValueKey(product.id),
+            onDismissed: (_) => _removeItem(product),
             child: ListTile(
-              leading: Text('#${index + 1}'),
               title: Text(product.name),
               subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _updateItem(product),
+              ),
             ),
           );
         },
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'top',
-            child: Icon(Icons.arrow_upward),
-            onPressed: _scrollToTop,
-            tooltip: 'Scroll to top',
-          ),
-          SizedBox(height: 16),
-          FloatingActionButton(
-            heroTag: 'middle',
-            child: Icon(Icons.remove),
-            onPressed: _scrollToMiddle,
-            tooltip: 'Scroll to middle',
-          ),
-        ],
       ),
     );
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    _cubit.dispose();
     super.dispose();
   }
 }
@@ -702,259 +892,33 @@ class _ScrollControlPageState extends State<ScrollControlPage> {
 
 ---
 
-## 9. Memory Management
+## 12. Data Age & Expiration
 
-Optimize memory usage for large lists:
+Auto-refresh data after expiration:
 
 ```dart
-class MemoryOptimizedPage extends StatelessWidget {
-  Future<List<LargeItem>> fetchItems(PaginationRequest request) async {
-    // Fetch large items with images
-    final response = await http.get(
-      Uri.parse('https://api.example.com/large-items?page=${request.page}'),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['items'] as List)
-          .map((item) => LargeItem.fromJson(item))
-          .toList();
-    }
-    throw Exception('Failed to load items');
-  }
-
+class DataAgeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Memory Optimized')),
-      body: SmartPagination.listViewWithCubit(
-        cubit: SmartPaginationCubit<LargeItem>(
-          request: PaginationRequest(page: 1, pageSize: 20),
-          provider: PaginationProvider.future(fetchItems),
-          maxPagesInMemory: 3, // Keep only 3 pages in memory (60 items)
-          onClear: () {
-            print('Cleared old pages from memory');
-          },
-          onInsertionCallback: (items) {
-            print('Loaded ${items.length} items');
-          },
-        ),
-        itemBuilder: (context, items, index) {
-          final item = items[index];
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              children: [
-                Image.network(
-                  item.imageUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  cacheHeight: 400, // Optimize image memory
-                ),
-                Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(item.title),
-                ),
-              ],
-            ),
-          );
-        },
-        cacheExtent: 500, // Pre-render items 500 pixels off-screen
-      ),
-    );
-  }
-}
-```
-
----
-
-## 10. REST API Integration
-
-Complete example with a real REST API:
-
-```dart
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-// API Service
-class ApiService {
-  static const String baseUrl = 'https://jsonplaceholder.typicode.com';
-
-  Future<List<Post>> fetchPosts(PaginationRequest request) async {
-    try {
-      final response = await http.get(
-        Uri.parse(
-          '$baseUrl/posts?_page=${request.page}&_limit=${request.pageSize}',
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Post.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load posts: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Network error: $e');
-    }
-  }
-}
-
-// Model
-class Post {
-  final int id;
-  final int userId;
-  final String title;
-  final String body;
-
-  Post({
-    required this.id,
-    required this.userId,
-    required this.title,
-    required this.body,
-  });
-
-  factory Post.fromJson(Map<String, dynamic> json) {
-    return Post(
-      id: json['id'] as int,
-      userId: json['userId'] as int,
-      title: json['title'] as String,
-      body: json['body'] as String,
-    );
-  }
-}
-
-// Page
-class PostsPage extends StatelessWidget {
-  final apiService = ApiService();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Posts'),
-        centerTitle: true,
-      ),
-      body: SmartPagination.listViewWithProvider<Post>(
-        request: PaginationRequest(page: 1, pageSize: 10),
-        provider: PaginationProvider.future(apiService.fetchPosts),
-        itemBuilder: (context, items, index) {
-          final post = items[index];
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: InkWell(
-              onTap: () {
-                // Navigate to post details
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PostDetailPage(post: post),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          child: Text('${post.userId}'),
-                          backgroundColor: Colors.blue[100],
-                          foregroundColor: Colors.blue[900],
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            post.title,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      post.body,
-                      style: TextStyle(color: Colors.grey[700]),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-        loadingWidget: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Loading posts...'),
-            ],
-          ),
-        ),
-        emptyWidget: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.inbox, size: 80, color: Colors.grey),
-              SizedBox(height: 16),
-              Text('No posts available'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-```
-
----
-
-## 11. Reorderable List
-
-Drag and drop to reorder items:
-
-```dart
-class ReorderableListPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Reorderable List')),
-      body: SmartPagination.reorderableListViewWithProvider<Product>(
-        request: PaginationRequest(page: 1, pageSize: 20),
+      appBar: AppBar(title: const Text('Data Age & Expiration')),
+      body: SmartPagination.listViewWithProvider<Product>(
+        request: const PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(fetchProducts),
+        // Data expires after 30 seconds
+        dataExpirationDuration: const Duration(seconds: 30),
+        // Check every 10 seconds
+        dataExpirationCheckInterval: const Duration(seconds: 10),
+        // Callback when data expires
+        onDataExpired: () {
+          print('Data has expired, refreshing...');
+        },
         itemBuilder: (context, items, index) {
           final product = items[index];
           return ListTile(
-            key: ValueKey(product.id),
-            leading: Icon(Icons.drag_handle),
             title: Text(product.name),
-            subtitle: Text('\$${product.price}'),
+            subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
           );
-        },
-        onReorder: (oldIndex, newIndex) {
-          // Handle reordering logic
-          if (newIndex > oldIndex) {
-            newIndex -= 1;
-          }
-          // Note: This only updates the UI list.
-          // You should also update your backend/database.
-          // In a real app, you would access the list from your state management solution
         },
       ),
     );
@@ -962,28 +926,37 @@ class ReorderableListPage extends StatelessWidget {
 }
 ```
 
+---
+
 ## Running the Examples
 
-To run these examples:
+1. Clone the repository
+2. Navigate to the example directory:
+   ```bash
+   cd example
+   ```
+3. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+4. Run the app:
+   ```bash
+   flutter run
+   ```
 
-1. Add the required dependencies to your `pubspec.yaml`:
+---
 
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
-  smart_pagination: ^0.0.1
-  http: ^1.1.0
-  cloud_firestore: ^4.13.0  # For real-time example
-```
+## Example Categories
 
-2. Import the package:
+The example app organizes examples into categories:
 
-```dart
-import 'package:smart_pagination/pagination.dart';
-```
-
-3. Copy any example code and customize it for your needs!
+| Category | Description | Examples |
+|----------|-------------|----------|
+| **Basic** | Core pagination patterns | ListView, GridView, Column, Row, Pull-to-Refresh, Filter & Search, Retry |
+| **Streams** | Real-time data updates | Single Stream, Multi Stream, Merged Streams |
+| **Advanced** | Complex pagination scenarios | Cursor, Horizontal, PageView, Staggered Grid, Custom States, Scroll Control, beforeBuild Hook, hasReachedEnd, Custom Builder, Reorderable, State Separation, Preloading, Data Operations, Data Age, Sorting |
+| **Search** | Smart search components | Search Dropdown, Multi-Select, Form Validation, Keyboard Navigation, Theming, Async States |
+| **Errors** | Error handling patterns | Basic Errors, Network Errors, Retry Patterns, Custom Widgets, Error Recovery, Graceful Degradation, Load More Errors |
 
 ---
 

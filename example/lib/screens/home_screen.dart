@@ -1,59 +1,21 @@
 import 'package:flutter/material.dart';
-import 'smart_pagination/basic_listview_screen.dart';
-import 'smart_pagination/gridview_screen.dart';
-import 'smart_pagination/column_example_screen.dart';
-import 'smart_pagination/row_example_screen.dart';
-import 'smart_pagination/retry_demo_screen.dart';
-import 'smart_pagination/filter_search_screen.dart';
-import 'smart_pagination/single_stream_screen.dart';
-import 'smart_pagination/multi_stream_screen.dart';
-import 'smart_pagination/merged_streams_screen.dart';
-import 'smart_pagination/cursor_pagination_screen.dart';
-import 'smart_pagination/horizontal_list_screen.dart';
-import 'smart_pagination/page_view_screen.dart';
-import 'smart_pagination/pull_to_refresh_screen.dart';
-import 'smart_pagination/staggered_grid_screen.dart';
-import 'smart_pagination/custom_states_screen.dart';
-import 'smart_pagination/before_build_hook_screen.dart';
-import 'smart_pagination/scroll_control_screen.dart';
-import 'smart_pagination/has_reached_end_screen.dart';
-import 'smart_pagination/custom_view_builder_screen.dart';
-import 'smart_pagination/reorderable_list_screen.dart';
-import 'smart_pagination/state_separation_screen.dart';
-import 'smart_pagination/smart_preloading_screen.dart';
-import 'smart_pagination/custom_error_handling_screen.dart';
-import 'smart_pagination/data_operations_screen.dart';
-import 'smart_pagination/data_age_screen.dart';
-import 'smart_pagination/sorting_screen.dart';
-import 'smart_pagination/search_dropdown_screen.dart';
-import 'smart_pagination/form_validation_search_screen.dart';
-import 'smart_pagination/multi_select_search_screen.dart';
-import 'smart_pagination/keyboard_navigation_search_screen.dart';
-import 'smart_pagination/search_theming_screen.dart';
-import 'smart_pagination/async_search_states_screen.dart';
+import 'package:go_router/go_router.dart';
 
-// Error handling examples
-import 'errors/basic_error_example.dart';
-import 'errors/network_errors_example.dart';
-import 'errors/retry_patterns_example.dart';
-import 'errors/custom_error_widgets_example.dart';
-import 'errors/error_recovery_example.dart';
-import 'errors/graceful_degradation_example.dart';
-import 'errors/load_more_errors_example.dart';
+import '../router/app_router.dart';
 
 class _ExampleItem {
   final String title;
   final String description;
   final IconData icon;
   final Color color;
-  final Widget screen;
+  final String route;
 
   const _ExampleItem({
     required this.title,
     required this.description,
     required this.icon,
     required this.color,
-    required this.screen,
+    required this.route,
   });
 }
 
@@ -94,49 +56,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Simple paginated ListView with products',
           icon: Icons.list_alt_rounded,
           color: Color(0xFF6366F1),
-          screen: BasicListViewScreen(),
+          route: AppRoutes.basicListView,
         ),
         _ExampleItem(
           title: 'GridView',
           description: 'Paginated GridView with product cards',
           icon: Icons.grid_view_rounded,
           color: Color(0xFF10B981),
-          screen: GridViewScreen(),
+          route: AppRoutes.gridView,
         ),
         _ExampleItem(
           title: 'Column Layout',
           description: 'Non-scrollable column inside scroll view',
           icon: Icons.view_agenda_rounded,
           color: Color(0xFF14B8A6),
-          screen: ColumnExampleScreen(),
+          route: AppRoutes.columnLayout,
         ),
         _ExampleItem(
           title: 'Row Layout',
           description: 'Non-scrollable row inside scroll view',
           icon: Icons.view_week_rounded,
           color: Color(0xFFEC4899),
-          screen: RowExampleScreen(),
+          route: AppRoutes.rowLayout,
         ),
         _ExampleItem(
           title: 'Pull to Refresh',
           description: 'Swipe down to refresh content',
           icon: Icons.refresh_rounded,
           color: Color(0xFFF59E0B),
-          screen: PullToRefreshScreen(),
+          route: AppRoutes.pullToRefresh,
         ),
         _ExampleItem(
           title: 'Filter & Search',
           description: 'Paginated list with filtering',
           icon: Icons.filter_list_rounded,
           color: Color(0xFF8B5CF6),
-          screen: FilterSearchScreen(),
+          route: AppRoutes.filterSearch,
         ),
         _ExampleItem(
           title: 'Retry Mechanism',
           description: 'Auto-retry with exponential backoff',
           icon: Icons.replay_rounded,
           color: Color(0xFFF97316),
-          screen: RetryDemoScreen(),
+          route: AppRoutes.retryMechanism,
         ),
       ],
     ),
@@ -150,21 +112,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Real-time updates from single stream',
           icon: Icons.bolt_rounded,
           color: Color(0xFF06B6D4),
-          screen: SingleStreamScreen(),
+          route: AppRoutes.singleStream,
         ),
         _ExampleItem(
           title: 'Multi Stream',
           description: 'Multiple streams with different rates',
           icon: Icons.cable_rounded,
           color: Color(0xFF4F46E5),
-          screen: MultiStreamScreen(),
+          route: AppRoutes.multiStream,
         ),
         _ExampleItem(
           title: 'Merged Streams',
           description: 'Merge streams into one unified stream',
           icon: Icons.merge_rounded,
           color: Color(0xFF7C3AED),
-          screen: MergedStreamsScreen(),
+          route: AppRoutes.mergedStreams,
         ),
       ],
     ),
@@ -178,105 +140,105 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Cursor-based pagination for real-time',
           icon: Icons.navigate_next_rounded,
           color: Color(0xFF0D9488),
-          screen: CursorPaginationScreen(),
+          route: AppRoutes.cursorPagination,
         ),
         _ExampleItem(
           title: 'Horizontal Scroll',
           description: 'Horizontal scrolling with pagination',
           icon: Icons.swap_horiz_rounded,
           color: Color(0xFFEA580C),
-          screen: HorizontalListScreen(),
+          route: AppRoutes.horizontalScroll,
         ),
         _ExampleItem(
           title: 'PageView',
           description: 'Swipeable pages with auto pagination',
           icon: Icons.auto_stories_rounded,
           color: Color(0xFFDB2777),
-          screen: PageViewScreen(),
+          route: AppRoutes.pageView,
         ),
         _ExampleItem(
           title: 'Staggered Grid',
           description: 'Pinterest-like masonry layout',
           icon: Icons.dashboard_rounded,
           color: Color(0xFF7C3AED),
-          screen: StaggeredGridScreen(),
+          route: AppRoutes.staggeredGrid,
         ),
         _ExampleItem(
           title: 'Custom States',
           description: 'Custom loading, empty, error states',
           icon: Icons.palette_rounded,
           color: Color(0xFF64748B),
-          screen: CustomStatesScreen(),
+          route: AppRoutes.customStates,
         ),
         _ExampleItem(
           title: 'Scroll Control',
           description: 'Programmatic scrolling to items',
           icon: Icons.open_in_full_rounded,
           color: Color(0xFF4F46E5),
-          screen: ScrollControlScreen(),
+          route: AppRoutes.scrollControl,
         ),
         _ExampleItem(
           title: 'beforeBuild Hook',
           description: 'Execute logic before rendering',
           icon: Icons.code_rounded,
           color: Color(0xFF78350F),
-          screen: BeforeBuildHookScreen(),
+          route: AppRoutes.beforeBuildHook,
         ),
         _ExampleItem(
           title: 'hasReachedEnd',
           description: 'Detect when pagination ends',
           icon: Icons.check_circle_rounded,
           color: Color(0xFFF97316),
-          screen: HasReachedEndScreen(),
+          route: AppRoutes.hasReachedEnd,
         ),
         _ExampleItem(
           title: 'Custom View Builder',
           description: 'Complete control with custom builder',
           icon: Icons.construction_rounded,
           color: Color(0xFF14B8A6),
-          screen: CustomViewBuilderScreen(),
+          route: AppRoutes.customViewBuilder,
         ),
         _ExampleItem(
           title: 'Reorderable List',
           description: 'Drag and drop to reorder items',
           icon: Icons.drag_indicator_rounded,
           color: Color(0xFF8B5CF6),
-          screen: ReorderableListScreen(),
+          route: AppRoutes.reorderableList,
         ),
         _ExampleItem(
           title: 'State Separation',
           description: 'Different UI for page states',
           icon: Icons.call_split_rounded,
           color: Color(0xFF4F46E5),
-          screen: StateSeparationScreen(),
+          route: AppRoutes.stateSeparation,
         ),
         _ExampleItem(
           title: 'Smart Preloading',
           description: 'Load items before reaching end',
           icon: Icons.speed_rounded,
           color: Color(0xFF7C3AED),
-          screen: SmartPreloadingScreen(),
+          route: AppRoutes.smartPreloading,
         ),
         _ExampleItem(
           title: 'Data Operations',
           description: 'Add, remove, update, clear items',
           icon: Icons.data_object_rounded,
           color: Color(0xFF06B6D4),
-          screen: DataOperationsScreen(),
+          route: AppRoutes.dataOperations,
         ),
         _ExampleItem(
           title: 'Data Age & Expiration',
           description: 'Auto-refresh after expiration',
           icon: Icons.timer_rounded,
           color: Color(0xFFEA580C),
-          screen: DataAgeScreen(),
+          route: AppRoutes.dataAge,
         ),
         _ExampleItem(
           title: 'Sorting & Orders',
           description: 'Programmatic sorting with orders',
           icon: Icons.sort_rounded,
           color: Color(0xFF4F46E5),
-          screen: SortingScreen(),
+          route: AppRoutes.sorting,
         ),
       ],
     ),
@@ -290,42 +252,42 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Search with auto-positioning overlay',
           icon: Icons.search_rounded,
           color: Color(0xFF7C3AED),
-          screen: SearchDropdownScreen(),
+          route: AppRoutes.searchDropdown,
         ),
         _ExampleItem(
           title: 'Multi-Select Search',
           description: 'Search and select multiple items',
           icon: Icons.checklist_rounded,
           color: Color(0xFFDC2626),
-          screen: MultiSelectSearchScreen(),
+          route: AppRoutes.multiSelectSearch,
         ),
         _ExampleItem(
           title: 'Form Validation',
           description: 'Search with validators & formatters',
           icon: Icons.fact_check_rounded,
           color: Color(0xFF059669),
-          screen: FormValidationSearchScreen(),
+          route: AppRoutes.formValidation,
         ),
         _ExampleItem(
           title: 'Keyboard Navigation',
           description: 'Arrow keys, Enter, Escape shortcuts',
           icon: Icons.keyboard_rounded,
           color: Color(0xFF2563EB),
-          screen: KeyboardNavigationSearchScreen(),
+          route: AppRoutes.keyboardNavigation,
         ),
         _ExampleItem(
           title: 'Search Theming',
           description: 'Light, dark & custom themes',
           icon: Icons.palette_rounded,
           color: Color(0xFFEC4899),
-          screen: SearchThemingScreen(),
+          route: AppRoutes.searchTheming,
         ),
         _ExampleItem(
           title: 'Async States',
           description: 'Loading, empty & error states',
           icon: Icons.hourglass_empty_rounded,
           color: Color(0xFFF59E0B),
-          screen: AsyncSearchStatesScreen(),
+          route: AppRoutes.asyncStates,
         ),
       ],
     ),
@@ -339,49 +301,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Simple error display with retry',
           icon: Icons.error_outline_rounded,
           color: Color(0xFFEF4444),
-          screen: BasicErrorExample(),
+          route: AppRoutes.basicError,
         ),
         _ExampleItem(
           title: 'Network Errors',
           description: 'Timeout, 404, 500 error types',
           icon: Icons.wifi_off_rounded,
           color: Color(0xFFF97316),
-          screen: NetworkErrorsExample(),
+          route: AppRoutes.networkErrors,
         ),
         _ExampleItem(
           title: 'Retry Patterns',
           description: 'Auto, exponential, limited retries',
           icon: Icons.autorenew_rounded,
           color: Color(0xFF3B82F6),
-          screen: RetryPatternsExample(),
+          route: AppRoutes.retryPatterns,
         ),
         _ExampleItem(
           title: 'Custom Error Widgets',
           description: 'Pre-built error widget styles',
           icon: Icons.widgets_rounded,
           color: Color(0xFF8B5CF6),
-          screen: CustomErrorWidgetsExample(),
+          route: AppRoutes.customErrorWidgets,
         ),
         _ExampleItem(
           title: 'Error Recovery',
           description: 'Cached data, fallback strategies',
           icon: Icons.healing_rounded,
           color: Color(0xFF10B981),
-          screen: ErrorRecoveryExample(),
+          route: AppRoutes.errorRecovery,
         ),
         _ExampleItem(
           title: 'Graceful Degradation',
           description: 'Offline mode, placeholders',
           icon: Icons.layers_clear_rounded,
           color: Color(0xFFF59E0B),
-          screen: GracefulDegradationExample(),
+          route: AppRoutes.gracefulDegradation,
         ),
         _ExampleItem(
           title: 'Load More Errors',
           description: 'Handle errors loading more pages',
           icon: Icons.expand_more_rounded,
           color: Color(0xFF4F46E5),
-          screen: LoadMoreErrorsExample(),
+          route: AppRoutes.loadMoreErrors,
         ),
       ],
     ),
@@ -697,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () => _navigate(context, item.screen),
+          onTap: () => context.push(item.route),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: EdgeInsets.all(16),
@@ -769,28 +731,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _navigate(BuildContext context, Widget screen) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => screen,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOutCubic;
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
-        },
-        transitionDuration: Duration(milliseconds: 300),
       ),
     );
   }
