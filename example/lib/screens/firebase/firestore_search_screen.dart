@@ -1,13 +1,15 @@
-import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_pagination/pagination.dart';
 
-/// Mock User for Firestore search example
+/// Model for Firestore User document
 class FirestoreUser {
   final String id;
   final String name;
   final String email;
   final String avatarUrl;
+  final String department;
   final bool isOnline;
   final DateTime lastActive;
 
@@ -16,22 +18,34 @@ class FirestoreUser {
     required this.name,
     required this.email,
     required this.avatarUrl,
+    required this.department,
     required this.isOnline,
     required this.lastActive,
   });
 
-  /// Generate search keywords for Firestore array-contains queries
-  List<String> get searchKeywords {
-    final keywords = <String>[];
-    final nameLower = name.toLowerCase();
-    for (int i = 1; i <= nameLower.length; i++) {
-      keywords.add(nameLower.substring(0, i));
-    }
-    return keywords;
+  factory FirestoreUser.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return FirestoreUser(
+      id: doc.id,
+      name: data['name'] ?? '',
+      email: data['email'] ?? '',
+      avatarUrl: data['avatarUrl'] ?? '',
+      department: data['department'] ?? 'General',
+      isOnline: data['isOnline'] ?? false,
+      lastActive: (data['lastActive'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  /// Searchable fields for client-side filtering
+  bool matchesQuery(String query) {
+    final lowerQuery = query.toLowerCase();
+    return name.toLowerCase().contains(lowerQuery) ||
+        email.toLowerCase().contains(lowerQuery) ||
+        department.toLowerCase().contains(lowerQuery);
   }
 }
 
-/// Simulates Firestore search with SmartSearchDropdown
+/// Demonstrates Firestore search with SmartSearchDropdown
 class FirestoreSearchScreen extends StatefulWidget {
   const FirestoreSearchScreen({super.key});
 
@@ -40,95 +54,84 @@ class FirestoreSearchScreen extends StatefulWidget {
 }
 
 class _FirestoreSearchScreenState extends State<FirestoreSearchScreen> {
+  bool _isFirebaseInitialized = false;
+  String? _initError;
   FirestoreUser? _selectedUser;
 
-  // Simulated Firestore users collection
-  final List<FirestoreUser> _allUsers = [
-    FirestoreUser(
-      id: '1',
-      name: 'Alice Johnson',
-      email: 'alice@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=alice',
-      isOnline: true,
-      lastActive: DateTime.now(),
-    ),
-    FirestoreUser(
-      id: '2',
-      name: 'Bob Smith',
-      email: 'bob@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=bob',
-      isOnline: false,
-      lastActive: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    FirestoreUser(
-      id: '3',
-      name: 'Charlie Brown',
-      email: 'charlie@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=charlie',
-      isOnline: true,
-      lastActive: DateTime.now(),
-    ),
-    FirestoreUser(
-      id: '4',
-      name: 'Diana Prince',
-      email: 'diana@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=diana',
-      isOnline: false,
-      lastActive: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    FirestoreUser(
-      id: '5',
-      name: 'Edward Norton',
-      email: 'edward@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=edward',
-      isOnline: true,
-      lastActive: DateTime.now(),
-    ),
-    FirestoreUser(
-      id: '6',
-      name: 'Fiona Apple',
-      email: 'fiona@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=fiona',
-      isOnline: false,
-      lastActive: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-    FirestoreUser(
-      id: '7',
-      name: 'George Lucas',
-      email: 'george@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=george',
-      isOnline: true,
-      lastActive: DateTime.now(),
-    ),
-    FirestoreUser(
-      id: '8',
-      name: 'Hannah Montana',
-      email: 'hannah@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?u=hannah',
-      isOnline: false,
-      lastActive: DateTime.now().subtract(const Duration(hours: 12)),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _initializeFirebase();
+  }
 
-  /// Simulates Firestore search with array-contains
+  Future<void> _initializeFirebase() async {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+      setState(() {
+        _isFirebaseInitialized = true;
+      });
+    } catch (e) {
+      setState(() {
+        _initError = e.toString();
+      });
+    }
+  }
+
+  /// Searches users from Firestore
+  ///
+  /// Note: Firestore doesn't support native full-text search.
+  /// For production apps, consider:
+  /// - Algolia or Typesense integration
+  /// - Firebase Extensions for search
+  /// - Client-side filtering (shown here for simplicity)
   Future<List<FirestoreUser>> searchUsers(PaginationRequest request) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
+    final firestore = FirebaseFirestore.instance;
+    final pageSize = request.pageSize ?? 10;
     final query = request.searchQuery?.toLowerCase() ?? '';
 
+    // Fetch users from Firestore
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+
     if (query.isEmpty) {
-      // Return recent users when no search query
-      final sorted = List<FirestoreUser>.from(_allUsers)
-        ..sort((a, b) => b.lastActive.compareTo(a.lastActive));
-      return sorted.take(request.pageSize ?? 10).toList();
+      // If no search query, get users ordered by lastActive
+      snapshot = await firestore
+          .collection('users')
+          .orderBy('lastActive', descending: true)
+          .limit(pageSize * 2)
+          .get();
+    } else {
+      // Firestore prefix search using startAt/endAt
+      snapshot = await firestore
+          .collection('users')
+          .orderBy('name')
+          .startAt([query.substring(0, 1).toUpperCase() + query.substring(1)])
+          .endAt(['${query.substring(0, 1).toUpperCase() + query.substring(1)}\uf8ff'])
+          .limit(pageSize * 2)
+          .get();
     }
 
-    // Simulate array-contains search
-    return _allUsers
-        .where((user) => user.searchKeywords.any((kw) => kw.startsWith(query)))
-        .take(request.pageSize ?? 10)
+    // Convert to model and filter client-side for better matching
+    var users = snapshot.docs
+        .map((doc) => FirestoreUser.fromFirestore(doc))
         .toList();
+
+    // Apply client-side filtering for better search
+    if (query.isNotEmpty) {
+      users = users.where((user) => user.matchesQuery(query)).toList();
+    }
+
+    // Apply pagination
+    final page = request.page;
+    final startIndex = (page - 1) * pageSize;
+    final endIndex = (startIndex + pageSize).clamp(0, users.length);
+
+    if (startIndex >= users.length) {
+      return [];
+    }
+
+    return users.sublist(startIndex, endIndex);
   }
 
   String _formatLastActive(DateTime date) {
@@ -144,207 +147,379 @@ class _FirestoreSearchScreenState extends State<FirestoreSearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Firestore Search'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => _showInfoDialog(context),
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    // Show error if Firebase initialization failed
+    if (_initError != null) {
+      return _buildFirebaseError();
+    }
+
+    // Show loading while initializing
+    if (!_isFirebaseInitialized) {
+      return const Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Info card
-            Card(
-              color: Colors.orange.shade50,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.orange.shade700),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Simulates Firestore array-contains query for prefix search',
-                        style: TextStyle(color: Colors.orange.shade700),
-                      ),
-                    ),
-                  ],
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Initializing Firebase...'),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Info banner
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade50,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search, color: Colors.purple.shade700, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Search users from Firestore with SmartSearchDropdown',
+                    style: TextStyle(color: Colors.purple.shade700, fontSize: 13),
+                  ),
                 ),
-              ),
+              ],
             ),
+          ),
+          const SizedBox(height: 24),
 
-            const SizedBox(height: 24),
-
-            // Search label
-            const Text(
-              'Search Users',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+          // Search label
+          const Text(
+            'Search Users',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 8),
 
-            // Search dropdown
-            SmartSearchDropdown<FirestoreUser>.withProvider(
-              request: const PaginationRequest(page: 1, pageSize: 10),
-              provider: PaginationProvider.future(searchUsers),
-              searchRequestBuilder: (query) => PaginationRequest(
-                page: 1,
-                pageSize: 10,
-                searchQuery: query,
-              ),
-              searchConfig: const SmartSearchConfig(
-                debounceDelay: Duration(milliseconds: 300),
-                minSearchLength: 0,
-                searchOnEmpty: true,
-              ),
-              overlayConfig: const SmartSearchOverlayConfig(
-                maxHeight: 300,
-              ),
-              decoration: const InputDecoration(
-                hintText: 'Type to search users...',
-              ),
-              showSelected: true,
-              itemBuilder: (context, user) => ListTile(
-                leading: Stack(
-                  children: [
-                    CircleAvatar(
-                      backgroundImage: NetworkImage(user.avatarUrl),
-                      onBackgroundImageError: (_, __) {},
-                      child: Text(user.name[0]),
-                    ),
-                    if (user.isOnline)
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                title: Text(user.name),
-                subtitle: Text(user.email),
-                trailing: user.isOnline
-                    ? null
-                    : Text(
-                        _formatLastActive(user.lastActive),
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 11,
-                        ),
-                      ),
-              ),
-              onItemSelected: (user) {
-                setState(() => _selectedUser = user);
-              },
+          // Search dropdown
+          SmartSearchDropdown<FirestoreUser>.withProvider(
+            request: const PaginationRequest(page: 1, pageSize: 10),
+            provider: PaginationProvider.future(searchUsers),
+            searchRequestBuilder: (query) => PaginationRequest(
+              page: 1,
+              pageSize: 10,
+              searchQuery: query,
             ),
-
-            // Selected user card
-            if (_selectedUser != null) ...[
-              const SizedBox(height: 32),
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 48,
-                            backgroundImage:
-                                NetworkImage(_selectedUser!.avatarUrl),
-                            onBackgroundImageError: (_, __) {},
-                            child: Text(
-                              _selectedUser!.name[0],
-                              style: const TextStyle(fontSize: 32),
-                            ),
-                          ),
-                          if (_selectedUser!.isOnline)
-                            Positioned(
-                              right: 4,
-                              bottom: 4,
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 3,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _selectedUser!.name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _selectedUser!.email,
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
+            searchConfig: const SmartSearchConfig(
+              debounceDelay: Duration(milliseconds: 300),
+              minSearchLength: 0,
+              searchOnEmpty: true,
+            ),
+            overlayConfig: const SmartSearchOverlayConfig(
+              maxHeight: 300,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'Type to search users...',
+              prefixIcon: Icon(Icons.person_search),
+            ),
+            showSelected: true,
+            itemBuilder: (context, user) => ListTile(
+              leading: Stack(
+                children: [
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(user.avatarUrl),
+                    onBackgroundImageError: (_, __) {},
+                    child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
+                  ),
+                  if (user.isOnline)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
                         decoration: BoxDecoration(
-                          color: _selectedUser!.isOnline
-                              ? Colors.green.shade100
-                              : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          _selectedUser!.isOnline
-                              ? 'Online'
-                              : _formatLastActive(_selectedUser!.lastActive),
-                          style: TextStyle(
-                            color: _selectedUser!.isOnline
-                                ? Colors.green.shade700
-                                : Colors.grey.shade700,
-                            fontSize: 12,
-                          ),
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.message),
-                            label: const Text('Message'),
-                          ),
-                          const SizedBox(width: 12),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.person),
-                            label: const Text('Profile'),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
+                ],
+              ),
+              title: Text(user.name),
+              subtitle: Text(user.email),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.purple.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  user.department,
+                  style: TextStyle(
+                    color: Colors.purple.shade700,
+                    fontSize: 12,
                   ),
                 ),
               ),
-            ],
+            ),
+            onItemSelected: (user) {
+              setState(() => _selectedUser = user);
+            },
+            emptyBuilder: (context) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person_off, size: 48, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  const Text('No users found'),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Add users to your "users" collection',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Selected user card
+          if (_selectedUser != null) ...[
+            const SizedBox(height: 32),
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundImage: NetworkImage(_selectedUser!.avatarUrl),
+                          onBackgroundImageError: (_, __) {},
+                          child: Text(
+                            _selectedUser!.name.isNotEmpty ? _selectedUser!.name[0] : '?',
+                            style: const TextStyle(fontSize: 32),
+                          ),
+                        ),
+                        if (_selectedUser!.isOnline)
+                          Positioned(
+                            right: 4,
+                            bottom: 4,
+                            child: Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 3,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _selectedUser!.name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _selectedUser!.email,
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _selectedUser!.department,
+                        style: TextStyle(color: Colors.purple.shade700),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _selectedUser!.isOnline
+                            ? Colors.green.shade100
+                            : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _selectedUser!.isOnline
+                            ? 'Online'
+                            : _formatLastActive(_selectedUser!.lastActive),
+                        style: TextStyle(
+                          color: _selectedUser!.isOnline
+                              ? Colors.green.shade700
+                              : Colors.grey.shade700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.message),
+                          label: const Text('Message'),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.person),
+                          label: const Text('Profile'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          // Search info
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.lightbulb, color: Colors.amber.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Search Implementation Note',
+                      style: TextStyle(
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Firestore doesn\'t support native full-text search. '
+                  'This example uses prefix matching (startAt/endAt) with '
+                  'client-side filtering. For production apps, consider:\n\n'
+                  '• Algolia or Typesense integration\n'
+                  '• Firebase Extensions for search\n'
+                  '• Cloud Functions for server-side filtering',
+                  style: TextStyle(color: Colors.amber.shade900, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFirebaseError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 80, color: Colors.orange.shade300),
+            const SizedBox(height: 24),
+            const Text(
+              'Firebase Not Configured',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'To use this example, configure Firebase:\n\n'
+              '1. Create a Firebase project\n'
+              '2. Add your app to the project\n'
+              '3. Run: flutterfire configure',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _initError ?? 'Unknown error',
+                style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Firestore Search'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('This example demonstrates:'),
+            SizedBox(height: 12),
+            Text('• SmartSearchDropdown with Firestore'),
+            Text('• Prefix-based search (startAt/endAt)'),
+            Text('• Client-side filtering for better matching'),
+            Text('• User selection and display'),
+            Text('• Online status indicators'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }

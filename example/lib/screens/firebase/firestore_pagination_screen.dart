@@ -1,8 +1,9 @@
-import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_pagination/pagination.dart';
 
-/// Mock Product for Firestore example
+/// Model for Firestore Product document
 class FirestoreProduct {
   final String id;
   final String name;
@@ -17,9 +18,29 @@ class FirestoreProduct {
     required this.imageUrl,
     required this.createdAt,
   });
+
+  factory FirestoreProduct.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return FirestoreProduct(
+      id: doc.id,
+      name: data['name'] ?? '',
+      price: (data['price'] ?? 0).toDouble(),
+      imageUrl: data['imageUrl'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'price': price,
+      'imageUrl': imageUrl,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
+  }
 }
 
-/// Simulates Firestore pagination with cursor-based queries
+/// Demonstrates Firestore cursor-based pagination with SmartPagination
 class FirestorePaginationScreen extends StatefulWidget {
   const FirestorePaginationScreen({super.key});
 
@@ -29,36 +50,61 @@ class FirestorePaginationScreen extends StatefulWidget {
 }
 
 class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
-  // Simulated Firestore data
-  final List<FirestoreProduct> _allProducts = List.generate(
-    100,
-    (index) => FirestoreProduct(
-      id: 'product_$index',
-      name: 'Product ${index + 1}',
-      price: 10.0 + (index * 5.99),
-      imageUrl: 'https://picsum.photos/seed/$index/100/100',
-      createdAt: DateTime.now().subtract(Duration(hours: index)),
-    ),
-  );
+  bool _isFirebaseInitialized = false;
+  String? _initError;
 
-  /// Simulates Firestore cursor-based pagination
-  Future<List<FirestoreProduct>> fetchProducts(
-      PaginationRequest request) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
+  // Store last document for cursor-based pagination
+  DocumentSnapshot? _lastDocument;
 
+  @override
+  void initState() {
+    super.initState();
+    _initializeFirebase();
+  }
+
+  Future<void> _initializeFirebase() async {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+      setState(() {
+        _isFirebaseInitialized = true;
+      });
+    } catch (e) {
+      setState(() {
+        _initError = e.toString();
+      });
+    }
+  }
+
+  /// Fetches products from Firestore using cursor-based pagination
+  Future<List<FirestoreProduct>> fetchProducts(PaginationRequest request) async {
+    final firestore = FirebaseFirestore.instance;
     final pageSize = request.pageSize ?? 20;
-    final page = request.page;
 
-    // Calculate pagination indices (simulating startAfterDocument)
-    final startIndex = (page - 1) * pageSize;
-    final endIndex = (startIndex + pageSize).clamp(0, _allProducts.length);
+    // Build query with ordering (required for cursor pagination)
+    Query<Map<String, dynamic>> query = firestore
+        .collection('products')
+        .orderBy('createdAt', descending: true)
+        .limit(pageSize);
 
-    if (startIndex >= _allProducts.length) {
-      return [];
+    // Apply cursor if not first page
+    if (request.page > 1 && _lastDocument != null) {
+      query = query.startAfterDocument(_lastDocument!);
     }
 
-    return _allProducts.sublist(startIndex, endIndex);
+    // Execute query
+    final snapshot = await query.get();
+
+    // Store last document for next page
+    if (snapshot.docs.isNotEmpty) {
+      _lastDocument = snapshot.docs.last;
+    }
+
+    // Convert to model objects
+    return snapshot.docs
+        .map((doc) => FirestoreProduct.fromFirestore(doc))
+        .toList();
   }
 
   String _timeAgo(DateTime date) {
@@ -81,81 +127,192 @@ class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Info banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            color: Colors.blue.shade50,
-            child: Row(
-              children: [
-                Icon(Icons.cloud, color: Colors.blue.shade700, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Simulated Firestore with cursor-based pagination',
-                    style: TextStyle(color: Colors.blue.shade700, fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          ),
+      body: _buildBody(),
+    );
+  }
 
-          // Product list
-          Expanded(
-            child: SmartPagination<FirestoreProduct>.listViewWithProvider(
-              request: const PaginationRequest(page: 1, pageSize: 20),
-              provider: PaginationProvider.future(fetchProducts),
-              itemBuilder: (context, items, index) {
-                final product = items[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        product.imageUrl,
+  Widget _buildBody() {
+    // Show error if Firebase initialization failed
+    if (_initError != null) {
+      return _buildFirebaseError();
+    }
+
+    // Show loading while initializing
+    if (!_isFirebaseInitialized) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Initializing Firebase...'),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Info banner
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          color: Colors.blue.shade50,
+          child: Row(
+            children: [
+              Icon(Icons.cloud, color: Colors.blue.shade700, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Cloud Firestore with cursor-based pagination (startAfterDocument)',
+                  style: TextStyle(color: Colors.blue.shade700, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Product list
+        Expanded(
+          child: SmartPagination<FirestoreProduct>.listViewWithProvider(
+            request: const PaginationRequest(page: 1, pageSize: 20),
+            provider: PaginationProvider.future(fetchProducts),
+            itemBuilder: (context, items, index) {
+              final product = items[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      product.imageUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
                         width: 50,
                         height: 50,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 50,
-                          height: 50,
-                          color: Colors.grey.shade200,
-                          child: Icon(Icons.image, color: Colors.grey.shade400),
-                        ),
+                        color: Colors.grey.shade200,
+                        child: Icon(Icons.image, color: Colors.grey.shade400),
                       ),
-                    ),
-                    title: Text(product.name),
-                    subtitle: Text(
-                      '\$${product.price.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    trailing: Text(
-                      _timeAgo(product.createdAt),
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                     ),
                   ),
-                );
-              },
-              loadingWidget: const Center(
+                  title: Text(product.name),
+                  subtitle: Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  trailing: Text(
+                    _timeAgo(product.createdAt),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
+                ),
+              );
+            },
+            firstPageLoadingBuilder: (context) => const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading from Firestore...'),
+                ],
+              ),
+            ),
+            firstPageEmptyBuilder: (context) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inbox, size: 64, color: Colors.grey.shade400),
+                  const SizedBox(height: 16),
+                  const Text('No products found'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Add products to your "products" collection',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            firstPageErrorBuilder: (context, error, retry) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Loading from Firestore...'),
+                    Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load products',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error.toString(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: retry,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFirebaseError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 80, color: Colors.orange.shade300),
+            const SizedBox(height: 24),
+            const Text(
+              'Firebase Not Configured',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'To use this example, configure Firebase:\n\n'
+              '1. Create a Firebase project\n'
+              '2. Add your app to the project\n'
+              '3. Download google-services.json (Android)\n'
+              '   or GoogleService-Info.plist (iOS)\n'
+              '4. Run: flutterfire configure',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _initError ?? 'Unknown error',
+                style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -171,10 +328,11 @@ class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
           children: [
             Text('This example demonstrates:'),
             SizedBox(height: 12),
-            Text('• Cursor-based pagination'),
-            Text('• startAfterDocument() simulation'),
-            Text('• Efficient large dataset handling'),
-            Text('• Real-time ready architecture'),
+            Text('• Cloud Firestore integration'),
+            Text('• Cursor-based pagination with startAfterDocument()'),
+            Text('• Ordered queries (by createdAt)'),
+            Text('• Document to model conversion'),
+            Text('• Error handling for Firebase'),
           ],
         ),
         actions: [
