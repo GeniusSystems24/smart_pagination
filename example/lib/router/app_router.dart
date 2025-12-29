@@ -51,6 +51,14 @@ import '../screens/errors/error_recovery_example.dart';
 import '../screens/errors/graceful_degradation_example.dart';
 import '../screens/errors/load_more_errors_example.dart';
 
+// Firebase examples
+import '../screens/firebase/firestore_pagination_screen.dart';
+import '../screens/firebase/firestore_realtime_screen.dart';
+import '../screens/firebase/firestore_search_screen.dart';
+import '../screens/firebase/realtime_database_screen.dart';
+import '../screens/firebase/firestore_filters_screen.dart';
+import '../screens/firebase/offline_support_screen.dart';
+
 /// Route paths for the example app
 class AppRoutes {
   // Home
@@ -103,6 +111,14 @@ class AppRoutes {
   static const String errorRecovery = '/errors/recovery';
   static const String gracefulDegradation = '/errors/graceful';
   static const String loadMoreErrors = '/errors/load-more';
+
+  // Firebase
+  static const String firestorePagination = '/firebase/firestore-pagination';
+  static const String firestoreRealtime = '/firebase/firestore-realtime';
+  static const String firestoreSearch = '/firebase/firestore-search';
+  static const String realtimeDatabase = '/firebase/realtime-database';
+  static const String firestoreFilters = '/firebase/firestore-filters';
+  static const String offlineSupport = '/firebase/offline-support';
 }
 
 /// Custom page transition for smooth navigation
@@ -449,6 +465,56 @@ final GoRouter appRouter = GoRouter(
         context: context,
         state: state,
         child: const LoadMoreErrorsExample(),
+      ),
+    ),
+
+    // Firebase examples
+    GoRoute(
+      path: AppRoutes.firestorePagination,
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const FirestorePaginationScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.firestoreRealtime,
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const FirestoreRealtimeScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.firestoreSearch,
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const FirestoreSearchScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.realtimeDatabase,
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const RealtimeDatabaseScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.firestoreFilters,
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const FirestoreFiltersScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.offlineSupport,
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const OfflineSupportScreen(),
       ),
     ),
   ],

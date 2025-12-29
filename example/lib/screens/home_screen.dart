@@ -347,6 +347,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
       ],
     ),
+    _ExampleCategory(
+      title: 'Firebase',
+      subtitle: 'Firebase integration examples',
+      icon: Icons.cloud_rounded,
+      items: [
+        _ExampleItem(
+          title: 'Firestore Pagination',
+          description: 'Cursor-based Firestore queries',
+          icon: Icons.storage_rounded,
+          color: Color(0xFFFF9800),
+          route: AppRoutes.firestorePagination,
+        ),
+        _ExampleItem(
+          title: 'Firestore Real-time',
+          description: 'Live data with snapshots',
+          icon: Icons.sync_rounded,
+          color: Color(0xFF4CAF50),
+          route: AppRoutes.firestoreRealtime,
+        ),
+        _ExampleItem(
+          title: 'Firestore Search',
+          description: 'Search with array-contains',
+          icon: Icons.manage_search_rounded,
+          color: Color(0xFF2196F3),
+          route: AppRoutes.firestoreSearch,
+        ),
+        _ExampleItem(
+          title: 'Realtime Database',
+          description: 'Firebase RTDB pagination',
+          icon: Icons.data_object_rounded,
+          color: Color(0xFFFFCA28),
+          route: AppRoutes.realtimeDatabase,
+        ),
+        _ExampleItem(
+          title: 'Firestore Filters',
+          description: 'Advanced composite queries',
+          icon: Icons.filter_alt_rounded,
+          color: Color(0xFF9C27B0),
+          route: AppRoutes.firestoreFilters,
+        ),
+        _ExampleItem(
+          title: 'Offline Support',
+          description: 'Cache & offline persistence',
+          icon: Icons.cloud_off_rounded,
+          color: Color(0xFF607D8B),
+          route: AppRoutes.offlineSupport,
+        ),
+      ],
+    ),
   ];
 
   @override
