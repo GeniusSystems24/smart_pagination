@@ -1,9 +1,13 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_pagination/pagination.dart';
 
-import 'screens/home_screen.dart';
+import 'firebase_options.dart';
+import 'router/app_router.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const PaginationExampleApp());
 }
 
@@ -32,15 +36,17 @@ class _PaginationExampleAppState extends State<PaginationExampleApp> {
 
   void toggleTheme() {
     setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+      _themeMode = _themeMode == ThemeMode.light
+          ? ThemeMode.dark
+          : ThemeMode.light;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       key: PaginationExampleApp.appKey,
+      routerConfig: appRouter,
       title: 'Smart Pagination Examples',
       debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
@@ -52,13 +58,8 @@ class _PaginationExampleAppState extends State<PaginationExampleApp> {
           seedColor: const Color(0xFF6366F1),
           brightness: Brightness.light,
         ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
-        extensions: [
-          SmartSearchTheme.light(),
-        ],
+        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
+        extensions: [SmartSearchTheme.light()],
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
@@ -67,15 +68,9 @@ class _PaginationExampleAppState extends State<PaginationExampleApp> {
           seedColor: const Color(0xFF818CF8),
           brightness: Brightness.dark,
         ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
-        extensions: [
-          SmartSearchTheme.dark(),
-        ],
+        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
+        extensions: [SmartSearchTheme.dark()],
       ),
-      home: const HomeScreen(),
     );
   }
 }

@@ -220,7 +220,6 @@ class SmartSearchBox<T> extends StatelessWidget {
 
   InputDecoration _buildDecoration(BuildContext context) {
     final searchTheme = SmartSearchTheme.of(context);
-
     final effectiveBorderRadius =
         borderRadius ??
         searchTheme.searchBoxBorderRadius ??

@@ -1,58 +1,21 @@
 import 'package:flutter/material.dart';
-import 'smart_pagination/basic_listview_screen.dart';
-import 'smart_pagination/gridview_screen.dart';
-import 'smart_pagination/column_example_screen.dart';
-import 'smart_pagination/row_example_screen.dart';
-import 'smart_pagination/retry_demo_screen.dart';
-import 'smart_pagination/filter_search_screen.dart';
-import 'smart_pagination/single_stream_screen.dart';
-import 'smart_pagination/multi_stream_screen.dart';
-import 'smart_pagination/merged_streams_screen.dart';
-import 'smart_pagination/cursor_pagination_screen.dart';
-import 'smart_pagination/horizontal_list_screen.dart';
-import 'smart_pagination/page_view_screen.dart';
-import 'smart_pagination/pull_to_refresh_screen.dart';
-import 'smart_pagination/staggered_grid_screen.dart';
-import 'smart_pagination/custom_states_screen.dart';
-import 'smart_pagination/before_build_hook_screen.dart';
-import 'smart_pagination/scroll_control_screen.dart';
-import 'smart_pagination/has_reached_end_screen.dart';
-import 'smart_pagination/custom_view_builder_screen.dart';
-import 'smart_pagination/reorderable_list_screen.dart';
-import 'smart_pagination/state_separation_screen.dart';
-import 'smart_pagination/smart_preloading_screen.dart';
-import 'smart_pagination/data_operations_screen.dart';
-import 'smart_pagination/data_age_screen.dart';
-import 'smart_pagination/sorting_screen.dart';
-import 'smart_pagination/search_dropdown_screen.dart';
-import 'smart_pagination/form_validation_search_screen.dart';
-import 'smart_pagination/multi_select_search_screen.dart';
-import 'smart_pagination/keyboard_navigation_search_screen.dart';
-import 'smart_pagination/search_theming_screen.dart';
-import 'smart_pagination/async_search_states_screen.dart';
+import 'package:go_router/go_router.dart';
 
-// Error handling examples
-import 'errors/basic_error_example.dart';
-import 'errors/network_errors_example.dart';
-import 'errors/retry_patterns_example.dart';
-import 'errors/custom_error_widgets_example.dart';
-import 'errors/error_recovery_example.dart';
-import 'errors/graceful_degradation_example.dart';
-import 'errors/load_more_errors_example.dart';
+import '../router/app_router.dart';
 
 class _ExampleItem {
   final String title;
   final String description;
   final IconData icon;
   final Color color;
-  final Widget screen;
+  final String route;
 
   const _ExampleItem({
     required this.title,
     required this.description,
     required this.icon,
     required this.color,
-    required this.screen,
+    required this.route,
   });
 }
 
@@ -71,7 +34,8 @@ class _ExampleCategory {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.initialIndex});
+  final int? initialIndex;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -93,49 +57,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Simple paginated ListView with products',
           icon: Icons.list_alt_rounded,
           color: Color(0xFF6366F1),
-          screen: BasicListViewScreen(),
+          route: const BasicListViewRoute().location,
         ),
         _ExampleItem(
           title: 'GridView',
           description: 'Paginated GridView with product cards',
           icon: Icons.grid_view_rounded,
           color: Color(0xFF10B981),
-          screen: GridViewScreen(),
+          route: const GridViewRoute().location,
         ),
         _ExampleItem(
           title: 'Column Layout',
           description: 'Non-scrollable column inside scroll view',
           icon: Icons.view_agenda_rounded,
           color: Color(0xFF14B8A6),
-          screen: ColumnExampleScreen(),
+          route: const ColumnLayoutRoute().location,
         ),
         _ExampleItem(
           title: 'Row Layout',
           description: 'Non-scrollable row inside scroll view',
           icon: Icons.view_week_rounded,
           color: Color(0xFFEC4899),
-          screen: RowExampleScreen(),
+          route: const RowLayoutRoute().location,
         ),
         _ExampleItem(
           title: 'Pull to Refresh',
           description: 'Swipe down to refresh content',
           icon: Icons.refresh_rounded,
           color: Color(0xFFF59E0B),
-          screen: PullToRefreshScreen(),
+          route: const PullToRefreshRoute().location,
         ),
         _ExampleItem(
           title: 'Filter & Search',
           description: 'Paginated list with filtering',
           icon: Icons.filter_list_rounded,
           color: Color(0xFF8B5CF6),
-          screen: FilterSearchScreen(),
+          route: const FilterSearchRoute().location,
         ),
         _ExampleItem(
           title: 'Retry Mechanism',
           description: 'Auto-retry with exponential backoff',
           icon: Icons.replay_rounded,
           color: Color(0xFFF97316),
-          screen: RetryDemoScreen(),
+          route: const RetryMechanismRoute().location,
         ),
       ],
     ),
@@ -149,21 +113,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Real-time updates from single stream',
           icon: Icons.bolt_rounded,
           color: Color(0xFF06B6D4),
-          screen: SingleStreamScreen(),
+          route: const SingleStreamRoute().location,
         ),
         _ExampleItem(
           title: 'Multi Stream',
           description: 'Multiple streams with different rates',
           icon: Icons.cable_rounded,
           color: Color(0xFF4F46E5),
-          screen: MultiStreamScreen(),
+          route: const MultiStreamRoute().location,
         ),
         _ExampleItem(
           title: 'Merged Streams',
           description: 'Merge streams into one unified stream',
           icon: Icons.merge_rounded,
           color: Color(0xFF7C3AED),
-          screen: MergedStreamsScreen(),
+          route: const MergedStreamsRoute().location,
         ),
       ],
     ),
@@ -177,105 +141,105 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Cursor-based pagination for real-time',
           icon: Icons.navigate_next_rounded,
           color: Color(0xFF0D9488),
-          screen: CursorPaginationScreen(),
+          route: const CursorPaginationRoute().location,
         ),
         _ExampleItem(
           title: 'Horizontal Scroll',
           description: 'Horizontal scrolling with pagination',
           icon: Icons.swap_horiz_rounded,
           color: Color(0xFFEA580C),
-          screen: HorizontalListScreen(),
+          route: const HorizontalScrollRoute().location,
         ),
         _ExampleItem(
           title: 'PageView',
           description: 'Swipeable pages with auto pagination',
           icon: Icons.auto_stories_rounded,
           color: Color(0xFFDB2777),
-          screen: PageViewScreen(),
+          route: const PageViewRoute().location,
         ),
         _ExampleItem(
           title: 'Staggered Grid',
           description: 'Pinterest-like masonry layout',
           icon: Icons.dashboard_rounded,
           color: Color(0xFF7C3AED),
-          screen: StaggeredGridScreen(),
+          route: const StaggeredGridRoute().location,
         ),
         _ExampleItem(
           title: 'Custom States',
           description: 'Custom loading, empty, error states',
           icon: Icons.palette_rounded,
           color: Color(0xFF64748B),
-          screen: CustomStatesScreen(),
+          route: const CustomStatesRoute().location,
         ),
         _ExampleItem(
           title: 'Scroll Control',
           description: 'Programmatic scrolling to items',
           icon: Icons.open_in_full_rounded,
           color: Color(0xFF4F46E5),
-          screen: ScrollControlScreen(),
+          route: const ScrollControlRoute().location,
         ),
         _ExampleItem(
           title: 'beforeBuild Hook',
           description: 'Execute logic before rendering',
           icon: Icons.code_rounded,
           color: Color(0xFF78350F),
-          screen: BeforeBuildHookScreen(),
+          route: const BeforeBuildHookRoute().location,
         ),
         _ExampleItem(
           title: 'hasReachedEnd',
           description: 'Detect when pagination ends',
           icon: Icons.check_circle_rounded,
           color: Color(0xFFF97316),
-          screen: HasReachedEndScreen(),
+          route: const HasReachedEndRoute().location,
         ),
         _ExampleItem(
           title: 'Custom View Builder',
           description: 'Complete control with custom builder',
           icon: Icons.construction_rounded,
           color: Color(0xFF14B8A6),
-          screen: CustomViewBuilderScreen(),
+          route: const CustomViewBuilderRoute().location,
         ),
         _ExampleItem(
           title: 'Reorderable List',
           description: 'Drag and drop to reorder items',
           icon: Icons.drag_indicator_rounded,
           color: Color(0xFF8B5CF6),
-          screen: ReorderableListScreen(),
+          route: const ReorderableListRoute().location,
         ),
         _ExampleItem(
           title: 'State Separation',
           description: 'Different UI for page states',
           icon: Icons.call_split_rounded,
           color: Color(0xFF4F46E5),
-          screen: StateSeparationScreen(),
+          route: const StateSeparationRoute().location,
         ),
         _ExampleItem(
           title: 'Smart Preloading',
           description: 'Load items before reaching end',
           icon: Icons.speed_rounded,
           color: Color(0xFF7C3AED),
-          screen: SmartPreloadingScreen(),
+          route: const SmartPreloadingRoute().location,
         ),
         _ExampleItem(
           title: 'Data Operations',
           description: 'Add, remove, update, clear items',
           icon: Icons.data_object_rounded,
           color: Color(0xFF06B6D4),
-          screen: DataOperationsScreen(),
+          route: const DataOperationsRoute().location,
         ),
         _ExampleItem(
           title: 'Data Age & Expiration',
           description: 'Auto-refresh after expiration',
           icon: Icons.timer_rounded,
           color: Color(0xFFEA580C),
-          screen: DataAgeScreen(),
+          route: const DataAgeRoute().location,
         ),
         _ExampleItem(
           title: 'Sorting & Orders',
           description: 'Programmatic sorting with orders',
           icon: Icons.sort_rounded,
           color: Color(0xFF4F46E5),
-          screen: SortingScreen(),
+          route: const SortingRoute().location,
         ),
       ],
     ),
@@ -289,42 +253,42 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Search with auto-positioning overlay',
           icon: Icons.search_rounded,
           color: Color(0xFF7C3AED),
-          screen: SearchDropdownScreen(),
+          route: const SearchDropdownRoute().location,
         ),
         _ExampleItem(
           title: 'Multi-Select Search',
           description: 'Search and select multiple items',
           icon: Icons.checklist_rounded,
           color: Color(0xFFDC2626),
-          screen: MultiSelectSearchScreen(),
+          route: const MultiSelectSearchRoute().location,
         ),
         _ExampleItem(
           title: 'Form Validation',
           description: 'Search with validators & formatters',
           icon: Icons.fact_check_rounded,
           color: Color(0xFF059669),
-          screen: FormValidationSearchScreen(),
+          route: const FormValidationRoute().location,
         ),
         _ExampleItem(
           title: 'Keyboard Navigation',
           description: 'Arrow keys, Enter, Escape shortcuts',
           icon: Icons.keyboard_rounded,
           color: Color(0xFF2563EB),
-          screen: KeyboardNavigationSearchScreen(),
+          route: const KeyboardNavigationRoute().location,
         ),
         _ExampleItem(
           title: 'Search Theming',
           description: 'Light, dark & custom themes',
           icon: Icons.palette_rounded,
           color: Color(0xFFEC4899),
-          screen: SearchThemingScreen(),
+          route: const SearchThemingRoute().location,
         ),
         _ExampleItem(
           title: 'Async States',
           description: 'Loading, empty & error states',
           icon: Icons.hourglass_empty_rounded,
           color: Color(0xFFF59E0B),
-          screen: AsyncSearchStatesScreen(),
+          route: const AsyncStatesRoute().location,
         ),
       ],
     ),
@@ -338,49 +302,105 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           description: 'Simple error display with retry',
           icon: Icons.error_outline_rounded,
           color: Color(0xFFEF4444),
-          screen: BasicErrorExample(),
+          route: const BasicErrorRoute().location,
         ),
         _ExampleItem(
           title: 'Network Errors',
           description: 'Timeout, 404, 500 error types',
           icon: Icons.wifi_off_rounded,
           color: Color(0xFFF97316),
-          screen: NetworkErrorsExample(),
+          route: const NetworkErrorsRoute().location,
         ),
         _ExampleItem(
           title: 'Retry Patterns',
           description: 'Auto, exponential, limited retries',
           icon: Icons.autorenew_rounded,
           color: Color(0xFF3B82F6),
-          screen: RetryPatternsExample(),
+          route: const RetryPatternsRoute().location,
         ),
         _ExampleItem(
           title: 'Custom Error Widgets',
           description: 'Pre-built error widget styles',
           icon: Icons.widgets_rounded,
           color: Color(0xFF8B5CF6),
-          screen: CustomErrorWidgetsExample(),
+          route: const CustomErrorWidgetsRoute().location,
         ),
         _ExampleItem(
           title: 'Error Recovery',
           description: 'Cached data, fallback strategies',
           icon: Icons.healing_rounded,
           color: Color(0xFF10B981),
-          screen: ErrorRecoveryExample(),
+          route: const ErrorRecoveryRoute().location,
         ),
         _ExampleItem(
           title: 'Graceful Degradation',
           description: 'Offline mode, placeholders',
           icon: Icons.layers_clear_rounded,
           color: Color(0xFFF59E0B),
-          screen: GracefulDegradationExample(),
+          route: const GracefulDegradationRoute().location,
         ),
         _ExampleItem(
           title: 'Load More Errors',
           description: 'Handle errors loading more pages',
           icon: Icons.expand_more_rounded,
           color: Color(0xFF4F46E5),
-          screen: LoadMoreErrorsExample(),
+          route: const LoadMoreErrorsRoute().location,
+        ),
+      ],
+    ),
+    _ExampleCategory(
+      title: 'Firebase',
+      subtitle: 'Firebase integration examples',
+      icon: Icons.cloud_rounded,
+      items: [
+        _ExampleItem(
+          title: 'Firestore Pagination',
+          description: 'Cursor-based Firestore queries',
+          icon: Icons.storage_rounded,
+          color: Color(0xFFFF9800),
+          route: const FirestorePaginationRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Firestore Real-time',
+          description: 'Live data with snapshots',
+          icon: Icons.sync_rounded,
+          color: Color(0xFF4CAF50),
+          route: const FirestoreRealtimeRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Firestore Search',
+          description: 'Search with array-contains',
+          icon: Icons.manage_search_rounded,
+          color: Color(0xFF2196F3),
+          route: const FirestoreSearchRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Realtime Database',
+          description: 'Firebase RTDB pagination',
+          icon: Icons.data_object_rounded,
+          color: Color(0xFFFFCA28),
+          route: const RealtimeDatabaseRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Firestore Filters',
+          description: 'Advanced composite queries',
+          icon: Icons.filter_alt_rounded,
+          color: Color(0xFF9C27B0),
+          route: const FirestoreFiltersRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Offline Support',
+          description: 'Cache & offline persistence',
+          icon: Icons.cloud_off_rounded,
+          color: Color(0xFF607D8B),
+          route: const OfflineSupportRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Seed Data Manager',
+          description: 'Populate Firebase with demo data',
+          icon: Icons.dataset_rounded,
+          color: Color(0xFF00BCD4),
+          route: const SeedDataRoute().location,
         ),
       ],
     ),
@@ -389,7 +409,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _categories.length, vsync: this);
+    _tabController = TabController(
+      length: _categories.length,
+      vsync: this,
+      initialIndex: widget.initialIndex ?? 0,
+    );
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
@@ -469,7 +493,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   Text(
                                     'Examples & Demos',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       fontSize: 14,
                                     ),
                                   ),
@@ -545,6 +571,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
+                  onTap: (value) {
+                    Future.delayed(Duration(milliseconds: 400), () {
+                      // Categories order: 0-Basic, 1-Streams, 2-Advanced, 3-Search, 4-Errors, 5-Firebase
+                      switch (value) {
+                        case 0:
+                          const BasicRoute().go(context);
+                          break;
+                        case 1:
+                          const StreamRoute().go(context);
+                          break;
+                        case 2:
+                          const AdvancedRoute().go(context);
+                          break;
+                        case 3:
+                          const SearchRoute().go(context);
+                          break;
+                        case 4:
+                          const ErrorRoute().go(context);
+                          break;
+                        case 5:
+                          const FirebaseRoute().go(context);
+                          break;
+                      }
+                    });
+                  },
                   tabs: _categories.map((category) {
                     return Tab(
                       child: Row(
@@ -582,11 +633,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off_rounded,
-            size: 64,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.search_off_rounded, size: 64, color: Colors.grey[300]),
           SizedBox(height: 16),
           Text(
             'No examples found',
@@ -599,10 +646,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           SizedBox(height: 8),
           Text(
             'Try a different search term',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[400],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -610,7 +654,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildCategoryContent(
-      _ExampleCategory category, List<_ExampleItem> items) {
+    _ExampleCategory category,
+    List<_ExampleItem> items,
+  ) {
     return ListView.builder(
       padding: EdgeInsets.all(16),
       itemCount: items.length + 1,
@@ -646,10 +692,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                     Text(
                       category.subtitle,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                     ),
                   ],
                 ),
@@ -696,7 +739,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () => _navigate(context, item.screen),
+          onTap: () => context.go(item.route),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: EdgeInsets.all(16),
@@ -709,10 +752,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        item.color,
-                        item.color.withValues(alpha: 0.7),
-                      ],
+                      colors: [item.color, item.color.withValues(alpha: 0.7)],
                     ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
@@ -771,28 +811,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
-  void _navigate(BuildContext context, Widget screen) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => screen,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOutCubic;
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
-        },
-        transitionDuration: Duration(milliseconds: 300),
-      ),
-    );
-  }
 }
 
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
@@ -803,7 +821,10 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: isDark ? Colors.grey[900] : Colors.white,
       child: tabBar,
