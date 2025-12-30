@@ -57,6 +57,6 @@ _flutter.loader.load({
     canvasKitBaseUrl: "/smart_pagination/canvaskit/"
   },
   serviceWorkerSettings: {
-    serviceWorkerVersion: "1150256336"
+    serviceWorkerVersion: "1527941043"
   }
 });
