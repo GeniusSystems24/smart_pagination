@@ -75,7 +75,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.4.0
+  smart_pagination: ^2.4.1
 ```
 
 Install it:
