@@ -58,7 +58,6 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
   String? _initError;
 
   // Store last key for cursor-based pagination
-  String? _lastKey;
   int? _lastTimestamp;
 
   @override
@@ -123,7 +122,6 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
     // Store last item for next page cursor
     if (posts.length > pageSize) {
       final lastPost = posts.last;
-      _lastKey = lastPost.id;
       _lastTimestamp = lastPost.timestamp.millisecondsSinceEpoch;
       posts.removeLast(); // Remove the extra item
     }
@@ -214,8 +212,9 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
                       Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor: Colors.primaries[
-                                post.author.hashCode % Colors.primaries.length],
+                            backgroundColor:
+                                Colors.primaries[post.author.hashCode %
+                                    Colors.primaries.length],
                             child: Text(
                               post.author.isNotEmpty ? post.author[0] : '?',
                               style: const TextStyle(color: Colors.white),
@@ -252,10 +251,7 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
                       const SizedBox(height: 12),
 
                       // Content
-                      Text(
-                        post.content,
-                        style: const TextStyle(fontSize: 15),
-                      ),
+                      Text(post.content, style: const TextStyle(fontSize: 15)),
 
                       const SizedBox(height: 12),
 
@@ -272,10 +268,7 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
                             '${post.comments}',
                           ),
                           const SizedBox(width: 24),
-                          _buildActionButton(
-                            Icons.share_outlined,
-                            'Share',
-                          ),
+                          _buildActionButton(Icons.share_outlined, 'Share'),
                         ],
                       ),
                     ],
@@ -297,7 +290,11 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.article_outlined, size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.article_outlined,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
                   const Text('No posts yet'),
                   const SizedBox(height: 8),

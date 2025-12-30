@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "413538268008",
+    "project_id": "smart-pagination-demo",
+    "storage_bucket": "smart-pagination-demo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413538268008:android:41bf06f03f6288f7b09cdd",
+        "android_client_info": {
+          "package_name": "com.example.smart_pagination_example"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA28pJmC7wUMQMCvcb6TdpwrJZvLxjvJNI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

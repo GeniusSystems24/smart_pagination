@@ -26,7 +26,6 @@ class _FormValidationSearchScreenState
   final _formKey = GlobalKey<FormState>();
   Product? _selectedProduct;
   int _quantity = 1;
-  String _notes = '';
   bool _isSubmitting = false;
 
   @override
@@ -267,7 +266,6 @@ class _FormValidationSearchScreenState
                   ),
                 ),
                 onSaved: (value) {
-                  _notes = value ?? '';
                 },
               ),
               const SizedBox(height: 32),
@@ -344,7 +342,6 @@ class _FormValidationSearchScreenState
     setState(() {
       _selectedProduct = null;
       _quantity = 1;
-      _notes = '';
     });
   }
 

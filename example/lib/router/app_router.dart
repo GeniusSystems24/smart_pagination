@@ -58,68 +58,9 @@ import '../screens/firebase/firestore_search_screen.dart';
 import '../screens/firebase/realtime_database_screen.dart';
 import '../screens/firebase/firestore_filters_screen.dart';
 import '../screens/firebase/offline_support_screen.dart';
+import '../screens/firebase/seed_data_screen.dart';
 
-/// Route paths for the example app
-class AppRoutes {
-  // Home
-  static const String home = '/';
-
-  // Basic
-  static const String basicListView = '/basic/list-view';
-  static const String gridView = '/basic/grid-view';
-  static const String columnLayout = '/basic/column';
-  static const String rowLayout = '/basic/row';
-  static const String pullToRefresh = '/basic/pull-to-refresh';
-  static const String filterSearch = '/basic/filter-search';
-  static const String retryMechanism = '/basic/retry';
-
-  // Streams
-  static const String singleStream = '/streams/single';
-  static const String multiStream = '/streams/multi';
-  static const String mergedStreams = '/streams/merged';
-
-  // Advanced
-  static const String cursorPagination = '/advanced/cursor';
-  static const String horizontalScroll = '/advanced/horizontal';
-  static const String pageView = '/advanced/page-view';
-  static const String staggeredGrid = '/advanced/staggered-grid';
-  static const String customStates = '/advanced/custom-states';
-  static const String scrollControl = '/advanced/scroll-control';
-  static const String beforeBuildHook = '/advanced/before-build';
-  static const String hasReachedEnd = '/advanced/reached-end';
-  static const String customViewBuilder = '/advanced/custom-builder';
-  static const String reorderableList = '/advanced/reorderable';
-  static const String stateSeparation = '/advanced/state-separation';
-  static const String smartPreloading = '/advanced/preloading';
-  static const String dataOperations = '/advanced/data-operations';
-  static const String dataAge = '/advanced/data-age';
-  static const String sorting = '/advanced/sorting';
-
-  // Search
-  static const String searchDropdown = '/search/dropdown';
-  static const String multiSelectSearch = '/search/multi-select';
-  static const String formValidation = '/search/form-validation';
-  static const String keyboardNavigation = '/search/keyboard';
-  static const String searchTheming = '/search/theming';
-  static const String asyncStates = '/search/async-states';
-
-  // Errors
-  static const String basicError = '/errors/basic';
-  static const String networkErrors = '/errors/network';
-  static const String retryPatterns = '/errors/retry-patterns';
-  static const String customErrorWidgets = '/errors/custom-widgets';
-  static const String errorRecovery = '/errors/recovery';
-  static const String gracefulDegradation = '/errors/graceful';
-  static const String loadMoreErrors = '/errors/load-more';
-
-  // Firebase
-  static const String firestorePagination = '/firebase/firestore-pagination';
-  static const String firestoreRealtime = '/firebase/firestore-realtime';
-  static const String firestoreSearch = '/firebase/firestore-search';
-  static const String realtimeDatabase = '/firebase/realtime-database';
-  static const String firestoreFilters = '/firebase/firestore-filters';
-  static const String offlineSupport = '/firebase/offline-support';
-}
+part 'app_router.g.dart';
 
 /// Custom page transition for smooth navigation
 CustomTransitionPage<void> _buildPageWithTransition({
@@ -135,387 +76,763 @@ CustomTransitionPage<void> _buildPageWithTransition({
       const end = Offset.zero;
       const curve = Curves.easeInOutCubic;
       var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-      return SlideTransition(
-        position: animation.drive(tween),
-        child: child,
-      );
+      return SlideTransition(position: animation.drive(tween), child: child);
     },
     transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
-/// App router configuration using go_router
-final GoRouter appRouter = GoRouter(
-  initialLocation: AppRoutes.home,
+// ============================================================================
+// Route Data Classes
+// ============================================================================
+
+// ============================================================================
+// Basic Routes
+// ============================================================================
+@TypedGoRoute<BasicRoute>(
+  path: '/basic',
   routes: [
-    // Home
-    GoRoute(
-      path: AppRoutes.home,
-      builder: (context, state) => const HomeScreen(),
-    ),
-
-    // Basic examples
-    GoRoute(
-      path: AppRoutes.basicListView,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const BasicListViewScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.gridView,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const GridViewScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.columnLayout,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const ColumnExampleScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.rowLayout,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const RowExampleScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.pullToRefresh,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const PullToRefreshScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.filterSearch,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const FilterSearchScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.retryMechanism,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const RetryDemoScreen(),
-      ),
-    ),
-
-    // Streams examples
-    GoRoute(
-      path: AppRoutes.singleStream,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const SingleStreamScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.multiStream,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const MultiStreamScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.mergedStreams,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const MergedStreamsScreen(),
-      ),
-    ),
-
-    // Advanced examples
-    GoRoute(
-      path: AppRoutes.cursorPagination,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const CursorPaginationScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.horizontalScroll,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const HorizontalListScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.pageView,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const PageViewScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.staggeredGrid,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const StaggeredGridScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.customStates,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const CustomStatesScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.scrollControl,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const ScrollControlScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.beforeBuildHook,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const BeforeBuildHookScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.hasReachedEnd,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const HasReachedEndScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.customViewBuilder,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const CustomViewBuilderScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.reorderableList,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const ReorderableListScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.stateSeparation,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const StateSeparationScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.smartPreloading,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const SmartPreloadingScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.dataOperations,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const DataOperationsScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.dataAge,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const DataAgeScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.sorting,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const SortingScreen(),
-      ),
-    ),
-
-    // Search examples
-    GoRoute(
-      path: AppRoutes.searchDropdown,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const SearchDropdownScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.multiSelectSearch,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const MultiSelectSearchScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.formValidation,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const FormValidationSearchScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.keyboardNavigation,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const KeyboardNavigationSearchScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.searchTheming,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const SearchThemingScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.asyncStates,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const AsyncSearchStatesScreen(),
-      ),
-    ),
-
-    // Error examples
-    GoRoute(
-      path: AppRoutes.basicError,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const BasicErrorExample(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.networkErrors,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const NetworkErrorsExample(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.retryPatterns,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const RetryPatternsExample(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.customErrorWidgets,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const CustomErrorWidgetsExample(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.errorRecovery,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const ErrorRecoveryExample(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.gracefulDegradation,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const GracefulDegradationExample(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.loadMoreErrors,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const LoadMoreErrorsExample(),
-      ),
-    ),
-
-    // Firebase examples
-    GoRoute(
-      path: AppRoutes.firestorePagination,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const FirestorePaginationScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.firestoreRealtime,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const FirestoreRealtimeScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.firestoreSearch,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const FirestoreSearchScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.realtimeDatabase,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const RealtimeDatabaseScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.firestoreFilters,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const FirestoreFiltersScreen(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.offlineSupport,
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const OfflineSupportScreen(),
-      ),
-    ),
+    TypedGoRoute<BasicListViewRoute>(path: 'list-view'),
+    TypedGoRoute<GridViewRoute>(path: 'grid-view'),
+    TypedGoRoute<ColumnLayoutRoute>(path: 'column'),
+    TypedGoRoute<RowLayoutRoute>(path: 'row'),
+    TypedGoRoute<PullToRefreshRoute>(path: 'pull-to-refresh'),
+    TypedGoRoute<FilterSearchRoute>(path: 'filter-search'),
+    TypedGoRoute<RetryMechanismRoute>(path: 'retry'),
   ],
+)
+class BasicRoute extends GoRouteData with $BasicRoute {
+  const BasicRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 0);
+  }
+}
+
+class BasicListViewRoute extends GoRouteData with $BasicListViewRoute {
+  const BasicListViewRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const BasicListViewScreen(),
+    );
+  }
+}
+
+class GridViewRoute extends GoRouteData with $GridViewRoute {
+  const GridViewRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const GridViewScreen(),
+    );
+  }
+}
+
+class ColumnLayoutRoute extends GoRouteData with $ColumnLayoutRoute {
+  const ColumnLayoutRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const ColumnExampleScreen(),
+    );
+  }
+}
+
+class RowLayoutRoute extends GoRouteData with $RowLayoutRoute {
+  const RowLayoutRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const RowExampleScreen(),
+    );
+  }
+}
+
+class PullToRefreshRoute extends GoRouteData with $PullToRefreshRoute {
+  const PullToRefreshRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const PullToRefreshScreen(),
+    );
+  }
+}
+
+class FilterSearchRoute extends GoRouteData with $FilterSearchRoute {
+  const FilterSearchRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const FilterSearchScreen(),
+    );
+  }
+}
+
+class RetryMechanismRoute extends GoRouteData with $RetryMechanismRoute {
+  const RetryMechanismRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const RetryDemoScreen(),
+    );
+  }
+}
+
+// ============================================================================
+// Streams Routes
+// ============================================================================
+
+@TypedGoRoute<StreamRoute>(
+  path: '/streams',
+  routes: [
+    TypedGoRoute<SingleStreamRoute>(path: 'single'),
+    TypedGoRoute<MultiStreamRoute>(path: 'multi'),
+    TypedGoRoute<MergedStreamsRoute>(path: 'merged'),
+  ],
+)
+class StreamRoute extends GoRouteData with $StreamRoute {
+  const StreamRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 1);
+  }
+}
+
+class SingleStreamRoute extends GoRouteData with $SingleStreamRoute {
+  const SingleStreamRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const SingleStreamScreen(),
+    );
+  }
+}
+
+class MultiStreamRoute extends GoRouteData with $MultiStreamRoute {
+  const MultiStreamRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const MultiStreamScreen(),
+    );
+  }
+}
+
+class MergedStreamsRoute extends GoRouteData with $MergedStreamsRoute {
+  const MergedStreamsRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const MergedStreamsScreen(),
+    );
+  }
+}
+
+// ============================================================================
+// Advanced Routes
+// ============================================================================
+@TypedGoRoute<AdvancedRoute>(
+  path: '/advanced',
+  routes: [
+    TypedGoRoute<CursorPaginationRoute>(path: 'cursor'),
+    TypedGoRoute<HorizontalScrollRoute>(path: 'horizontal'),
+    TypedGoRoute<PageViewRoute>(path: 'page-view'),
+    TypedGoRoute<StaggeredGridRoute>(path: 'staggered-grid'),
+    TypedGoRoute<CustomStatesRoute>(path: 'custom-states'),
+    TypedGoRoute<ScrollControlRoute>(path: 'scroll-control'),
+    TypedGoRoute<BeforeBuildHookRoute>(path: 'before-build'),
+    TypedGoRoute<HasReachedEndRoute>(path: 'reached-end'),
+    TypedGoRoute<CustomViewBuilderRoute>(path: 'custom-builder'),
+    TypedGoRoute<ReorderableListRoute>(path: 'reorderable'),
+    TypedGoRoute<StateSeparationRoute>(path: 'state-separation'),
+    TypedGoRoute<SmartPreloadingRoute>(path: 'preloading'),
+    TypedGoRoute<DataOperationsRoute>(path: 'data-operations'),
+    TypedGoRoute<DataAgeRoute>(path: 'data-age'),
+    TypedGoRoute<SortingRoute>(path: 'sorting'),
+  ],
+)
+class AdvancedRoute extends GoRouteData with $AdvancedRoute {
+  const AdvancedRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 2);
+  }
+}
+
+class CursorPaginationRoute extends GoRouteData with $CursorPaginationRoute {
+  const CursorPaginationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const CursorPaginationScreen(),
+    );
+  }
+}
+
+class HorizontalScrollRoute extends GoRouteData with $HorizontalScrollRoute {
+  const HorizontalScrollRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const HorizontalListScreen(),
+    );
+  }
+}
+
+class PageViewRoute extends GoRouteData with $PageViewRoute {
+  const PageViewRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const PageViewScreen(),
+    );
+  }
+}
+
+class StaggeredGridRoute extends GoRouteData with $StaggeredGridRoute {
+  const StaggeredGridRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const StaggeredGridScreen(),
+    );
+  }
+}
+
+class CustomStatesRoute extends GoRouteData with $CustomStatesRoute {
+  const CustomStatesRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const CustomStatesScreen(),
+    );
+  }
+}
+
+class ScrollControlRoute extends GoRouteData with $ScrollControlRoute {
+  const ScrollControlRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const ScrollControlScreen(),
+    );
+  }
+}
+
+class BeforeBuildHookRoute extends GoRouteData with $BeforeBuildHookRoute {
+  const BeforeBuildHookRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const BeforeBuildHookScreen(),
+    );
+  }
+}
+
+class HasReachedEndRoute extends GoRouteData with $HasReachedEndRoute {
+  const HasReachedEndRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const HasReachedEndScreen(),
+    );
+  }
+}
+
+class CustomViewBuilderRoute extends GoRouteData with $CustomViewBuilderRoute {
+  const CustomViewBuilderRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const CustomViewBuilderScreen(),
+    );
+  }
+}
+
+class ReorderableListRoute extends GoRouteData with $ReorderableListRoute {
+  const ReorderableListRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const ReorderableListScreen(),
+    );
+  }
+}
+
+class StateSeparationRoute extends GoRouteData with $StateSeparationRoute {
+  const StateSeparationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const StateSeparationScreen(),
+    );
+  }
+}
+
+class SmartPreloadingRoute extends GoRouteData with $SmartPreloadingRoute {
+  const SmartPreloadingRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const SmartPreloadingScreen(),
+    );
+  }
+}
+
+class DataOperationsRoute extends GoRouteData with $DataOperationsRoute {
+  const DataOperationsRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const DataOperationsScreen(),
+    );
+  }
+}
+
+class DataAgeRoute extends GoRouteData with $DataAgeRoute {
+  const DataAgeRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const DataAgeScreen(),
+    );
+  }
+}
+
+class SortingRoute extends GoRouteData with $SortingRoute {
+  const SortingRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const SortingScreen(),
+    );
+  }
+}
+
+// ============================================================================
+// Search Routes
+// ============================================================================
+
+@TypedGoRoute<SearchRoute>(
+  path: '/search',
+  routes: [
+    TypedGoRoute<SearchDropdownRoute>(path: 'dropdown'),
+    TypedGoRoute<MultiSelectSearchRoute>(path: 'multi-select'),
+    TypedGoRoute<FormValidationRoute>(path: 'form-validation'),
+    TypedGoRoute<KeyboardNavigationRoute>(path: 'keyboard'),
+    TypedGoRoute<SearchThemingRoute>(path: 'theming'),
+    TypedGoRoute<AsyncStatesRoute>(path: 'async-states'),
+  ],
+)
+class SearchRoute extends GoRouteData with $SearchRoute {
+  const SearchRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 3);
+  }
+}
+
+class SearchDropdownRoute extends GoRouteData with $SearchDropdownRoute {
+  const SearchDropdownRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const SearchDropdownScreen(),
+    );
+  }
+}
+
+class MultiSelectSearchRoute extends GoRouteData with $MultiSelectSearchRoute {
+  const MultiSelectSearchRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const MultiSelectSearchScreen(),
+    );
+  }
+}
+
+class FormValidationRoute extends GoRouteData with $FormValidationRoute {
+  const FormValidationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const FormValidationSearchScreen(),
+    );
+  }
+}
+
+class KeyboardNavigationRoute extends GoRouteData
+    with $KeyboardNavigationRoute {
+  const KeyboardNavigationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const KeyboardNavigationSearchScreen(),
+    );
+  }
+}
+
+class SearchThemingRoute extends GoRouteData with $SearchThemingRoute {
+  const SearchThemingRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const SearchThemingScreen(),
+    );
+  }
+}
+
+class AsyncStatesRoute extends GoRouteData with $AsyncStatesRoute {
+  const AsyncStatesRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const AsyncSearchStatesScreen(),
+    );
+  }
+}
+
+// ============================================================================
+// Error Routes
+// ============================================================================
+
+@TypedGoRoute<ErrorRoute>(
+  path: '/errors',
+  routes: [
+    TypedGoRoute<BasicErrorRoute>(path: 'basic'),
+    TypedGoRoute<NetworkErrorsRoute>(path: 'network'),
+    TypedGoRoute<RetryPatternsRoute>(path: 'retry-patterns'),
+    TypedGoRoute<CustomErrorWidgetsRoute>(path: 'custom-widgets'),
+    TypedGoRoute<ErrorRecoveryRoute>(path: 'recovery'),
+    TypedGoRoute<GracefulDegradationRoute>(path: 'graceful'),
+    TypedGoRoute<LoadMoreErrorsRoute>(path: 'load-more'),
+  ],
+)
+class ErrorRoute extends GoRouteData with $ErrorRoute {
+  const ErrorRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 4);
+  }
+}
+
+class BasicErrorRoute extends GoRouteData with $BasicErrorRoute {
+  const BasicErrorRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const BasicErrorExample(),
+    );
+  }
+}
+
+class NetworkErrorsRoute extends GoRouteData with $NetworkErrorsRoute {
+  const NetworkErrorsRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const NetworkErrorsExample(),
+    );
+  }
+}
+
+class RetryPatternsRoute extends GoRouteData with $RetryPatternsRoute {
+  const RetryPatternsRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const RetryPatternsExample(),
+    );
+  }
+}
+
+class CustomErrorWidgetsRoute extends GoRouteData
+    with $CustomErrorWidgetsRoute {
+  const CustomErrorWidgetsRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const CustomErrorWidgetsExample(),
+    );
+  }
+}
+
+class ErrorRecoveryRoute extends GoRouteData with $ErrorRecoveryRoute {
+  const ErrorRecoveryRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const ErrorRecoveryExample(),
+    );
+  }
+}
+
+class GracefulDegradationRoute extends GoRouteData
+    with $GracefulDegradationRoute {
+  const GracefulDegradationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const GracefulDegradationExample(),
+    );
+  }
+}
+
+class LoadMoreErrorsRoute extends GoRouteData with $LoadMoreErrorsRoute {
+  const LoadMoreErrorsRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const LoadMoreErrorsExample(),
+    );
+  }
+}
+
+// ============================================================================
+// Firebase Routes
+// ============================================================================
+
+@TypedGoRoute<FirebaseRoute>(
+  path: '/firebase',
+  routes: [
+    TypedGoRoute<FirestorePaginationRoute>(path: 'firestore-pagination'),
+    TypedGoRoute<FirestoreRealtimeRoute>(path: 'firestore-realtime'),
+    TypedGoRoute<FirestoreSearchRoute>(path: 'firestore-search'),
+    TypedGoRoute<RealtimeDatabaseRoute>(path: 'realtime-database'),
+    TypedGoRoute<FirestoreFiltersRoute>(path: 'firestore-filters'),
+    TypedGoRoute<OfflineSupportRoute>(path: 'offline-support'),
+    TypedGoRoute<SeedDataRoute>(path: 'seed-data'),
+  ],
+)
+class FirebaseRoute extends GoRouteData with $FirebaseRoute {
+  const FirebaseRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 5);
+  }
+}
+
+class FirestorePaginationRoute extends GoRouteData
+    with $FirestorePaginationRoute {
+  const FirestorePaginationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const FirestorePaginationScreen(),
+    );
+  }
+}
+
+class FirestoreRealtimeRoute extends GoRouteData with $FirestoreRealtimeRoute {
+  const FirestoreRealtimeRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const FirestoreRealtimeScreen(),
+    );
+  }
+}
+
+class FirestoreSearchRoute extends GoRouteData with $FirestoreSearchRoute {
+  const FirestoreSearchRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const FirestoreSearchScreen(),
+    );
+  }
+}
+
+class RealtimeDatabaseRoute extends GoRouteData with $RealtimeDatabaseRoute {
+  const RealtimeDatabaseRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const RealtimeDatabaseScreen(),
+    );
+  }
+}
+
+class FirestoreFiltersRoute extends GoRouteData with $FirestoreFiltersRoute {
+  const FirestoreFiltersRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const FirestoreFiltersScreen(),
+    );
+  }
+}
+
+class OfflineSupportRoute extends GoRouteData with $OfflineSupportRoute {
+  const OfflineSupportRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const OfflineSupportScreen(),
+    );
+  }
+}
+
+class SeedDataRoute extends GoRouteData with $SeedDataRoute {
+  const SeedDataRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const SeedDataScreen(),
+    );
+  }
+}
+
+// ============================================================================
+// Router Configuration (Generated - will be created by go_router_builder)
+// ============================================================================
+
+/// App router configuration using go_router_builder
+/// The $appRoutes is generated by go_router_builder
+final GoRouter appRouter = GoRouter(
+  initialLocation: BasicRoute().location,
+  routes: $appRoutes,
 );

@@ -220,8 +220,6 @@ class SmartSearchBox<T> extends StatelessWidget {
 
   InputDecoration _buildDecoration(BuildContext context) {
     final searchTheme = SmartSearchTheme.of(context);
-    final isFocused = controller.isFocused;
-
     final effectiveBorderRadius =
         borderRadius ?? searchTheme.searchBoxBorderRadius ?? BorderRadius.circular(12);
 
