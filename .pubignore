@@ -1,0 +1,9 @@
+# Exclude GitHub Pages web build from pub.dev package
+docs/
+
+# Exclude other development files
+.github/
+.vscode/
+.idea/
+*.iml
+

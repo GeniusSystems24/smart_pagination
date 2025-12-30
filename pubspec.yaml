@@ -5,10 +5,17 @@ description: >
   Column, Row, Custom), advanced error handling (6 pre-built error styles),
   smart preloading, real-time stream support, automatic retry with exponential
   backoff, SmartSearchBox with auto-positioning overlay dropdown, keyboard navigation, and production-ready UI components..
-version: 2.4.1
+version: 2.4.2
 homepage: https://github.com/GeniusSystems24/smart_pagination
 repository: https://github.com/GeniusSystems24/smart_pagination
 issue_tracker: https://github.com/GeniusSystems24/smart_pagination/issues
+
+# Ignore false positive secret leaks (Firebase client-side API keys are safe to expose)
+false_secrets:
+  - /docs/**
+  - /example/lib/firebase_options.dart
+  - /example/android/app/google-services.json
+  - /example/ios/Runner/GoogleService-Info.plist
 
 environment:
   sdk: ^3.9.0
