@@ -129,14 +129,19 @@ class SmartSearchOverlay<T> extends StatefulWidget {
 }
 
 class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final LayerLink _layerLink = LayerLink();
   final GlobalKey _searchBoxKey = GlobalKey();
 
   OverlayEntry? _overlayEntry;
   late AnimationController _animationController;
   late Animation<double> _animation;
-  ScrollPosition? _scrollPosition;
+
+  // Position tracking for accurate overlay positioning
+  Ticker? _positionTicker;
+  Offset? _lastKnownPosition;
+  Size? _lastKnownSize;
+  final List<ScrollPosition> _trackedScrollPositions = [];
 
   @override
   void initState() {
@@ -155,9 +160,10 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
 
   @override
   void dispose() {
+    _stopPositionTracking();
     widget.controller.removeListener(_onControllerChanged);
     _removeOverlay();
-    _detachFromScrollPosition();
+    _detachFromAllScrollPositions();
     _animationController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -166,41 +172,107 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _attachToScrollPosition();
+    _attachToAllScrollPositions();
   }
 
   @override
   void didChangeMetrics() {
     // Screen size or orientation changed - update overlay position
-    if (_overlayEntry != null && widget.controller.isOverlayVisible) {
-      _overlayEntry!.markNeedsBuild();
-    }
+    _scheduleOverlayUpdate();
   }
 
-  void _attachToScrollPosition() {
+  /// Attaches to all ancestor scroll positions for comprehensive tracking
+  void _attachToAllScrollPositions() {
     if (!widget.overlayConfig.followTargetOnScroll) return;
 
-    // Try to find the nearest Scrollable
-    final scrollable = Scrollable.maybeOf(context);
-    if (scrollable != null) {
-      final newPosition = scrollable.position;
-      if (_scrollPosition != newPosition) {
-        _detachFromScrollPosition();
-        _scrollPosition = newPosition;
-        _scrollPosition?.addListener(_onScrollPositionChanged);
+    _detachFromAllScrollPositions();
+
+    // Find all ancestor Scrollables and attach to their positions
+    BuildContext? currentContext = context;
+    while (currentContext != null) {
+      final scrollable = Scrollable.maybeOf(currentContext);
+      if (scrollable != null) {
+        final position = scrollable.position;
+        if (!_trackedScrollPositions.contains(position)) {
+          _trackedScrollPositions.add(position);
+          position.addListener(_onScrollPositionChanged);
+        }
+        // Try to find parent context
+        currentContext = scrollable.context;
+        // Move up the tree to find more scrollables
+        final element = currentContext as Element?;
+        if (element != null) {
+          Element? parentElement;
+          element.visitAncestorElements((ancestor) {
+            parentElement = ancestor;
+            return false; // Stop at first ancestor
+          });
+          currentContext = parentElement;
+        } else {
+          break;
+        }
+      } else {
+        break;
       }
     }
   }
 
-  void _detachFromScrollPosition() {
-    _scrollPosition?.removeListener(_onScrollPositionChanged);
-    _scrollPosition = null;
+  void _detachFromAllScrollPositions() {
+    for (final position in _trackedScrollPositions) {
+      position.removeListener(_onScrollPositionChanged);
+    }
+    _trackedScrollPositions.clear();
   }
 
   void _onScrollPositionChanged() {
-    // Update overlay position when user scrolls
-    if (_overlayEntry != null && widget.controller.isOverlayVisible) {
+    _scheduleOverlayUpdate();
+  }
+
+  /// Starts continuous position tracking using a Ticker for high accuracy
+  void _startPositionTracking() {
+    if (!widget.overlayConfig.followTargetOnScroll) return;
+    if (_positionTicker != null) return;
+
+    _positionTicker = createTicker(_onPositionTick);
+    _positionTicker!.start();
+  }
+
+  void _stopPositionTracking() {
+    _positionTicker?.stop();
+    _positionTicker?.dispose();
+    _positionTicker = null;
+  }
+
+  void _onPositionTick(Duration elapsed) {
+    if (_overlayEntry == null || !widget.controller.isOverlayVisible) {
+      return;
+    }
+
+    // Check if search box position or size has changed
+    final renderBox =
+        _searchBoxKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.attached) return;
+
+    final currentPosition = renderBox.localToGlobal(Offset.zero);
+    final currentSize = renderBox.size;
+
+    // Only update if position or size actually changed
+    if (_lastKnownPosition != currentPosition ||
+        _lastKnownSize != currentSize) {
+      _lastKnownPosition = currentPosition;
+      _lastKnownSize = currentSize;
       _overlayEntry!.markNeedsBuild();
+    }
+  }
+
+  void _scheduleOverlayUpdate() {
+    if (_overlayEntry != null && widget.controller.isOverlayVisible) {
+      // Use post-frame callback to ensure smooth updates
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_overlayEntry != null && mounted) {
+          _overlayEntry!.markNeedsBuild();
+        }
+      });
     }
   }
 
@@ -218,13 +290,23 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
       return;
     }
 
+    // Reset position tracking
+    _lastKnownPosition = null;
+    _lastKnownSize = null;
+
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
     _animationController.forward();
+
+    // Start continuous position tracking for high accuracy
+    _startPositionTracking();
   }
 
   void _hideOverlay() {
     if (_overlayEntry == null) return;
+
+    // Stop position tracking
+    _stopPositionTracking();
 
     _animationController.reverse().then((_) {
       _removeOverlay();
@@ -234,6 +316,8 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
+    _lastKnownPosition = null;
+    _lastKnownSize = null;
   }
 
   OverlayEntry _createOverlayEntry() {
@@ -268,7 +352,7 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
+    Widget child = CompositedTransformTarget(
       link: _layerLink,
       child: SmartSearchBox<T>(
         key: _searchBoxKey,
@@ -289,6 +373,20 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
         keyboardType: widget.searchBoxKeyboardType,
       ),
     );
+
+    // Wrap with NotificationListener to catch scroll events from any ancestor
+    if (widget.overlayConfig.followTargetOnScroll) {
+      child = NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          // Update overlay position on any scroll event
+          _scheduleOverlayUpdate();
+          return false; // Don't stop notification propagation
+        },
+        child: child,
+      );
+    }
+
+    return child;
   }
 }
 
