@@ -75,7 +75,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.4.2
+  smart_pagination: ^2.5.0
 ```
 
 Install it:
@@ -628,6 +628,95 @@ SmartSearchDropdown<Product>.withProvider(
   ),
 )
 ```
+
+### Overlay Animation Types
+
+Choose from 13 different animation styles for the overlay show/hide transitions:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  overlayConfig: SmartSearchOverlayConfig(
+    animationType: OverlayAnimationType.bounceScale,
+    animationDuration: Duration(milliseconds: 300),
+    animationCurve: Curves.easeOutBack,
+  ),
+)
+```
+
+**Available Animation Types:**
+
+| Animation | Description |
+|-----------|-------------|
+| `fade` | Simple fade in/out (default) |
+| `scale` | Scale animation from center |
+| `fadeScale` | Combined scale with fade |
+| `slideDown` | Slide from top with fade |
+| `slideUp` | Slide from bottom with fade |
+| `slideLeft` | Slide from left with fade |
+| `slideRight` | Slide from right with fade |
+| `bounceScale` | Elastic bounce scale effect |
+| `elasticScale` | Smooth elastic scale with overshoot |
+| `flipX` | 3D flip on X axis |
+| `flipY` | 3D flip on Y axis |
+| `zoomIn` | Zoom from 50% to 100% |
+| `none` | Instant show/hide, no animation |
+
+### Overlay Value Parameter
+
+Pass a context value when showing the overlay to determine what content to display:
+
+```dart
+// Show overlay with different values
+controller.showOverlay(value: 'users');     // Search users
+controller.showOverlay(value: 'products');  // Search products
+controller.showOverlay(value: 1);           // Category ID
+
+// In your widget, check the value
+if (controller.overlayValue == 'users') {
+  return UserSearchResults();
+}
+
+// Type-safe access
+final categoryId = controller.getOverlayValue<int>(); // Returns int? or null
+```
+
+**Controller Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `showOverlay({Object? value})` | Show overlay with optional context value |
+| `hideOverlay({bool clearValue})` | Hide overlay, optionally preserving value |
+| `toggleOverlay({Object? value})` | Toggle visibility with optional value |
+| `setOverlayValue(Object? value)` | Set value without showing overlay |
+| `clearOverlayValue()` | Clear the overlay value |
+| `getOverlayValue<V>()` | Type-safe value access |
+
+**Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `overlayValue` | `Object?` | Current overlay value |
+| `hasOverlayValue` | `bool` | Whether a value is set |
+
+### Scroll-Aware Positioning
+
+The overlay automatically tracks the search field position during scrolling:
+
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  overlayConfig: SmartSearchOverlayConfig(
+    followTargetOnScroll: true, // Default: true
+  ),
+)
+```
+
+**Features:**
+- Real-time position updates during scrolling
+- Automatic attachment to nearest scrollable ancestor
+- Screen orientation/size change handling
+- Can be disabled via `followTargetOnScroll: false`
 
 ### Separate Search Box & Overlay
 
