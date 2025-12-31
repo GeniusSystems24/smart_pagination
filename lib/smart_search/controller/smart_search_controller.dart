@@ -64,6 +64,10 @@ class SmartSearchController<T> extends ChangeNotifier {
   /// The currently selected item (for showSelected mode).
   T? _selectedItem;
 
+  /// A custom value passed when overlay is shown programmatically.
+  /// This can be used to determine what content to display in the overlay.
+  Object? _overlayValue;
+
   /// The connected pagination cubit.
   SmartPaginationCubit<T> get cubit => _cubit;
 
@@ -105,6 +109,31 @@ class SmartSearchController<T> extends ChangeNotifier {
 
   /// Whether an item is currently selected.
   bool get hasSelectedItem => _selectedItem != null;
+
+  /// The custom value passed when overlay was shown.
+  /// Use this to determine overlay content type.
+  ///
+  /// Example:
+  /// ```dart
+  /// controller.showOverlay(value: 'user'); // Show user search
+  /// controller.showOverlay(value: 1); // Show category 1
+  ///
+  /// // In your widget:
+  /// if (controller.overlayValue == 'user') {
+  ///   return UserSearchContent();
+  /// }
+  /// ```
+  Object? get overlayValue => _overlayValue;
+
+  /// Whether a custom overlay value is set.
+  bool get hasOverlayValue => _overlayValue != null;
+
+  /// Gets the overlay value cast to a specific type.
+  /// Returns null if the value is not of the expected type.
+  V? getOverlayValue<V>() {
+    final value = _overlayValue;
+    return value is V ? value : null;
+  }
 
   /// Returns the currently focused item, or null if none.
   T? get focusedItem {
@@ -178,10 +207,34 @@ class SmartSearchController<T> extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Shows the search overlay.
-  void showOverlay() {
-    if (_isOverlayVisible) return;
+  /// Shows the search overlay with an optional value.
+  ///
+  /// The [value] parameter can be used to pass context-specific data
+  /// that determines what content to display in the overlay.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Show overlay for user search
+  /// controller.showOverlay(value: 'user');
+  ///
+  /// // Show overlay for category selection
+  /// controller.showOverlay(value: CategoryType.products);
+  ///
+  /// // Show overlay with numeric identifier
+  /// controller.showOverlay(value: 1);
+  /// ```
+  void showOverlay({Object? value}) {
+    if (_isOverlayVisible) {
+      // If already visible but value changed, update it
+      if (value != null && _overlayValue != value) {
+        _overlayValue = value;
+        notifyListeners();
+      }
+      return;
+    }
+
     _isOverlayVisible = true;
+    _overlayValue = value;
     // Preserve the focused index when reopening
 
     // If cubit is in initial state and searchOnEmpty is true, trigger initial fetch
@@ -193,10 +246,16 @@ class SmartSearchController<T> extends ChangeNotifier {
   }
 
   /// Hides the search overlay.
-  void hideOverlay() {
+  ///
+  /// If [clearValue] is true (default), the overlay value will be cleared.
+  void hideOverlay({bool clearValue = true}) {
     if (!_isOverlayVisible) return;
     _isOverlayVisible = false;
     // Don't reset _focusedIndex here - preserve it for when overlay reopens
+
+    if (clearValue) {
+      _overlayValue = null;
+    }
 
     if (_config.clearOnClose) {
       clearSearch();
@@ -205,12 +264,24 @@ class SmartSearchController<T> extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Toggles the overlay visibility.
-  void toggleOverlay() {
+  /// Sets the overlay value without showing the overlay.
+  void setOverlayValue(Object? value) {
+    _overlayValue = value;
+    notifyListeners();
+  }
+
+  /// Clears the overlay value.
+  void clearOverlayValue() {
+    _overlayValue = null;
+    notifyListeners();
+  }
+
+  /// Toggles the overlay visibility with an optional value.
+  void toggleOverlay({Object? value}) {
     if (_isOverlayVisible) {
       hideOverlay();
     } else {
-      showOverlay();
+      showOverlay(value: value);
     }
   }
 

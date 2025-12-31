@@ -5,6 +5,125 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2025-12-31
+
+### Added
+
+#### Overlay Value Parameter - Context-Aware Content 🎯
+
+New feature that allows passing a value when showing the overlay programmatically. This enables you to determine what content to display in the overlay based on the passed value.
+
+**Usage Example:**
+```dart
+// Show overlay for user search
+controller.showOverlay(value: 'user');
+
+// Show overlay for category selection
+controller.showOverlay(value: CategoryType.products);
+
+// Show overlay with numeric identifier
+controller.showOverlay(value: 1);
+
+// In your widget, check the value:
+if (controller.overlayValue == 'user') {
+  return UserSearchContent();
+}
+
+// Type-safe access
+final categoryId = controller.getOverlayValue<int>(); // Returns int? or null
+```
+
+**New Controller Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `showOverlay({Object? value})` | Show overlay with optional context value |
+| `hideOverlay({bool clearValue = true})` | Hide overlay, optionally preserving the value |
+| `toggleOverlay({Object? value})` | Toggle visibility with optional value |
+| `setOverlayValue(Object? value)` | Set value without showing overlay |
+| `clearOverlayValue()` | Clear the overlay value |
+| `getOverlayValue<V>()` | Type-safe value access, returns null if type mismatch |
+
+**New Controller Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `overlayValue` | `Object?` | Current overlay value |
+| `hasOverlayValue` | `bool` | Whether a value is set |
+
+---
+
+#### Overlay Animation Types - 13 Animation Styles 🎬
+
+New powerful animation system for overlay show/hide transitions. Choose from 13 different animation types to match your app's design.
+
+**Available Animation Types:**
+
+| Animation Type | Description |
+|----------------|-------------|
+| `fade` | Simple fade in/out (default) |
+| `scale` | Scale animation from center |
+| `fadeScale` | Combined scale with fade |
+| `slideDown` | Slide from top with fade |
+| `slideUp` | Slide from bottom with fade |
+| `slideLeft` | Slide from left with fade |
+| `slideRight` | Slide from right with fade |
+| `bounceScale` | Elastic bounce scale effect |
+| `elasticScale` | Smooth elastic scale with overshoot |
+| `flipX` | 3D flip on X axis |
+| `flipY` | 3D flip on Y axis |
+| `zoomIn` | Zoom from 50% to 100% |
+| `none` | Instant show/hide, no animation |
+
+**Usage Example:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  overlayConfig: SmartSearchOverlayConfig(
+    animationType: OverlayAnimationType.bounceScale,
+    animationDuration: Duration(milliseconds: 300),
+    animationCurve: Curves.easeOutBack,
+  ),
+)
+```
+
+**New Configuration Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `animationType` | `OverlayAnimationType` | `fade` | Animation style for show/hide |
+| `animationCurve` | `Curve` | `Curves.easeOutCubic` | Animation curve for the transition |
+
+---
+
+#### Scroll-Aware Overlay Positioning 📜
+
+The overlay now tracks the search field position in real-time when the user scrolls. This ensures the overlay stays correctly positioned relative to its target, even in scrollable content.
+
+**Key Features:**
+- Real-time position updates during scrolling
+- Automatic attachment to nearest scrollable ancestor
+- Screen orientation/size change handling
+- Can be disabled via configuration
+
+**Usage Example:**
+```dart
+SmartSearchDropdown<Product>.withProvider(
+  // ... other properties
+  overlayConfig: SmartSearchOverlayConfig(
+    followTargetOnScroll: true, // Default: true
+  ),
+)
+```
+
+**New Configuration Parameter:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `followTargetOnScroll` | `bool` | `true` | Whether overlay follows target on scroll |
+
+---
+
 ## [2.4.2] - 2025-12-30
 
 ### Added

@@ -129,13 +129,14 @@ class SmartSearchOverlay<T> extends StatefulWidget {
 }
 
 class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final LayerLink _layerLink = LayerLink();
   final GlobalKey _searchBoxKey = GlobalKey();
 
   OverlayEntry? _overlayEntry;
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
+  late Animation<double> _animation;
+  ScrollPosition? _scrollPosition;
 
   @override
   void initState() {
@@ -144,19 +145,63 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
       duration: widget.overlayConfig.animationDuration,
       vsync: this,
     );
-    _fadeAnimation = CurvedAnimation(
+    _animation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeOutCubic,
+      curve: widget.overlayConfig.animationCurve,
     );
     widget.controller.addListener(_onControllerChanged);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
     _removeOverlay();
+    _detachFromScrollPosition();
     _animationController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _attachToScrollPosition();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // Screen size or orientation changed - update overlay position
+    if (_overlayEntry != null && widget.controller.isOverlayVisible) {
+      _overlayEntry!.markNeedsBuild();
+    }
+  }
+
+  void _attachToScrollPosition() {
+    if (!widget.overlayConfig.followTargetOnScroll) return;
+
+    // Try to find the nearest Scrollable
+    final scrollable = Scrollable.maybeOf(context);
+    if (scrollable != null) {
+      final newPosition = scrollable.position;
+      if (_scrollPosition != newPosition) {
+        _detachFromScrollPosition();
+        _scrollPosition = newPosition;
+        _scrollPosition?.addListener(_onScrollPositionChanged);
+      }
+    }
+  }
+
+  void _detachFromScrollPosition() {
+    _scrollPosition?.removeListener(_onScrollPositionChanged);
+    _scrollPosition = null;
+  }
+
+  void _onScrollPositionChanged() {
+    // Update overlay position when user scrolls
+    if (_overlayEntry != null && widget.controller.isOverlayVisible) {
+      _overlayEntry!.markNeedsBuild();
+    }
   }
 
   void _onControllerChanged() {
@@ -199,7 +244,8 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
           searchBoxKey: _searchBoxKey,
           controller: widget.controller,
           config: widget.overlayConfig,
-          fadeAnimation: _fadeAnimation,
+          animation: _animation,
+          animationType: widget.overlayConfig.animationType,
           itemBuilder: widget.itemBuilder,
           onItemSelected: _onItemSelected,
           loadingBuilder: widget.loadingBuilder,
@@ -252,7 +298,8 @@ class _OverlayContent<T> extends StatefulWidget {
     required this.searchBoxKey,
     required this.controller,
     required this.config,
-    required this.fadeAnimation,
+    required this.animation,
+    required this.animationType,
     required this.itemBuilder,
     required this.onItemSelected,
     required this.onDismiss,
@@ -270,7 +317,8 @@ class _OverlayContent<T> extends StatefulWidget {
   final GlobalKey searchBoxKey;
   final SmartSearchController<T> controller;
   final SmartSearchOverlayConfig config;
-  final Animation<double> fadeAnimation;
+  final Animation<double> animation;
+  final OverlayAnimationType animationType;
   final Widget Function(BuildContext context, T item) itemBuilder;
   final ValueChanged<T> onItemSelected;
   final VoidCallback onDismiss;
@@ -380,6 +428,14 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
       padding: padding,
     );
 
+    final overlayChild = _ThemedOverlayContainer(
+      config: widget.config,
+      overlayDecoration: widget.overlayDecoration,
+      width: positionData.size.width,
+      maxHeight: positionData.size.height,
+      child: _buildContent(context),
+    );
+
     return Stack(
       children: [
         // Barrier
@@ -390,7 +446,7 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
               onTap: widget.onDismiss,
               child: widget.config.barrierColor != null
                   ? FadeTransition(
-                      opacity: widget.fadeAnimation,
+                      opacity: widget.animation,
                       child: Container(color: widget.config.barrierColor),
                     )
                   : const SizedBox.expand(),
@@ -401,19 +457,162 @@ class _OverlayContentState<T> extends State<_OverlayContent<T>> {
         Positioned(
           left: positionData.offset.dx,
           top: positionData.offset.dy,
-          child: FadeTransition(
-            opacity: widget.fadeAnimation,
-            child: _ThemedOverlayContainer(
-              config: widget.config,
-              overlayDecoration: widget.overlayDecoration,
-              width: positionData.size.width,
-              maxHeight: positionData.size.height,
-              child: _buildContent(context),
-            ),
-          ),
+          child: _buildAnimatedOverlay(overlayChild),
         ),
       ],
     );
+  }
+
+  Widget _buildAnimatedOverlay(Widget child) {
+    switch (widget.animationType) {
+      case OverlayAnimationType.fade:
+        return FadeTransition(
+          opacity: widget.animation,
+          child: child,
+        );
+
+      case OverlayAnimationType.scale:
+        return ScaleTransition(
+          scale: widget.animation,
+          child: child,
+        );
+
+      case OverlayAnimationType.fadeScale:
+        return FadeTransition(
+          opacity: widget.animation,
+          child: ScaleTransition(
+            scale: widget.animation,
+            child: child,
+          ),
+        );
+
+      case OverlayAnimationType.slideDown:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, -0.3),
+            end: Offset.zero,
+          ).animate(widget.animation),
+          child: FadeTransition(
+            opacity: widget.animation,
+            child: child,
+          ),
+        );
+
+      case OverlayAnimationType.slideUp:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.3),
+            end: Offset.zero,
+          ).animate(widget.animation),
+          child: FadeTransition(
+            opacity: widget.animation,
+            child: child,
+          ),
+        );
+
+      case OverlayAnimationType.slideLeft:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.3, 0),
+            end: Offset.zero,
+          ).animate(widget.animation),
+          child: FadeTransition(
+            opacity: widget.animation,
+            child: child,
+          ),
+        );
+
+      case OverlayAnimationType.slideRight:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(-0.3, 0),
+            end: Offset.zero,
+          ).animate(widget.animation),
+          child: FadeTransition(
+            opacity: widget.animation,
+            child: child,
+          ),
+        );
+
+      case OverlayAnimationType.bounceScale:
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: widget.animation,
+            curve: Curves.elasticOut,
+          ),
+          child: FadeTransition(
+            opacity: widget.animation,
+            child: child,
+          ),
+        );
+
+      case OverlayAnimationType.elasticScale:
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: widget.animation,
+            curve: Curves.easeOutBack,
+          ),
+          child: FadeTransition(
+            opacity: widget.animation,
+            child: child,
+          ),
+        );
+
+      case OverlayAnimationType.flipX:
+        return AnimatedBuilder(
+          animation: widget.animation,
+          builder: (context, child) {
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateX((1 - widget.animation.value) * 1.5708),
+              child: Opacity(
+                opacity: widget.animation.value,
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+
+      case OverlayAnimationType.flipY:
+        return AnimatedBuilder(
+          animation: widget.animation,
+          builder: (context, child) {
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateY((1 - widget.animation.value) * 1.5708),
+              child: Opacity(
+                opacity: widget.animation.value,
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+
+      case OverlayAnimationType.zoomIn:
+        return AnimatedBuilder(
+          animation: widget.animation,
+          builder: (context, child) {
+            final scale = 0.5 + (widget.animation.value * 0.5);
+            return Transform.scale(
+              scale: scale,
+              child: Opacity(
+                opacity: widget.animation.value,
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+
+      case OverlayAnimationType.none:
+        return child;
+    }
   }
 
   Widget _buildContent(BuildContext context) {

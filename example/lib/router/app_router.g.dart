@@ -715,6 +715,10 @@ RouteBase get $searchRoute => GoRouteData.$route(
       path: 'async-states',
       factory: $AsyncStatesRoute._fromState,
     ),
+    GoRouteData.$route(
+      path: 'overlay-animations',
+      factory: $OverlayAnimationsRoute._fromState,
+    ),
   ],
 );
 
@@ -849,6 +853,27 @@ mixin $AsyncStatesRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/search/async-states');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $OverlayAnimationsRoute on GoRouteData {
+  static OverlayAnimationsRoute _fromState(GoRouterState state) =>
+      const OverlayAnimationsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/search/overlay-animations');
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -290,6 +290,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           color: Color(0xFFF59E0B),
           route: const AsyncStatesRoute().location,
         ),
+        _ExampleItem(
+          title: 'Overlay Animations',
+          description: '13 animation types & overlay values',
+          icon: Icons.animation_rounded,
+          color: Color(0xFF8B5CF6),
+          route: const OverlayAnimationsRoute().location,
+        ),
       ],
     ),
     _ExampleCategory(

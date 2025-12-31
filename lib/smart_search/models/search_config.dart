@@ -1,5 +1,47 @@
 part of '../../pagination.dart';
 
+/// Animation types for overlay show/hide transitions.
+enum OverlayAnimationType {
+  /// Simple fade in/out animation.
+  fade,
+
+  /// Scale animation from center.
+  scale,
+
+  /// Scale with fade combined.
+  fadeScale,
+
+  /// Slide from top with fade.
+  slideDown,
+
+  /// Slide from bottom with fade.
+  slideUp,
+
+  /// Slide from left with fade.
+  slideLeft,
+
+  /// Slide from right with fade.
+  slideRight,
+
+  /// Bounce scale animation.
+  bounceScale,
+
+  /// Elastic scale animation.
+  elasticScale,
+
+  /// Flip animation on X axis.
+  flipX,
+
+  /// Flip animation on Y axis.
+  flipY,
+
+  /// Zoom in animation.
+  zoomIn,
+
+  /// No animation (instant show/hide).
+  none,
+}
+
 /// Configuration for search behavior.
 class SmartSearchConfig {
   const SmartSearchConfig({
@@ -72,7 +114,10 @@ class SmartSearchOverlayConfig {
     this.barrierColor,
     this.barrierDismissible = true,
     this.animationDuration = const Duration(milliseconds: 200),
+    this.animationType = OverlayAnimationType.fade,
+    this.animationCurve = Curves.easeOutCubic,
     this.constraints,
+    this.followTargetOnScroll = true,
   });
 
   /// Preferred position for the overlay.
@@ -102,8 +147,19 @@ class SmartSearchOverlayConfig {
   /// Duration of the show/hide animation.
   final Duration animationDuration;
 
+  /// Type of animation for show/hide transitions.
+  final OverlayAnimationType animationType;
+
+  /// Animation curve for the transition.
+  final Curve animationCurve;
+
   /// Additional constraints for the overlay.
   final BoxConstraints? constraints;
+
+  /// Whether the overlay should follow the target widget when scrolling.
+  /// When true, the overlay position updates in real-time as the user scrolls.
+  /// Default is true for better UX with scrollable content.
+  final bool followTargetOnScroll;
 
   SmartSearchOverlayConfig copyWith({
     OverlayPosition? position,
@@ -115,7 +171,10 @@ class SmartSearchOverlayConfig {
     Color? barrierColor,
     bool? barrierDismissible,
     Duration? animationDuration,
+    OverlayAnimationType? animationType,
+    Curve? animationCurve,
     BoxConstraints? constraints,
+    bool? followTargetOnScroll,
   }) {
     return SmartSearchOverlayConfig(
       position: position ?? this.position,
@@ -127,7 +186,10 @@ class SmartSearchOverlayConfig {
       barrierColor: barrierColor ?? this.barrierColor,
       barrierDismissible: barrierDismissible ?? this.barrierDismissible,
       animationDuration: animationDuration ?? this.animationDuration,
+      animationType: animationType ?? this.animationType,
+      animationCurve: animationCurve ?? this.animationCurve,
       constraints: constraints ?? this.constraints,
+      followTargetOnScroll: followTargetOnScroll ?? this.followTargetOnScroll,
     );
   }
 }
