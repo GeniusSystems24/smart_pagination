@@ -124,6 +124,41 @@ SmartSearchDropdown<Product>.withProvider(
 
 ---
 
+#### High-Accuracy Position Tracking 🎯
+
+Enhanced position tracking system for maximum accuracy when the overlay follows the search field during scrolling.
+
+**Technical Implementation:**
+- **Ticker-based monitoring**: Continuous position checking every frame for instant updates
+- **Multi-level scroll tracking**: Attaches to all ancestor `ScrollPosition` objects
+- **NotificationListener wrapper**: Catches scroll events from any scrollable in the widget tree
+- **Smart update scheduling**: Uses `addPostFrameCallback` for smooth, non-blocking updates
+- **Optimized rebuilds**: Only triggers overlay rebuild when position actually changes
+
+**How it works:**
+```dart
+// Tracks position changes every frame
+Ticker _positionTicker;
+Offset? _lastKnownPosition;
+
+void _onPositionTick(Duration elapsed) {
+  final currentPosition = renderBox.localToGlobal(Offset.zero);
+  // Only update if position actually changed
+  if (_lastKnownPosition != currentPosition) {
+    _lastKnownPosition = currentPosition;
+    _overlayEntry!.markNeedsBuild();
+  }
+}
+```
+
+**Benefits:**
+- Works with nested scrollables (e.g., ListView inside PageView)
+- Handles keyboard appearance/disappearance
+- Responds to screen rotation and resize
+- Zero lag between scroll and overlay position update
+
+---
+
 ## [2.4.2] - 2025-12-30
 
 ### Added
