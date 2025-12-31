@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_pagination/pagination.dart';
 
 import '../../models/product.dart';
-import '../../services/api_service.dart';
+import '../../services/mock_api_service.dart';
 
 /// Example screen demonstrating all 13 overlay animation types
 /// and the overlay value parameter feature.
@@ -206,7 +206,7 @@ class _OverlayAnimationsScreenState extends State<OverlayAnimationsScreen> {
                   ),
                 );
               },
-              searchBoxDecoration: InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Search products...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
