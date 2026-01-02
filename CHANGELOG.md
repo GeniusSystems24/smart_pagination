@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.1] - 2026-01-02
+
+### Fixed
+
+#### Concurrent Request Prevention 🔒
+
+Fixed an issue where multiple fetch requests could be executed simultaneously, causing duplicate data or race conditions.
+
+**The Problem:**
+- When `fetchPaginatedList()` was called multiple times rapidly (e.g., from multiple widget rebuilds), each call would trigger a separate network request
+- This led to duplicate items, race conditions, and wasted network resources
+
+**The Solution:**
+- Added `_isFetching` flag to track ongoing fetch operations
+- New requests are now queued/ignored while a fetch is in progress
+- The cubit now exposes `isFetching` getter to check the current state
+
+```dart
+// Check if a fetch is in progress
+if (!cubit.isFetching) {
+  cubit.fetchPaginatedList();
+}
+```
+
+---
+
+#### Error Retry Strategy - Prevent Infinite Retries 🛡️
+
+Added configurable error retry strategy to prevent infinite retry loops when server errors occur.
+
+**The Problem:**
+- When a server error occurred, widget rebuilds would trigger automatic retries endlessly
+- This caused unnecessary network load and poor user experience
+
+**The Solution:**
+- New `ErrorRetryStrategy` enum with three modes:
+  - `automatic`: Default behavior, retries on next fetch call
+  - `manual`: Requires explicit `retryAfterError()` call
+  - `none`: No automatic retry, requires `refreshPaginatedList()`
+
+**Usage:**
+```dart
+SmartPaginationCubit<Product>(
+  request: request,
+  provider: provider,
+  // Prevent automatic retries on error
+  errorRetryStrategy: ErrorRetryStrategy.manual,
+);
+
+// Later, when user taps retry button:
+if (cubit.hasError) {
+  cubit.retryAfterError();
+}
+```
+
+**New Cubit Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `isFetching` | `bool` | Whether a fetch is in progress |
+| `hasError` | `bool` | Whether the last fetch resulted in an error |
+| `lastError` | `Exception?` | The last error that occurred |
+
+**New Cubit Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `retryAfterError()` | Explicitly retry after an error (for manual strategy) |
+| `clearError()` | Clear error state without retrying |
+
+---
+
 ## [2.5.0] - 2025-12-31
 
 ### Added

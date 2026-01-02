@@ -1,5 +1,17 @@
 part of '../../pagination.dart';
 
+/// Strategy for handling automatic retry on error.
+enum ErrorRetryStrategy {
+  /// Automatically retry on next fetch call (default behavior).
+  automatic,
+
+  /// Don't retry automatically. Requires explicit call to [retryAfterError].
+  manual,
+
+  /// Don't retry at all. The error state persists until [refreshPaginatedList] is called.
+  none,
+}
+
 class SmartPaginationCubit<T>
     extends IPaginationListCubit<T, SmartPaginationState<T>> {
   SmartPaginationCubit({
@@ -13,6 +25,7 @@ class SmartPaginationCubit<T>
     RetryConfig? retryConfig,
     Duration? dataAge,
     SortOrderCollection<T>? orders,
+    this.errorRetryStrategy = ErrorRetryStrategy.automatic,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -36,6 +49,9 @@ class SmartPaginationCubit<T>
   final Duration? _dataAge;
   SortOrderCollection<T>? _orders;
 
+  /// Strategy for handling automatic retry when an error occurs.
+  final ErrorRetryStrategy errorRetryStrategy;
+
   @override
   final PaginationRequest initialRequest;
 
@@ -46,8 +62,27 @@ class SmartPaginationCubit<T>
   int _fetchToken = 0;
   DateTime? _lastFetchTime;
 
+  /// Flag to prevent concurrent fetch operations.
+  bool _isFetching = false;
+
+  /// Flag to track if the last fetch resulted in an error.
+  /// Used by [errorRetryStrategy] to prevent automatic retries.
+  bool _lastFetchWasError = false;
+
+  /// The last error that occurred during fetch.
+  Exception? _lastError;
+
   @override
   bool didFetch = false;
+
+  /// Returns true if a fetch operation is currently in progress.
+  bool get isFetching => _isFetching;
+
+  /// Returns true if the last fetch resulted in an error.
+  bool get hasError => _lastFetchWasError;
+
+  /// Returns the last error that occurred, or null if no error.
+  Exception? get lastError => _lastError;
 
   /// Returns the configured data age duration.
   Duration? get dataAge => _dataAge;
@@ -360,12 +395,17 @@ class SmartPaginationCubit<T>
 
   @override
   void refreshPaginatedList({PaginationRequest? requestOverride, int? limit}) {
+    // Cancel any ongoing request
     cancelOngoingRequest();
     _streamSubscription?.cancel();
     _onClear?.call();
     didFetch = false;
     _pages.clear();
     _currentMeta = null;
+
+    // Clear error state on refresh
+    _lastFetchWasError = false;
+    _lastError = null;
 
     final request = _buildRequest(
       reset: true,
@@ -375,8 +415,82 @@ class SmartPaginationCubit<T>
     _fetch(request: request, reset: true);
   }
 
+  /// Retries the last failed fetch operation.
+  ///
+  /// Use this method when [errorRetryStrategy] is set to [ErrorRetryStrategy.manual]
+  /// to explicitly retry after an error.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (cubit.hasError) {
+  ///   cubit.retryAfterError();
+  /// }
+  /// ```
+  void retryAfterError() {
+    if (!_lastFetchWasError) {
+      _logger.d('retryAfterError called but there is no error to retry');
+      return;
+    }
+
+    _logger.d('Retrying after error...');
+    _lastFetchWasError = false;
+    _lastError = null;
+
+    // Determine if this was an initial load or load more
+    if (state is SmartPaginationError<T>) {
+      // Initial load failed, refresh
+      refreshPaginatedList();
+    } else if (state is SmartPaginationLoaded<T>) {
+      // Load more failed, retry load more
+      final currentState = state as SmartPaginationLoaded<T>;
+      if (currentState.loadMoreError != null) {
+        emit(currentState.copyWith(loadMoreError: null));
+        final request = _buildRequest(reset: false);
+        _fetch(request: request, reset: false);
+      }
+    }
+  }
+
+  /// Clears the error state without retrying.
+  ///
+  /// This is useful when you want to dismiss the error UI without triggering a retry.
+  void clearError() {
+    _lastFetchWasError = false;
+    _lastError = null;
+
+    final currentState = state;
+    if (currentState is SmartPaginationLoaded<T> && currentState.loadMoreError != null) {
+      emit(currentState.copyWith(loadMoreError: null));
+    }
+  }
+
   @override
   void fetchPaginatedList({PaginationRequest? requestOverride, int? limit}) {
+    // Prevent concurrent fetch operations
+    if (_isFetching) {
+      _logger.d('Fetch already in progress, skipping duplicate request');
+      return;
+    }
+
+    // Check error retry strategy
+    if (_lastFetchWasError) {
+      switch (errorRetryStrategy) {
+        case ErrorRetryStrategy.automatic:
+          // Allow retry, clear the error flag
+          _lastFetchWasError = false;
+          _lastError = null;
+          break;
+        case ErrorRetryStrategy.manual:
+          // Don't retry automatically, require explicit retryAfterError() call
+          _logger.d('Error retry strategy is manual, skipping automatic retry. Call retryAfterError() to retry.');
+          return;
+        case ErrorRetryStrategy.none:
+          // Don't retry at all
+          _logger.d('Error retry strategy is none, skipping retry. Call refreshPaginatedList() to reset.');
+          return;
+      }
+    }
+
     // Check if data has expired and reset if necessary
     if (checkAndResetIfExpired()) {
       // State has been reset to initial, continue to load fresh data
@@ -414,6 +528,8 @@ class SmartPaginationCubit<T>
     required PaginationRequest request,
     required bool reset,
   }) async {
+    // Set fetching flag to prevent concurrent requests
+    _isFetching = true;
     final token = ++_fetchToken;
 
     try {
@@ -431,10 +547,18 @@ class SmartPaginationCubit<T>
         MergedStreamPaginationProvider<T> provider => provider.getMergedStream(request).first,
       };
 
-      if (token != _fetchToken) return;
+      // Check if request was cancelled
+      if (token != _fetchToken) {
+        _isFetching = false;
+        return;
+      }
 
       didFetch = true;
       _currentRequest = request;
+
+      // Clear error state on successful fetch
+      _lastFetchWasError = false;
+      _lastError = null;
 
       // Update last fetch time for data age tracking
       // Refresh on initial load and on load more (any successful fetch)
@@ -501,6 +625,10 @@ class SmartPaginationCubit<T>
         stackTrace: stackTrace,
       );
 
+      // Set error state
+      _lastFetchWasError = true;
+      _lastError = error;
+
       // Handle load more errors differently
       if (!reset && state is SmartPaginationLoaded<T>) {
         final currentState = state as SmartPaginationLoaded<T>;
@@ -521,6 +649,10 @@ class SmartPaginationCubit<T>
         stackTrace: stackTrace,
       );
 
+      // Set error state
+      _lastFetchWasError = true;
+      _lastError = exception;
+
       // Handle load more errors differently
       if (!reset && state is SmartPaginationLoaded<T>) {
         final currentState = state as SmartPaginationLoaded<T>;
@@ -533,6 +665,9 @@ class SmartPaginationCubit<T>
       } else {
         emit(SmartPaginationError<T>(error: exception));
       }
+    } finally {
+      // Always clear the fetching flag
+      _isFetching = false;
     }
   }
 
@@ -614,6 +749,7 @@ class SmartPaginationCubit<T>
   @override
   void cancelOngoingRequest() {
     _fetchToken++;
+    _isFetching = false;
   }
 
   @override
