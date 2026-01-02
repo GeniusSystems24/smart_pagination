@@ -579,7 +579,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.5.0"
+    version: "2.6.0"
   source_gen:
     dependency: transitive
     description:
@@ -660,6 +660,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  tooltip_card:
+    dependency: "direct main"
+    description:
+      name: tooltip_card
+      sha256: "5c37c4e3d08f49dfe5755b06ba378ff591d984c44dca9fb2a098de3c60772b98"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.2"
   typed_data:
     dependency: transitive
     description:

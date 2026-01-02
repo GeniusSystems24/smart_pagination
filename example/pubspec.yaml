@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.0.0
 
 environment:
-  sdk: ^3.9.0
+  sdk: ^3.0.0
   flutter: ">=1.17.0"
 
 dependencies:
@@ -27,7 +27,7 @@ dependencies:
   firebase_database: ^11.2.0
 
   # Chat UI enhancements
-  tooltip_card: ^1.1.5
+  tooltip_card: ^2.6.2
 
 dev_dependencies:
   analyzer: ^7.2.0

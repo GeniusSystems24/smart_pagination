@@ -18,7 +18,7 @@ false_secrets:
   - /example/ios/Runner/GoogleService-Info.plist
 
 environment:
-  sdk: ^3.9.0
+  sdk: ^3.0.0
   flutter: ">=1.17.0"
 
 dependencies:
