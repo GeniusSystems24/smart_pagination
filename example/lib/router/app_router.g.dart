@@ -352,6 +352,7 @@ RouteBase get $advancedRoute => GoRouteData.$route(
     ),
     GoRouteData.$route(path: 'data-age', factory: $DataAgeRoute._fromState),
     GoRouteData.$route(path: 'sorting', factory: $SortingRoute._fromState),
+    GoRouteData.$route(path: 'chat', factory: $ChatRoute._fromState),
   ],
 );
 
@@ -672,6 +673,26 @@ mixin $SortingRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/advanced/sorting');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ChatRoute on GoRouteData {
+  static ChatRoute _fromState(GoRouterState state) => const ChatRoute();
+
+  @override
+  String get location => GoRouteData.$location('/advanced/chat');
 
   @override
   void go(BuildContext context) => context.go(location);

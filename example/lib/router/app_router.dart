@@ -33,6 +33,7 @@ import '../screens/smart_pagination/smart_preloading_screen.dart';
 import '../screens/smart_pagination/data_operations_screen.dart';
 import '../screens/smart_pagination/data_age_screen.dart';
 import '../screens/smart_pagination/sorting_screen.dart';
+import '../screens/smart_pagination/chat_screen.dart';
 
 // Search examples
 import '../screens/smart_pagination/search_dropdown_screen.dart';
@@ -283,6 +284,7 @@ class MergedStreamsRoute extends GoRouteData with $MergedStreamsRoute {
     TypedGoRoute<DataOperationsRoute>(path: 'data-operations'),
     TypedGoRoute<DataAgeRoute>(path: 'data-age'),
     TypedGoRoute<SortingRoute>(path: 'sorting'),
+    TypedGoRoute<ChatRoute>(path: 'chat'),
   ],
 )
 class AdvancedRoute extends GoRouteData with $AdvancedRoute {
@@ -485,6 +487,19 @@ class SortingRoute extends GoRouteData with $SortingRoute {
       context: context,
       state: state,
       child: const SortingScreen(),
+    );
+  }
+}
+
+class ChatRoute extends GoRouteData with $ChatRoute {
+  const ChatRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const ChatScreen(),
     );
   }
 }

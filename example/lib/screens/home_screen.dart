@@ -241,6 +241,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           color: Color(0xFF4F46E5),
           route: const SortingRoute().location,
         ),
+        _ExampleItem(
+          title: 'Chat Example',
+          description: 'Scroll navigation with chat UI',
+          icon: Icons.chat_bubble_rounded,
+          color: Color(0xFF06B6D4),
+          route: const ChatRoute().location,
+        ),
       ],
     ),
     _ExampleCategory(

@@ -26,6 +26,9 @@ dependencies:
   cloud_firestore: ^5.6.0
   firebase_database: ^11.2.0
 
+  # Chat UI enhancements
+  tooltip_card: ^1.1.5
+
 dev_dependencies:
   analyzer: ^7.2.0
   flutter_test:

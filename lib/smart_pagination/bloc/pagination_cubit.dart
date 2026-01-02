@@ -1106,4 +1106,356 @@ class SmartPaginationCubit<T>
       );
     }
   }
+
+  // ==================== SCROLL NAVIGATION ====================
+
+  /// The attached list observer controller for scroll navigation.
+  ListObserverController? _listObserverController;
+
+  /// The attached grid observer controller for scroll navigation.
+  GridObserverController? _gridObserverController;
+
+  /// Returns true if a list observer controller is attached.
+  bool get hasListObserverController => _listObserverController != null;
+
+  /// Returns true if a grid observer controller is attached.
+  bool get hasGridObserverController => _gridObserverController != null;
+
+  /// Returns true if any observer controller is attached.
+  bool get hasObserverController =>
+      _listObserverController != null || _gridObserverController != null;
+
+  /// Attaches a [ListObserverController] for scroll navigation.
+  ///
+  /// This must be called before using [animateToIndex], [jumpToIndex],
+  /// [animateFirstWhere], or [jumpFirstWhere] with list views.
+  ///
+  /// Example:
+  /// ```dart
+  /// final observerController = ListObserverController(controller: scrollController);
+  /// cubit.attachListObserverController(observerController);
+  /// ```
+  void attachListObserverController(ListObserverController controller) {
+    _listObserverController = controller;
+    _logger.d('ListObserverController attached');
+  }
+
+  /// Attaches a [GridObserverController] for scroll navigation.
+  ///
+  /// This must be called before using [animateToIndex], [jumpToIndex],
+  /// [animateFirstWhere], or [jumpFirstWhere] with grid views.
+  ///
+  /// Example:
+  /// ```dart
+  /// final observerController = GridObserverController(controller: scrollController);
+  /// cubit.attachGridObserverController(observerController);
+  /// ```
+  void attachGridObserverController(GridObserverController controller) {
+    _gridObserverController = controller;
+    _logger.d('GridObserverController attached');
+  }
+
+  /// Detaches the list observer controller.
+  void detachListObserverController() {
+    _listObserverController = null;
+    _logger.d('ListObserverController detached');
+  }
+
+  /// Detaches the grid observer controller.
+  void detachGridObserverController() {
+    _gridObserverController = null;
+    _logger.d('GridObserverController detached');
+  }
+
+  /// Detaches all observer controllers.
+  void detachAllObserverControllers() {
+    _listObserverController = null;
+    _gridObserverController = null;
+    _logger.d('All observer controllers detached');
+  }
+
+  /// Animates to the item at the given [index] with smooth scrolling.
+  ///
+  /// The [duration] defaults to 300ms. The [curve] defaults to [Curves.easeInOut].
+  /// The [alignment] determines where the item should be positioned in the viewport
+  /// (0.0 = top/left, 0.5 = center, 1.0 = bottom/right).
+  ///
+  /// Returns a [Future] that completes when the animation finishes.
+  /// Returns `false` if no observer controller is attached or the index is out of bounds.
+  ///
+  /// Example:
+  /// ```dart
+  /// await cubit.animateToIndex(10);
+  /// await cubit.animateToIndex(5, duration: Duration(milliseconds: 500));
+  /// await cubit.animateToIndex(0, alignment: 0.5); // Center the item
+  /// ```
+  Future<bool> animateToIndex(
+    int index, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+    Axis scrollDirection = Axis.vertical,
+  }) async {
+    // Validate index
+    final items = currentItems;
+    if (index < 0 || index >= items.length) {
+      _logger.w('animateToIndex: index $index out of bounds (0-${items.length - 1})');
+      return false;
+    }
+
+    if (_listObserverController != null) {
+      await _listObserverController!.animateTo(
+        index: index,
+        duration: duration,
+        curve: curve,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+      _logger.d('Animated to index $index');
+      return true;
+    }
+
+    if (_gridObserverController != null) {
+      await _gridObserverController!.animateTo(
+        index: index,
+        duration: duration,
+        curve: curve,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+      _logger.d('Animated to index $index (grid)');
+      return true;
+    }
+
+    _logger.w('animateToIndex: no observer controller attached');
+    return false;
+  }
+
+  /// Jumps immediately to the item at the given [index] without animation.
+  ///
+  /// The [alignment] determines where the item should be positioned in the viewport
+  /// (0.0 = top/left, 0.5 = center, 1.0 = bottom/right).
+  ///
+  /// Returns `true` if successful, `false` if no observer controller is attached
+  /// or the index is out of bounds.
+  ///
+  /// Example:
+  /// ```dart
+  /// cubit.jumpToIndex(10);
+  /// cubit.jumpToIndex(0, alignment: 0.5); // Center the item
+  /// ```
+  bool jumpToIndex(
+    int index, {
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    // Validate index
+    final items = currentItems;
+    if (index < 0 || index >= items.length) {
+      _logger.w('jumpToIndex: index $index out of bounds (0-${items.length - 1})');
+      return false;
+    }
+
+    if (_listObserverController != null) {
+      _listObserverController!.jumpTo(
+        index: index,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+      _logger.d('Jumped to index $index');
+      return true;
+    }
+
+    if (_gridObserverController != null) {
+      _gridObserverController!.jumpTo(
+        index: index,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+      _logger.d('Jumped to index $index (grid)');
+      return true;
+    }
+
+    _logger.w('jumpToIndex: no observer controller attached');
+    return false;
+  }
+
+  /// Animates to the first item matching the given [test] function.
+  ///
+  /// The [duration] defaults to 300ms. The [curve] defaults to [Curves.easeInOut].
+  /// The [alignment] determines where the item should be positioned in the viewport
+  /// (0.0 = top/left, 0.5 = center, 1.0 = bottom/right).
+  ///
+  /// Returns a [Future] that completes with `true` if a matching item was found
+  /// and scrolled to, or `false` if no match was found or no controller is attached.
+  ///
+  /// Example:
+  /// ```dart
+  /// await cubit.animateFirstWhere((item) => item.id == targetId);
+  /// await cubit.animateFirstWhere(
+  ///   (item) => item.name.contains('search'),
+  ///   duration: Duration(milliseconds: 500),
+  /// );
+  /// ```
+  Future<bool> animateFirstWhere(
+    bool Function(T item) test, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) async {
+    final items = currentItems;
+    final index = items.indexWhere(test);
+
+    if (index == -1) {
+      _logger.d('animateFirstWhere: no matching item found');
+      return false;
+    }
+
+    return animateToIndex(
+      index,
+      duration: duration,
+      curve: curve,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  /// Jumps immediately to the first item matching the given [test] function.
+  ///
+  /// The [alignment] determines where the item should be positioned in the viewport
+  /// (0.0 = top/left, 0.5 = center, 1.0 = bottom/right).
+  ///
+  /// Returns `true` if a matching item was found and scrolled to, or `false`
+  /// if no match was found or no controller is attached.
+  ///
+  /// Example:
+  /// ```dart
+  /// cubit.jumpFirstWhere((item) => item.id == targetId);
+  /// cubit.jumpFirstWhere((item) => item.isHighlighted, alignment: 0.5);
+  /// ```
+  bool jumpFirstWhere(
+    bool Function(T item) test, {
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    final items = currentItems;
+    final index = items.indexWhere(test);
+
+    if (index == -1) {
+      _logger.d('jumpFirstWhere: no matching item found');
+      return false;
+    }
+
+    return jumpToIndex(
+      index,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  /// Scrolls to make the item at [index] visible, using animation if [animate] is true.
+  ///
+  /// This is a convenience method that calls either [animateToIndex] or [jumpToIndex]
+  /// based on the [animate] parameter.
+  ///
+  /// Example:
+  /// ```dart
+  /// await cubit.scrollToIndex(10, animate: true);
+  /// cubit.scrollToIndex(0, animate: false);
+  /// ```
+  Future<bool> scrollToIndex(
+    int index, {
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) async {
+    if (animate) {
+      return animateToIndex(
+        index,
+        duration: duration,
+        curve: curve,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+    } else {
+      return jumpToIndex(
+        index,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+    }
+  }
+
+  /// Scrolls to the first item matching [test], using animation if [animate] is true.
+  ///
+  /// This is a convenience method that calls either [animateFirstWhere] or [jumpFirstWhere]
+  /// based on the [animate] parameter.
+  ///
+  /// Example:
+  /// ```dart
+  /// await cubit.scrollFirstWhere((item) => item.id == targetId, animate: true);
+  /// cubit.scrollFirstWhere((item) => item.isNew, animate: false);
+  /// ```
+  Future<bool> scrollFirstWhere(
+    bool Function(T item) test, {
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) async {
+    if (animate) {
+      return animateFirstWhere(
+        test,
+        duration: duration,
+        curve: curve,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+    } else {
+      return jumpFirstWhere(
+        test,
+        alignment: alignment,
+        padding: padding,
+        sliverContext: sliverContext,
+        isFixedHeight: isFixedHeight,
+      );
+    }
+  }
+
+  // ==================== END SCROLL NAVIGATION ====================
 }

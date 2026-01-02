@@ -2254,6 +2254,106 @@ class _ProductsPageState extends State<ProductsPage> {
 }
 ```
 
+### Advanced Scroll Navigation (v2.6.0+)
+
+For more precise scroll navigation using `scrollview_observer`, you can attach an observer controller to the cubit:
+
+```dart
+class ChatScreen extends StatefulWidget {
+  @override
+  _ChatScreenState createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  late SmartPaginationCubit<Message> cubit;
+  late ScrollController scrollController;
+  late ListObserverController observerController;
+
+  @override
+  void initState() {
+    super.initState();
+    scrollController = ScrollController();
+    observerController = ListObserverController(controller: scrollController);
+
+    cubit = SmartPaginationCubit<Message>(
+      request: PaginationRequest(page: 1, pageSize: 50),
+      provider: PaginationProvider.future(fetchMessages),
+    );
+
+    // Attach the observer controller for scroll navigation
+    cubit.attachListObserverController(observerController);
+  }
+
+  // Animate to specific index
+  Future<void> scrollToMessage(int index) async {
+    await cubit.animateToIndex(
+      index,
+      duration: Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+      alignment: 0.5, // Center in viewport
+    );
+  }
+
+  // Jump to first unread message
+  void jumpToUnread() {
+    cubit.jumpFirstWhere((message) => !message.isRead);
+  }
+
+  // Search and scroll to matching message
+  Future<void> searchMessage(String query) async {
+    final success = await cubit.animateFirstWhere(
+      (message) => message.content.contains(query),
+      alignment: 0.3,
+    );
+    print(success ? 'Found!' : 'Not found');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ListViewObserver(
+        controller: observerController,
+        child: SmartPagination<Message>.listViewWithCubit(
+          cubit: cubit,
+          scrollController: scrollController,
+          itemBuilder: (context, items, index) => MessageBubble(items[index]),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => cubit.animateToIndex(0),
+        child: Icon(Icons.arrow_upward),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    cubit.detachListObserverController();
+    cubit.close();
+    scrollController.dispose();
+    super.dispose();
+  }
+}
+```
+
+**Available Navigation Methods:**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `animateToIndex(int index, {...})` | `Future<bool>` | Animate to item at index |
+| `jumpToIndex(int index, {...})` | `bool` | Instantly jump to item at index |
+| `animateFirstWhere(test, {...})` | `Future<bool>` | Animate to first matching item |
+| `jumpFirstWhere(test, {...})` | `bool` | Jump to first matching item |
+| `scrollToIndex(index, {animate})` | `Future<bool>` | Convenience wrapper |
+| `scrollFirstWhere(test, {animate})` | `Future<bool>` | Convenience wrapper |
+
+**Navigation Parameters:**
+- `duration` - Animation duration (default: 300ms)
+- `curve` - Animation curve (default: Curves.easeInOut)
+- `alignment` - Position in viewport (0.0 = top, 0.5 = center, 1.0 = bottom)
+- `padding` - Additional padding for alignment
+- `isFixedHeight` - Optimization for fixed-height items
+
 ### Before Build Hook
 
 Transform state before rendering:

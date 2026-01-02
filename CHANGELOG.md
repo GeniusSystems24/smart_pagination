@@ -5,6 +5,103 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-01-02
+
+### Added
+
+#### Scroll Navigation Methods - Programmatic Scrolling 🎯
+
+New scroll navigation methods in `SmartPaginationCubit` using the `scrollview_observer` package. These methods allow you to programmatically scroll to specific items in your list or grid views.
+
+**New Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `animateToIndex(int index, {...})` | Smoothly animate to item at index |
+| `jumpToIndex(int index, {...})` | Instantly jump to item at index |
+| `animateFirstWhere(bool Function(T) test, {...})` | Animate to first item matching predicate |
+| `jumpFirstWhere(bool Function(T) test, {...})` | Jump to first item matching predicate |
+| `scrollToIndex(int index, {bool animate})` | Convenience method combining animate/jump |
+| `scrollFirstWhere(bool Function(T) test, {bool animate})` | Convenience method combining animate/jump |
+
+**Observer Controller Management:**
+
+| Method | Description |
+|--------|-------------|
+| `attachListObserverController(ListObserverController)` | Attach controller for ListView |
+| `attachGridObserverController(GridObserverController)` | Attach controller for GridView |
+| `detachListObserverController()` | Detach list observer controller |
+| `detachGridObserverController()` | Detach grid observer controller |
+| `detachAllObserverControllers()` | Detach all observer controllers |
+
+**Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `hasListObserverController` | `bool` | Whether a list observer is attached |
+| `hasGridObserverController` | `bool` | Whether a grid observer is attached |
+| `hasObserverController` | `bool` | Whether any observer is attached |
+
+**Usage Example:**
+```dart
+// Create the observer controller
+final scrollController = ScrollController();
+final observerController = ListObserverController(controller: scrollController);
+
+// Attach to cubit
+cubit.attachListObserverController(observerController);
+
+// Navigate to specific index with animation
+await cubit.animateToIndex(
+  10,
+  duration: Duration(milliseconds: 500),
+  curve: Curves.easeOutCubic,
+  alignment: 0.5, // Center in viewport
+);
+
+// Jump instantly to an index
+cubit.jumpToIndex(0);
+
+// Find and scroll to first matching item
+await cubit.animateFirstWhere(
+  (message) => message.id == targetId,
+  alignment: 0.3,
+);
+
+// In your widget, wrap with ListViewObserver
+ListViewObserver(
+  controller: observerController,
+  child: SmartPagination<Message>.listViewWithCubit(
+    cubit: cubit,
+    scrollController: scrollController,
+    itemBuilder: (context, items, index) => MessageWidget(items[index]),
+  ),
+)
+```
+
+**Parameters:**
+
+All navigation methods support these parameters:
+- `duration` - Animation duration (default: 300ms)
+- `curve` - Animation curve (default: Curves.easeInOut)
+- `alignment` - Position in viewport (0.0 = top, 0.5 = center, 1.0 = bottom)
+- `padding` - Additional padding for alignment
+- `isFixedHeight` - Whether items have fixed height (optimization)
+- `sliverContext` - Context for sliver-based scrolling
+
+---
+
+#### Chat Screen Example 💬
+
+New comprehensive chat screen example demonstrating scroll navigation features:
+- Animated scroll to specific messages
+- Jump to unread messages
+- Search and scroll to matching messages
+- Message highlighting on navigation
+- Real-time message insertion with auto-scroll
+
+---
+
 ## [2.5.1] - 2026-01-02
 
 ### Fixed
