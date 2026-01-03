@@ -713,6 +713,7 @@ SmartSearchDropdown<Product>.withProvider(
 ```
 
 **Features:**
+
 - Real-time position updates during scrolling
 - Automatic attachment to nearest scrollable ancestor
 - Screen orientation/size change handling
@@ -2348,6 +2349,7 @@ class _ChatScreenState extends State<ChatScreen> {
 | `scrollFirstWhere(test, {animate})` | `Future<bool>` | Convenience wrapper |
 
 **Navigation Parameters:**
+
 - `duration` - Animation duration (default: 300ms)
 - `curve` - Animation curve (default: Curves.easeInOut)
 - `alignment` - Position in viewport (0.0 = top, 0.5 = center, 1.0 = bottom)

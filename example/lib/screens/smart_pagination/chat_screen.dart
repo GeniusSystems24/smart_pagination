@@ -335,7 +335,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 TooltipCard.builder(
                   beakEnabled: true,
                   placementSide: TooltipCardPlacementSide.bottom,
-                  whenContentVisible: WhenContentVisible.onTap,
+                  whenContentVisible: WhenContentVisible.pressButton,
                   builder: (context, close) => Container(
                     padding: const EdgeInsets.all(12),
                     constraints: const BoxConstraints(maxWidth: 250),
@@ -542,7 +542,7 @@ class _ChatScreenState extends State<ChatScreen> {
       floatingActionButton: TooltipCard.builder(
         beakEnabled: true,
         placementSide: TooltipCardPlacementSide.start,
-        whenContentVisible: WhenContentVisible.onHover,
+        whenContentVisible: WhenContentVisible.hoverButton,
         builder: (context, close) => const Padding(
           padding: EdgeInsets.all(8),
           child: Text(
@@ -696,7 +696,7 @@ class _QuickJumpChip extends StatelessWidget {
     return TooltipCard.builder(
       beakEnabled: true,
       placementSide: TooltipCardPlacementSide.bottom,
-      whenContentVisible: WhenContentVisible.onHover,
+      whenContentVisible: WhenContentVisible.hoverButton,
       builder: (context, close) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         constraints: const BoxConstraints(maxWidth: 200),
@@ -824,7 +824,7 @@ class _MessageBubble extends StatelessWidget {
               placementSide: isCurrentUser
                   ? TooltipCardPlacementSide.start
                   : TooltipCardPlacementSide.end,
-              whenContentVisible: WhenContentVisible.onLongPress,
+              whenContentVisible: WhenContentVisible.longPressButton,
               modalBarrierEnabled: true,
               builder: (context, close) => _MessageTooltipContent(
                 message: message,
