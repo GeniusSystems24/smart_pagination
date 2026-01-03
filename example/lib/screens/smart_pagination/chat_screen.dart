@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:smart_pagination/pagination.dart';
 import 'package:intl/intl.dart';
 import 'package:tooltip_card/tooltip_card.dart';
 
 import '../../models/message.dart';
 
-/// Example screen demonstrating scroll navigation methods
-/// (animateToIndex, animateFirstWhere, jumpToIndex, jumpFirstWhere)
-/// with a chat-like UI using scrollview_observer.
+/// A realistic chat screen demonstrating scroll navigation methods
+/// with proper reverse ListView and modern UI design.
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
@@ -15,92 +15,155 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   late SmartPaginationCubit<Message> _cubit;
   late ScrollController _scrollController;
   late ListObserverController _observerController;
+  late AnimationController _fabAnimationController;
+
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _messageFocusNode = FocusNode();
 
-  String _currentUser = 'You';
+  static const String _currentUser = 'أنت';
+  static const String _otherUser = 'أحمد محمد';
+
   int? _highlightedIndex;
   bool _isSearching = false;
+  bool _showScrollToBottom = false;
+  bool _isTyping = false;
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+
     _observerController = ListObserverController(controller: _scrollController);
 
+    _fabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+
     _cubit = SmartPaginationCubit<Message>(
-      request: const PaginationRequest(page: 1, pageSize: 50),
+      request: const PaginationRequest(page: 1, pageSize: 30),
       provider: PaginationProvider.future(_fetchMessages),
     );
 
-    // Attach the observer controller to the cubit for scroll navigation
     _cubit.attachListObserverController(_observerController);
+
+    // Simulate typing indicator
+    _simulateTyping();
+  }
+
+  void _onScroll() {
+    final showButton = _scrollController.hasClients &&
+        _scrollController.offset > 200;
+
+    if (showButton != _showScrollToBottom) {
+      setState(() => _showScrollToBottom = showButton);
+      if (showButton) {
+        _fabAnimationController.forward();
+      } else {
+        _fabAnimationController.reverse();
+      }
+    }
+  }
+
+  void _simulateTyping() {
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() => _isTyping = true);
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) setState(() => _isTyping = false);
+        });
+      }
+    });
   }
 
   Future<List<Message>> _fetchMessages(PaginationRequest request) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     final messages = <Message>[];
-    final baseTime = DateTime.now().subtract(const Duration(days: 1));
+    final now = DateTime.now();
+
+    // Create realistic chat messages
+    final sampleConversation = _getSampleConversation();
 
     for (int i = 0; i < (request.pageSize ?? 20); i++) {
       final index = ((request.page - 1) * (request.pageSize ?? 20)) + i;
-      final isCurrentUser = index % 3 == 0;
-      final author = isCurrentUser ? 'You' : 'John Doe';
+      if (index >= sampleConversation.length * 3) break;
+
+      final messageData = sampleConversation[index % sampleConversation.length];
+      final isCurrentUser = messageData['isMe'] as bool;
+
+      // Create timestamps going backwards in time
+      final timestamp = now.subtract(Duration(
+        minutes: index * 3 + (index ~/ 5) * 30, // Add gaps for realism
+      ));
 
       messages.add(Message(
-        id: 'msg_$index',
-        content: _getSampleMessage(index),
-        author: author,
-        timestamp: baseTime.add(Duration(minutes: index * 5)),
-        isRead: index < 10,
+        id: 'msg_${request.page}_$index',
+        content: messageData['text'] as String,
+        author: isCurrentUser ? _currentUser : _otherUser,
+        timestamp: timestamp,
+        isRead: index > 5, // Recent messages are unread
       ));
     }
+
+    // Update unread count
+    _unreadCount = messages.where((m) => !m.isRead).length;
 
     return messages;
   }
 
-  String _getSampleMessage(int index) {
-    final samples = [
-      'Hey! How are you doing today?',
-      'I just finished the project we discussed.',
-      'Can you review my pull request when you get a chance?',
-      'The meeting has been rescheduled to 3 PM.',
-      'Thanks for your help with the bug fix!',
-      'Did you see the latest updates?',
-      'Let me know if you need any assistance.',
-      'Great work on the presentation!',
-      'I\'ll send you the documents shortly.',
-      'Looking forward to our collaboration!',
-      'The deployment was successful.',
-      'Please check the error logs.',
-      'New feature request from the client.',
-      'Sprint review is tomorrow at 10 AM.',
-      'Code review completed with comments.',
+  List<Map<String, dynamic>> _getSampleConversation() {
+    return [
+      {'text': 'مرحباً! كيف حالك اليوم؟ 👋', 'isMe': false},
+      {'text': 'أهلاً أحمد! الحمد لله بخير، وأنت؟', 'isMe': true},
+      {'text': 'الحمد لله، هل انتهيت من المشروع؟', 'isMe': false},
+      {'text': 'نعم، أنهيته البارحة وأرسلته للمراجعة ✅', 'isMe': true},
+      {'text': 'ممتاز! عمل رائع 👏', 'isMe': false},
+      {'text': 'شكراً لك! هل لديك أي ملاحظات؟', 'isMe': true},
+      {'text': 'سأراجعه اليوم وأخبرك', 'isMe': false},
+      {'text': 'تمام، في انتظارك', 'isMe': true},
+      {'text': 'بالمناسبة، الاجتماع تأجل للساعة 3 مساءً', 'isMe': false},
+      {'text': 'حسناً، سأكون جاهزاً 📅', 'isMe': true},
+      {'text': 'هل تحتاج مساعدة في التحضير؟', 'isMe': false},
+      {'text': 'نعم، أرسل لي العرض التقديمي من فضلك', 'isMe': true},
+      {'text': 'تم الإرسال على البريد 📧', 'isMe': false},
+      {'text': 'وصل، شكراً جزيلاً!', 'isMe': true},
+      {'text': 'عفواً! نتواصل لاحقاً', 'isMe': false},
+      {'text': 'إن شاء الله، أراك في الاجتماع', 'isMe': true},
+      {'text': 'هل رأيت التحديثات الجديدة في النظام؟', 'isMe': false},
+      {'text': 'لا بعد، ما الجديد؟', 'isMe': true},
+      {'text': 'أضافوا ميزة البحث المتقدم 🔍', 'isMe': false},
+      {'text': 'رائع! سأجربها الآن', 'isMe': true},
     ];
-    return samples[index % samples.length];
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _cubit.detachListObserverController();
     _cubit.close();
     _scrollController.dispose();
     _messageController.dispose();
     _searchController.dispose();
+    _messageFocusNode.dispose();
+    _fabAnimationController.dispose();
     super.dispose();
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
 
     final newMessage = Message(
       id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      content: _messageController.text.trim(),
+      content: text,
       author: _currentUser,
       timestamp: DateTime.now(),
       isRead: true,
@@ -109,13 +172,64 @@ class _ChatScreenState extends State<ChatScreen> {
     _cubit.insertEmit(newMessage, index: 0);
     _messageController.clear();
 
-    // Scroll to the new message
+    // Haptic feedback
+    HapticFeedback.lightImpact();
+
+    // Scroll to bottom (index 0 in reverse list)
     Future.delayed(const Duration(milliseconds: 100), () {
-      _cubit.animateToIndex(0, alignment: 0.0);
+      _scrollToNewest();
+    });
+
+    // Simulate reply
+    _simulateReply();
+  }
+
+  void _simulateReply() {
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+
+      setState(() => _isTyping = true);
+
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
+
+        setState(() => _isTyping = false);
+
+        final replies = [
+          'تمام 👍',
+          'حسناً، فهمت',
+          'شكراً للتوضيح',
+          'سأتحقق من ذلك',
+          'ممتاز!',
+        ];
+
+        final reply = Message(
+          id: 'msg_reply_${DateTime.now().millisecondsSinceEpoch}',
+          content: replies[DateTime.now().second % replies.length],
+          author: _otherUser,
+          timestamp: DateTime.now(),
+          isRead: false,
+        );
+
+        _cubit.insertEmit(reply, index: 0);
+        setState(() => _unreadCount++);
+      });
     });
   }
 
-  void _scrollToBottom() async {
+  Future<void> _scrollToNewest() async {
+    final success = await _cubit.animateToIndex(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+
+    if (success && mounted) {
+      setState(() => _unreadCount = 0);
+    }
+  }
+
+  Future<void> _scrollToOldest() async {
     final items = _cubit.currentItems;
     if (items.isEmpty) return;
 
@@ -124,35 +238,9 @@ class _ChatScreenState extends State<ChatScreen> {
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeOutCubic,
     );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Scrolled to oldest message'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
   }
 
-  void _scrollToTop() async {
-    await _cubit.animateToIndex(
-      0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOutCubic,
-    );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Scrolled to newest message'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
-  }
-
-  void _jumpToUnreadMessage() async {
+  Future<void> _jumpToUnread() async {
     final success = await _cubit.animateFirstWhere(
       (message) => !message.isRead,
       duration: const Duration(milliseconds: 400),
@@ -160,20 +248,14 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Found first unread message'
-                : 'No unread messages found',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
+      _showSnackBar(
+        success ? 'تم العثور على أول رسالة غير مقروءة' : 'لا توجد رسائل غير مقروءة',
+        success ? Colors.green : Colors.orange,
       );
     }
   }
 
-  void _searchAndScrollToMessage(String query) async {
+  Future<void> _searchAndScroll(String query) async {
     if (query.isEmpty) return;
 
     final success = await _cubit.animateFirstWhere(
@@ -192,25 +274,17 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Found message at position ${index + 1}'
-                : 'No matching message found',
-          ),
-          backgroundColor: success ? Colors.green : Colors.orange,
-          duration: const Duration(seconds: 2),
-        ),
+      _showSnackBar(
+        success
+            ? 'تم العثور على الرسالة رقم ${index + 1}'
+            : 'لم يتم العثور على "$query"',
+        success ? Colors.green : Colors.orange,
       );
     }
 
-    // Clear highlight after 3 seconds
     if (success) {
       Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() => _highlightedIndex = null);
-        }
+        if (mounted) setState(() => _highlightedIndex = null);
       });
     }
   }
@@ -219,458 +293,683 @@ class _ChatScreenState extends State<ChatScreen> {
     final success = _cubit.jumpToIndex(index, alignment: 0.3);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Jumped to message #${index + 1}'
-                : 'Could not jump to message #${index + 1}',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
+      _showSnackBar(
+        success
+            ? 'تم الانتقال للرسالة #${index + 1}'
+            : 'لا يمكن الانتقال للرسالة #${index + 1}',
+        success ? Colors.teal : Colors.red,
       );
     }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.center),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: 'Search messages...',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  border: InputBorder.none,
-                ),
-                onSubmitted: _searchAndScrollToMessage,
-              )
-            : const Text('Chat Example'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  _highlightedIndex = null;
-                }
-              });
-            },
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              switch (value) {
-                case 'top':
-                  _scrollToTop();
-                  break;
-                case 'bottom':
-                  _scrollToBottom();
-                  break;
-                case 'unread':
-                  _jumpToUnreadMessage();
-                  break;
-                case 'middle':
-                  final items = _cubit.currentItems;
-                  if (items.isNotEmpty) {
-                    _jumpToIndex(items.length ~/ 2);
-                  }
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'top',
-                child: ListTile(
-                  leading: Icon(Icons.vertical_align_top),
-                  title: Text('Scroll to Top'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'bottom',
-                child: ListTile(
-                  leading: Icon(Icons.vertical_align_bottom),
-                  title: Text('Scroll to Bottom'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'unread',
-                child: ListTile(
-                  leading: Icon(Icons.mark_email_unread),
-                  title: Text('Find Unread'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'middle',
-                child: ListTile(
-                  leading: Icon(Icons.vertical_align_center),
-                  title: Text('Jump to Middle'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      backgroundColor: isDark ? const Color(0xFF0B141A) : const Color(0xFFECE5DD),
+      appBar: _buildAppBar(isDark),
       body: Column(
         children: [
-          // Feature description
-          Container(
-            padding: const EdgeInsets.all(12),
-            color: Colors.indigo.withValues(alpha: 0.1),
-            child: Row(
-              children: [
-                TooltipCard.builder(
-                  beakEnabled: true,
-                  placementSide: TooltipCardPlacementSide.bottom,
-                  whenContentVisible: WhenContentVisible.pressButton,
-                  builder: (context, close) => Container(
-                    padding: const EdgeInsets.all(12),
-                    constraints: const BoxConstraints(maxWidth: 250),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'الدوال المستخدمة:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildMethodInfo('animateToIndex', 'تحريك سلس للعنصر'),
-                        _buildMethodInfo('jumpToIndex', 'انتقال مباشر للعنصر'),
-                        _buildMethodInfo('animateFirstWhere', 'بحث وتحريك سلس'),
-                        _buildMethodInfo('jumpFirstWhere', 'بحث وانتقال مباشر'),
-                        _buildMethodInfo('scrollToIndex', 'تمرير مع خيار الحركة'),
-                        _buildMethodInfo('scrollFirstWhere', 'بحث وتمرير مع خيار الحركة'),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: close,
-                          child: const Text('إغلاق'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  child: const Icon(Icons.info_outline, color: Colors.indigo, size: 20),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'يوضح هذا المثال دوال التمرير مع tooltip_card و scrollview_observer. '
-                    'اضغط مطولاً على أي رسالة لرؤية التفاصيل.',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Navigation toolbar
+          _buildNavigationToolbar(isDark),
 
-          // Quick jump buttons
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _QuickJumpChip(
-                    label: 'Jump to #1',
-                    icon: Icons.looks_one,
-                    onPressed: () => _jumpToIndex(0),
-                    tooltipMessage: 'انتقل مباشرة إلى أول رسالة باستخدام jumpToIndex',
-                  ),
-                  const SizedBox(width: 8),
-                  _QuickJumpChip(
-                    label: 'Jump to #10',
-                    icon: Icons.looks_two,
-                    onPressed: () => _jumpToIndex(9),
-                    tooltipMessage: 'انتقل مباشرة إلى الرسالة رقم 10 باستخدام jumpToIndex',
-                  ),
-                  const SizedBox(width: 8),
-                  _QuickJumpChip(
-                    label: 'Jump to #25',
-                    icon: Icons.format_list_numbered,
-                    onPressed: () => _jumpToIndex(24),
-                    tooltipMessage: 'انتقل مباشرة إلى الرسالة رقم 25 باستخدام jumpToIndex',
-                  ),
-                  const SizedBox(width: 8),
-                  _QuickJumpChip(
-                    label: 'Find "bug"',
-                    icon: Icons.search,
-                    onPressed: () => _searchAndScrollToMessage('bug'),
-                    tooltipMessage: 'ابحث عن كلمة "bug" باستخدام animateFirstWhere',
-                  ),
-                  const SizedBox(width: 8),
-                  _QuickJumpChip(
-                    label: 'Find "meeting"',
-                    icon: Icons.event,
-                    onPressed: () => _searchAndScrollToMessage('meeting'),
-                    tooltipMessage: 'ابحث عن كلمة "meeting" باستخدام animateFirstWhere',
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const Divider(height: 1),
-
-          // Messages list with ListViewObserver
+          // Chat messages
           Expanded(
-            child: ListViewObserver(
-              controller: _observerController,
-              child: SmartPagination<Message>.listViewWithCubit(
-                cubit: _cubit,
-                scrollController: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                reverse: false,
-                itemBuilder: (context, items, index) {
-                  final message = items[index];
-                  final isHighlighted = _highlightedIndex == index;
-                  return _MessageBubble(
-                    message: message,
-                    isCurrentUser: message.author == _currentUser,
-                    isHighlighted: isHighlighted,
-                    index: index,
-                    onTap: () => _showMessageDetails(message, index),
-                  );
-                },
-                firstPageLoadingBuilder: (context) => const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Colors.indigo),
-                      SizedBox(height: 16),
-                      Text('Loading messages...'),
-                    ],
-                  ),
-                ),
-                firstPageErrorBuilder: (context, error, retry) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                      const SizedBox(height: 16),
-                      const Text('Failed to load messages'),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: retry,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
-                firstPageEmptyBuilder: (context) => const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text('No messages yet'),
-                      Text('Start a conversation!', style: TextStyle(color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                loadMoreLoadingBuilder: (context) => const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+            child: Stack(
+              children: [
+                // Background pattern
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0B141A) : const Color(0xFFECE5DD),
                     ),
                   ),
                 ),
-              ),
+
+                // Messages list
+                ListViewObserver(
+                  controller: _observerController,
+                  child: SmartPagination<Message>.listViewWithCubit(
+                    cubit: _cubit,
+                    scrollController: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    reverse: true, // Important for chat!
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemBuilder: (context, items, index) {
+                      final message = items[index];
+                      final isHighlighted = _highlightedIndex == index;
+
+                      // Show date separator
+                      final showDateSeparator = _shouldShowDateSeparator(items, index);
+
+                      return Column(
+                        children: [
+                          if (showDateSeparator)
+                            _DateSeparator(date: message.timestamp),
+                          _MessageBubble(
+                            message: message,
+                            isCurrentUser: message.author == _currentUser,
+                            isHighlighted: isHighlighted,
+                            index: index,
+                            isDark: isDark,
+                            onLongPress: () => _showMessageOptions(message, index),
+                          ),
+                        ],
+                      );
+                    },
+                    firstPageLoadingBuilder: (context) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: isDark ? Colors.teal : Colors.teal,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'جاري تحميل الرسائل...',
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    firstPageErrorBuilder: (context, error, retry) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.cloud_off,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'فشل تحميل الرسائل',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'تحقق من اتصالك بالإنترنت',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                            const SizedBox(height: 24),
+                            FilledButton.icon(
+                              onPressed: retry,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('إعادة المحاولة'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    firstPageEmptyBuilder: (context) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            size: 80,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'لا توجد رسائل',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'ابدأ المحادثة الآن!',
+                            style: TextStyle(color: Colors.grey[500]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    loadMoreLoadingBuilder: (context) => const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Typing indicator
+                if (_isTyping)
+                  Positioned(
+                    bottom: 8,
+                    left: 16,
+                    child: _TypingIndicator(userName: _otherUser),
+                  ),
+              ],
             ),
           ),
 
           // Message input
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
+          _buildMessageInput(isDark),
+        ],
+      ),
+      floatingActionButton: _buildScrollToBottomFab(isDark),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(bool isDark) {
+    final bgColor = isDark ? const Color(0xFF1F2C34) : Colors.teal;
+
+    return AppBar(
+      backgroundColor: bgColor,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      titleSpacing: 0,
+      title: _isSearching
+          ? TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'بحث في الرسائل...',
+                hintStyle: TextStyle(color: Colors.white60),
+                border: InputBorder.none,
+              ),
+              onSubmitted: (query) {
+                _searchAndScroll(query);
+                setState(() => _isSearching = false);
+              },
+            )
+          : Row(
+              children: [
+                TooltipCard.builder(
+                  beakEnabled: true,
+                  placementSide: TooltipCardPlacementSide.bottom,
+                  whenContentVisible: WhenContentVisible.onTap,
+                  builder: (context, close) => _buildUserProfileTooltip(close),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white24,
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            _otherUser,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            _isTyping ? 'يكتب...' : 'متصل الآن',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _isTyping ? Colors.greenAccent : Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            child: SafeArea(
+      actions: [
+        IconButton(
+          icon: Icon(_isSearching ? Icons.close : Icons.search),
+          onPressed: () {
+            setState(() {
+              _isSearching = !_isSearching;
+              if (!_isSearching) {
+                _searchController.clear();
+                _highlightedIndex = null;
+              }
+            });
+          },
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert),
+          onSelected: _handleMenuAction,
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'top',
               child: Row(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton(
-                    onPressed: _sendMessage,
-                    mini: true,
-                    backgroundColor: Colors.indigo,
-                    child: const Icon(Icons.send, color: Colors.white),
-                  ),
+                  Icon(Icons.keyboard_double_arrow_up, size: 20),
+                  SizedBox(width: 12),
+                  Text('أقدم الرسائل'),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: TooltipCard.builder(
-        beakEnabled: true,
-        placementSide: TooltipCardPlacementSide.start,
-        whenContentVisible: WhenContentVisible.hoverButton,
-        builder: (context, close) => const Padding(
-          padding: EdgeInsets.all(8),
-          child: Text(
-            'انتقل لأعلى (animateToIndex)',
-            style: TextStyle(fontSize: 12),
-          ),
-        ),
-        child: FloatingActionButton.small(
-          onPressed: _scrollToTop,
-          backgroundColor: Colors.indigo,
-          child: const Icon(Icons.arrow_upward, color: Colors.white),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
-    );
-  }
-
-  Widget _buildMethodInfo(String method, String description) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.indigo.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              method,
-              style: const TextStyle(
-                fontSize: 10,
-                fontFamily: 'monospace',
-                color: Colors.indigo,
+            const PopupMenuItem(
+              value: 'bottom',
+              child: Row(
+                children: [
+                  Icon(Icons.keyboard_double_arrow_down, size: 20),
+                  SizedBox(width: 12),
+                  Text('أحدث الرسائل'),
+                ],
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              description,
-              style: const TextStyle(fontSize: 11),
+            const PopupMenuItem(
+              value: 'unread',
+              child: Row(
+                children: [
+                  Icon(Icons.mark_email_unread, size: 20),
+                  SizedBox(width: 12),
+                  Text('غير المقروءة'),
+                ],
+              ),
             ),
+            const PopupMenuItem(
+              value: 'middle',
+              child: Row(
+                children: [
+                  Icon(Icons.vertical_align_center, size: 20),
+                  SizedBox(width: 12),
+                  Text('منتصف المحادثة'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUserProfileTooltip(VoidCallback close) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(maxWidth: 280),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.teal,
+            child: Icon(Icons.person, size: 40, color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            _otherUser,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '+966 50 XXX XXXX',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildProfileAction(Icons.call, 'اتصال'),
+              _buildProfileAction(Icons.videocam, 'فيديو'),
+              _buildProfileAction(Icons.info_outline, 'معلومات'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: close,
+            child: const Text('إغلاق'),
           ),
         ],
       ),
     );
   }
 
-  void _showMessageDetails(Message message, int index) {
+  Widget _buildProfileAction(IconData icon, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: () {},
+          icon: Icon(icon, color: Colors.teal),
+        ),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildNavigationToolbar(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      color: isDark ? const Color(0xFF1F2C34) : Colors.teal.shade50,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _NavigationChip(
+              label: 'الأولى',
+              icon: Icons.looks_one,
+              onTap: () => _jumpToIndex(0),
+              color: Colors.teal,
+            ),
+            _NavigationChip(
+              label: 'رقم 10',
+              icon: Icons.filter_1,
+              onTap: () => _jumpToIndex(9),
+              color: Colors.blue,
+            ),
+            _NavigationChip(
+              label: 'رقم 20',
+              icon: Icons.filter_2,
+              onTap: () => _jumpToIndex(19),
+              color: Colors.purple,
+            ),
+            _NavigationChip(
+              label: 'المشروع',
+              icon: Icons.search,
+              onTap: () => _searchAndScroll('المشروع'),
+              color: Colors.orange,
+            ),
+            _NavigationChip(
+              label: 'الاجتماع',
+              icon: Icons.event,
+              onTap: () => _searchAndScroll('الاجتماع'),
+              color: Colors.pink,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageInput(bool isDark) {
+    final bgColor = isDark ? const Color(0xFF1F2C34) : Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            // Emoji button
+            IconButton(
+              onPressed: () {},
+              icon: Icon(
+                Icons.emoji_emotions_outlined,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+
+            // Text field
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2A3942) : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: TextField(
+                  controller: _messageController,
+                  focusNode: _messageFocusNode,
+                  textDirection: TextDirection.rtl,
+                  decoration: InputDecoration(
+                    hintText: 'اكتب رسالة...',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 4),
+
+            // Attachment button
+            IconButton(
+              onPressed: () {},
+              icon: Icon(
+                Icons.attach_file,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+
+            // Send/Voice button
+            TooltipCard.builder(
+              beakEnabled: true,
+              placementSide: TooltipCardPlacementSide.top,
+              whenContentVisible: WhenContentVisible.onLongPress,
+              builder: (context, close) => const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('اضغط للإرسال\nاضغط مطولاً للتسجيل الصوتي'),
+              ),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.teal,
+                child: IconButton(
+                  onPressed: _sendMessage,
+                  icon: Icon(
+                    _messageController.text.isEmpty ? Icons.mic : Icons.send,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildScrollToBottomFab(bool isDark) {
+    if (!_showScrollToBottom) return null;
+
+    return ScaleTransition(
+      scale: CurvedAnimation(
+        parent: _fabAnimationController,
+        curve: Curves.easeOutBack,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 70),
+        child: Stack(
+          children: [
+            FloatingActionButton.small(
+              onPressed: _scrollToNewest,
+              backgroundColor: isDark ? const Color(0xFF2A3942) : Colors.white,
+              child: Icon(
+                Icons.keyboard_double_arrow_down,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+            if (_unreadCount > 0)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.teal,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Text(
+                    '$_unreadCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleMenuAction(String value) {
+    switch (value) {
+      case 'top':
+        _scrollToOldest();
+        break;
+      case 'bottom':
+        _scrollToNewest();
+        break;
+      case 'unread':
+        _jumpToUnread();
+        break;
+      case 'middle':
+        final items = _cubit.currentItems;
+        if (items.isNotEmpty) {
+          _jumpToIndex(items.length ~/ 2);
+        }
+        break;
+    }
+  }
+
+  bool _shouldShowDateSeparator(List<Message> items, int index) {
+    if (index == items.length - 1) return true;
+
+    final currentDate = DateUtils.dateOnly(items[index].timestamp);
+    final nextDate = DateUtils.dateOnly(items[index + 1].timestamp);
+
+    return currentDate != nextDate;
+  }
+
+  void _showMessageOptions(Message message, int index) {
+    HapticFeedback.mediumImpact();
+
     showModalBottomSheet(
       context: context,
-      builder: (context) => Padding(
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: message.author == _currentUser
-                      ? Colors.indigo
-                      : Colors.grey,
-                  child: Text(
-                    message.author[0].toUpperCase(),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      message.author,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      DateFormat('MMM d, yyyy HH:mm').format(message.timestamp),
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(message.content),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Message #${index + 1}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-                Row(
-                  children: [
-                    Icon(
-                      message.isRead ? Icons.done_all : Icons.done,
-                      size: 16,
-                      color: message.isRead ? Colors.blue : Colors.grey,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      message.isRead ? 'Read' : 'Unread',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
+            const SizedBox(height: 20),
+
+            // Message preview
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                message.content,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textDirection: TextDirection.rtl,
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            const SizedBox(height: 20),
+
+            // Actions
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                TextButton.icon(
-                  onPressed: () {
+                _MessageActionChip(
+                  icon: Icons.content_copy,
+                  label: 'نسخ',
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: message.content));
+                    Navigator.pop(context);
+                    _showSnackBar('تم النسخ', Colors.green);
+                  },
+                ),
+                _MessageActionChip(
+                  icon: Icons.reply,
+                  label: 'رد',
+                  onTap: () => Navigator.pop(context),
+                ),
+                _MessageActionChip(
+                  icon: Icons.forward,
+                  label: 'تحويل',
+                  onTap: () => Navigator.pop(context),
+                ),
+                _MessageActionChip(
+                  icon: Icons.star_border,
+                  label: 'تمييز',
+                  onTap: () => Navigator.pop(context),
+                ),
+                _MessageActionChip(
+                  icon: Icons.center_focus_strong,
+                  label: 'انتقال',
+                  onTap: () {
                     Navigator.pop(context);
                     _cubit.animateToIndex(index, alignment: 0.3);
                   },
-                  icon: const Icon(Icons.center_focus_strong),
-                  label: const Text('Scroll to this'),
+                ),
+                _MessageActionChip(
+                  icon: Icons.delete_outline,
+                  label: 'حذف',
+                  color: Colors.red,
+                  onTap: () => Navigator.pop(context),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -678,39 +977,188 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-class _QuickJumpChip extends StatelessWidget {
-  const _QuickJumpChip({
+// ============= Helper Widgets =============
+
+class _DateSeparator extends StatelessWidget {
+  const _DateSeparator({required this.date});
+
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateUtils.dateOnly(now);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateUtils.dateOnly(date);
+
+    String dateText;
+    if (messageDate == today) {
+      dateText = 'اليوم';
+    } else if (messageDate == yesterday) {
+      dateText = 'أمس';
+    } else {
+      dateText = DateFormat('d MMMM yyyy', 'ar').format(date);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            dateText,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator({required this.userName});
+
+  final String userName;
+
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (index) {
+                  final delay = index * 0.2;
+                  final value = (_controller.value - delay).clamp(0.0, 1.0);
+                  final scale = 0.5 + 0.5 * (1 - (value - 0.5).abs() * 2);
+
+                  return Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: const BoxDecoration(
+                        color: Colors.grey,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavigationChip extends StatelessWidget {
+  const _NavigationChip({
     required this.label,
     required this.icon,
-    required this.onPressed,
-    this.tooltipMessage,
+    required this.onTap,
+    required this.color,
   });
 
   final String label;
   final IconData icon;
-  final VoidCallback onPressed;
-  final String? tooltipMessage;
+  final VoidCallback onTap;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return TooltipCard.builder(
-      beakEnabled: true,
-      placementSide: TooltipCardPlacementSide.bottom,
-      whenContentVisible: WhenContentVisible.hoverButton,
-      builder: (context, close) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        constraints: const BoxConstraints(maxWidth: 200),
-        child: Text(
-          tooltipMessage ?? 'اضغط للانتقال إلى $label',
-          style: const TextStyle(fontSize: 12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: TooltipCard.builder(
+        beakEnabled: true,
+        placementSide: TooltipCardPlacementSide.bottom,
+        whenContentVisible: WhenContentVisible.onHover,
+        builder: (context, close) => Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text('انتقل إلى: $label'),
+        ),
+        child: ActionChip(
+          avatar: Icon(icon, size: 16, color: color),
+          label: Text(label, style: TextStyle(fontSize: 11, color: color)),
+          onPressed: onTap,
+          backgroundColor: color.withValues(alpha: 0.1),
+          side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
         ),
       ),
-      child: ActionChip(
-        avatar: Icon(icon, size: 16),
-        label: Text(label, style: const TextStyle(fontSize: 12)),
-        onPressed: onPressed,
-        backgroundColor: Colors.indigo.withValues(alpha: 0.1),
-      ),
+    );
+  }
+}
+
+class _MessageActionChip extends StatelessWidget {
+  const _MessageActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final chipColor = color ?? Colors.grey[700];
+
+    return ActionChip(
+      avatar: Icon(icon, size: 18, color: chipColor),
+      label: Text(label, style: TextStyle(color: chipColor)),
+      onPressed: onTap,
+      backgroundColor: (chipColor ?? Colors.grey).withValues(alpha: 0.1),
     );
   }
 }
@@ -721,264 +1169,104 @@ class _MessageBubble extends StatelessWidget {
     required this.isCurrentUser,
     required this.isHighlighted,
     required this.index,
-    required this.onTap,
+    required this.isDark,
+    required this.onLongPress,
   });
 
   final Message message;
   final bool isCurrentUser;
   final bool isHighlighted;
   final int index;
-  final VoidCallback onTap;
+  final bool isDark;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    final bubbleContent = Container(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.7,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: isCurrentUser ? Colors.indigo : Colors.grey[200],
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
-          bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isCurrentUser)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                message.author,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                ),
-              ),
-            ),
-          Text(
-            message.content,
-            style: TextStyle(
-              color: isCurrentUser ? Colors.white : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                DateFormat('HH:mm').format(message.timestamp),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isCurrentUser ? Colors.white70 : Colors.grey[600],
-                ),
-              ),
-              if (isCurrentUser) ...[
-                const SizedBox(width: 4),
-                Icon(
-                  message.isRead ? Icons.done_all : Icons.done,
-                  size: 14,
-                  color: message.isRead ? Colors.lightBlueAccent : Colors.white70,
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
+    // WhatsApp-like colors
+    final bubbleColor = isCurrentUser
+        ? (isDark ? const Color(0xFF005C4B) : const Color(0xFFD9FDD3))
+        : (isDark ? const Color(0xFF202C33) : Colors.white);
+
+    final textColor = isDark ? Colors.white : Colors.black87;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(2),
+      margin: EdgeInsets.only(
+        left: isCurrentUser ? 64 : 8,
+        right: isCurrentUser ? 8 : 64,
+        top: 2,
+        bottom: 2,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         color: isHighlighted
-            ? Colors.yellow.withValues(alpha: 0.3)
+            ? Colors.yellow.withValues(alpha: 0.4)
             : Colors.transparent,
       ),
-      child: Row(
-        mainAxisAlignment:
-            isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isCurrentUser) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey[300],
-              child: Text(
-                message.author[0].toUpperCase(),
-                style: const TextStyle(fontSize: 12),
-              ),
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: Align(
+          alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: TooltipCard.builder(
-              beakEnabled: true,
-              placementSide: isCurrentUser
-                  ? TooltipCardPlacementSide.start
-                  : TooltipCardPlacementSide.end,
-              whenContentVisible: WhenContentVisible.longPressButton,
-              modalBarrierEnabled: true,
-              builder: (context, close) => _MessageTooltipContent(
-                message: message,
-                index: index,
-                onClose: close,
-                onScrollTo: onTap,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: bubbleColor,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(12),
+                topRight: const Radius.circular(12),
+                bottomLeft: Radius.circular(isCurrentUser ? 12 : 4),
+                bottomRight: Radius.circular(isCurrentUser ? 4 : 12),
               ),
-              child: GestureDetector(
-                onTap: onTap,
-                child: bubbleContent,
-              ),
-            ),
-          ),
-          if (isCurrentUser) const SizedBox(width: 8),
-        ],
-      ),
-    );
-  }
-}
-
-/// Tooltip content widget for message details
-class _MessageTooltipContent extends StatelessWidget {
-  const _MessageTooltipContent({
-    required this.message,
-    required this.index,
-    required this.onClose,
-    required this.onScrollTo,
-  });
-
-  final Message message;
-  final int index;
-  final VoidCallback onClose;
-  final VoidCallback onScrollTo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      constraints: const BoxConstraints(maxWidth: 280),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.indigo.withValues(alpha: 0.2),
-                child: Text(
-                  message.author[0].toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.indigo,
-                    fontWeight: FontWeight.bold,
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message.content,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 15,
+                  ),
+                  textDirection: TextDirection.rtl,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      message.author,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      DateFormat('MMM d, yyyy • HH:mm').format(message.timestamp),
+                      DateFormat('HH:mm').format(message.timestamp),
                       style: TextStyle(
-                        color: Colors.grey[600],
                         fontSize: 11,
+                        color: isDark ? Colors.white60 : Colors.grey[600],
                       ),
                     ),
+                    if (isCurrentUser) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        message.isRead ? Icons.done_all : Icons.done,
+                        size: 16,
+                        color: message.isRead
+                            ? const Color(0xFF53BDEB)
+                            : (isDark ? Colors.white60 : Colors.grey[600]),
+                      ),
+                    ],
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 12),
-
-          // Message preview
-          Text(
-            message.content,
-            style: const TextStyle(fontSize: 13),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
-
-          // Status row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'رسالة #${index + 1}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    message.isRead ? Icons.done_all : Icons.done,
-                    size: 16,
-                    color: message.isRead ? Colors.blue : Colors.grey,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    message.isRead ? 'مقروءة' : 'غير مقروءة',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: message.isRead ? Colors.blue : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: onClose,
-                child: const Text('إغلاق'),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.icon(
-                onPressed: () {
-                  onClose();
-                  onScrollTo();
-                },
-                icon: const Icon(Icons.center_focus_strong, size: 18),
-                label: const Text('انتقال'),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
