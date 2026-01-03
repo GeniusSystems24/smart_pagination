@@ -1182,6 +1182,7 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
             loadedState: beforeBuildState,
             itemBuilderType: widget.itemBuilderType,
             itemBuilder: widget.itemBuilder,
+            cubit: widget.cubit, // Pass cubit for built-in observer
             heightOfInitialLoadingAndEmptyWidget:
                 widget.heightOfInitialLoadingAndEmptyWidget,
             gridDelegate: widget.gridDelegate,

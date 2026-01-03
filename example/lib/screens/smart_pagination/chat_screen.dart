@@ -20,7 +20,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   late SmartPaginationCubit<Message> _cubit;
   late ScrollController _scrollController;
-  late ListObserverController _observerController;
   late AnimationController _fabAnimationController;
 
   final TextEditingController _messageController = TextEditingController();
@@ -42,19 +41,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
-    _observerController = ListObserverController(controller: _scrollController);
-
     _fabAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
 
+    // Observer is now built-in! No need to create ListObserverController manually.
+    // SmartPagination will automatically attach it to the cubit.
     _cubit = SmartPaginationCubit<Message>(
       request: const PaginationRequest(page: 1, pageSize: 30),
       provider: PaginationProvider.future(_fetchMessages),
     );
-
-    _cubit.attachListObserverController(_observerController);
 
     // Simulate typing indicator
     _simulateTyping();
@@ -149,7 +146,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
-    _cubit.detachListObserverController();
+    // No need to detach observer - it's handled automatically by SmartPagination
     _cubit.close();
     _scrollController.dispose();
     _messageController.dispose();
@@ -344,121 +341,118 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   ),
                 ),
 
-                // Messages list
-                ListViewObserver(
-                  controller: _observerController,
-                  child: SmartPagination<Message>.listViewWithCubit(
-                    cubit: _cubit,
-                    scrollController: _scrollController,
-                    physics: const BouncingScrollPhysics(),
-                    reverse: true, // Important for chat!
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemBuilder: (context, items, index) {
-                      final message = items[index];
-                      final isHighlighted = _highlightedIndex == index;
+                // Messages list - ListViewObserver is now built-in!
+                SmartPagination<Message>.listViewWithCubit(
+                  cubit: _cubit,
+                  scrollController: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  reverse: true, // Important for chat!
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemBuilder: (context, items, index) {
+                    final message = items[index];
+                    final isHighlighted = _highlightedIndex == index;
 
-                      // Show date separator
-                      final showDateSeparator = _shouldShowDateSeparator(items, index);
+                    // Show date separator
+                    final showDateSeparator = _shouldShowDateSeparator(items, index);
 
-                      return Column(
-                        children: [
-                          if (showDateSeparator)
-                            _DateSeparator(date: message.timestamp),
-                          _MessageBubble(
-                            message: message,
-                            isCurrentUser: message.author == _currentUser,
-                            isHighlighted: isHighlighted,
-                            index: index,
-                            isDark: isDark,
-                            onLongPress: () => _showMessageOptions(message, index),
-                          ),
-                        ],
-                      );
-                    },
-                    firstPageLoadingBuilder: (context) => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            color: isDark ? Colors.teal : Colors.teal,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'جاري تحميل الرسائل...',
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    firstPageErrorBuilder: (context, error, retry) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_off,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'فشل تحميل الرسائل',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'تحقق من اتصالك بالإنترنت',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            const SizedBox(height: 24),
-                            FilledButton.icon(
-                              onPressed: retry,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('إعادة المحاولة'),
-                            ),
-                          ],
+                    return Column(
+                      children: [
+                        if (showDateSeparator)
+                          _DateSeparator(date: message.timestamp),
+                        _MessageBubble(
+                          message: message,
+                          isCurrentUser: message.author == _currentUser,
+                          isHighlighted: isHighlighted,
+                          index: index,
+                          isDark: isDark,
+                          onLongPress: () => _showMessageOptions(message, index),
                         ),
-                      ),
+                      ],
+                    );
+                  },
+                  firstPageLoadingBuilder: (context) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          color: isDark ? Colors.teal : Colors.teal,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'جاري تحميل الرسائل...',
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
-                    firstPageEmptyBuilder: (context) => Center(
+                  ),
+                  firstPageErrorBuilder: (context, error, retry) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.chat_bubble_outline,
-                            size: 80,
+                            Icons.cloud_off,
+                            size: 64,
                             color: Colors.grey[400],
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            'لا توجد رسائل',
+                          const Text(
+                            'فشل تحميل الرسائل',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'ابدأ المحادثة الآن!',
-                            style: TextStyle(color: Colors.grey[500]),
+                            'تحقق من اتصالك بالإنترنت',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          const SizedBox(height: 24),
+                          FilledButton.icon(
+                            onPressed: retry,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('إعادة المحاولة'),
                           ),
                         ],
                       ),
                     ),
-                    loadMoreLoadingBuilder: (context) => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  firstPageEmptyBuilder: (context) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 80,
+                          color: Colors.grey[400],
                         ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'لا توجد رسائل',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'ابدأ المحادثة الآن!',
+                          style: TextStyle(color: Colors.grey[500]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  loadMoreLoadingBuilder: (context) => const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
                   ),
