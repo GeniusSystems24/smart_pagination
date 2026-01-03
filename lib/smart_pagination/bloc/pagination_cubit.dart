@@ -324,7 +324,7 @@ class SmartPaginationCubit<T>
   /// If no data has been fetched yet, returns false.
   bool get isDataExpired {
     if (_dataAge == null || _lastFetchTime == null) return false;
-    return DateTime.now().difference(_lastFetchTime!) > _dataAge;
+    return DateTime.now().difference(_lastFetchTime!) > _dataAge!;
   }
 
   /// Checks if data has expired and resets the cubit if so.
@@ -363,7 +363,7 @@ class SmartPaginationCubit<T>
   /// Gets the current expiration DateTime based on lastFetchTime and dataAge.
   DateTime? _getDataExpiredAt() {
     if (_dataAge == null || _lastFetchTime == null) return null;
-    return _lastFetchTime!.add(_dataAge);
+    return _lastFetchTime!.add(_dataAge!);
   }
 
   bool get _hasReachedEnd => _currentMeta != null && !_currentMeta!.hasNext;
@@ -536,14 +536,14 @@ class SmartPaginationCubit<T>
       // Fetch data based on provider type
       final pageItems = await switch (_provider) {
         FuturePaginationProvider<T>(:final dataProvider) => _retryHandler != null
-            ? _retryHandler.execute(
+            ? _retryHandler!.execute(
                 () => dataProvider(request),
                 onRetry: (attempt, error) {
                   _logger.w('Retry attempt $attempt after error: $error');
                 },
               )
             : dataProvider(request),
-        StreamPaginationProvider<T>(:final streamProvider) => streamProvider(request).first,
+        StreamPaginationProvider<T> provider => provider.streamProvider(request).first,
         MergedStreamPaginationProvider<T> provider => provider.getMergedStream(request).first,
       };
 
@@ -602,7 +602,7 @@ class SmartPaginationCubit<T>
           loadMoreError: null, // Clear any previous error
           fetchedAt: _lastFetchTime,
           dataExpiredAt: _dataAge != null && _lastFetchTime != null
-              ? _lastFetchTime!.add(_dataAge)
+              ? _lastFetchTime!.add(_dataAge!)
               : null,
           activeOrderId: _orders?.activeOrderId,
         ),
@@ -611,10 +611,10 @@ class SmartPaginationCubit<T>
       // Attach stream if it's a stream provider and this is initial load
       if (reset) {
         if (_provider is StreamPaginationProvider<T>) {
-          final streamProvider = _provider;
+          final streamProvider = _provider as StreamPaginationProvider<T>;
           _attachStream(streamProvider.streamProvider(request), request);
         } else if (_provider is MergedStreamPaginationProvider<T>) {
-          final mergedProvider = _provider;
+          final mergedProvider = _provider as MergedStreamPaginationProvider<T>;
           _attachStream(mergedProvider.getMergedStream(request), request);
         }
       }
@@ -716,7 +716,7 @@ class SmartPaginationCubit<T>
             loadMoreError: null,
             fetchedAt: _lastFetchTime,
             dataExpiredAt: _dataAge != null && _lastFetchTime != null
-                ? _lastFetchTime!.add(_dataAge)
+                ? _lastFetchTime!.add(_dataAge!)
                 : null,
             activeOrderId: _orders?.activeOrderId,
           ),
@@ -1079,7 +1079,7 @@ class SmartPaginationCubit<T>
           hasReachedEnd: true,
           lastUpdate: DateTime.now(),
           fetchedAt: _lastFetchTime,
-          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge) : null,
+          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
         ),
       );
     } else {
@@ -1101,7 +1101,7 @@ class SmartPaginationCubit<T>
           isLoadingMore: false,
           loadMoreError: null,
           fetchedAt: _lastFetchTime,
-          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge) : null,
+          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
         ),
       );
     }
