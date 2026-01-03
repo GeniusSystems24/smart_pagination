@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_pagination/pagination.dart';
 import 'package:intl/intl.dart';
+import 'package:tooltip_card/tooltip_card.dart';
 
 import '../../models/message.dart';
 
@@ -329,14 +330,45 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             color: Colors.indigo.withValues(alpha: 0.1),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.indigo, size: 20),
-                SizedBox(width: 8),
-                Expanded(
+                TooltipCard.builder(
+                  beakEnabled: true,
+                  placementSide: TooltipCardPlacementSide.bottom,
+                  whenContentVisible: WhenContentVisible.onTap,
+                  builder: (context, close) => Container(
+                    padding: const EdgeInsets.all(12),
+                    constraints: const BoxConstraints(maxWidth: 250),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'الدوال المستخدمة:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildMethodInfo('animateToIndex', 'تحريك سلس للعنصر'),
+                        _buildMethodInfo('jumpToIndex', 'انتقال مباشر للعنصر'),
+                        _buildMethodInfo('animateFirstWhere', 'بحث وتحريك سلس'),
+                        _buildMethodInfo('jumpFirstWhere', 'بحث وانتقال مباشر'),
+                        _buildMethodInfo('scrollToIndex', 'تمرير مع خيار الحركة'),
+                        _buildMethodInfo('scrollFirstWhere', 'بحث وتمرير مع خيار الحركة'),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: close,
+                          child: const Text('إغلاق'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(Icons.info_outline, color: Colors.indigo, size: 20),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
                   child: Text(
-                    'Demonstrates animateToIndex, jumpToIndex, animateFirstWhere, '
-                    'and jumpFirstWhere using scrollview_observer.',
+                    'يوضح هذا المثال دوال التمرير مع tooltip_card و scrollview_observer. '
+                    'اضغط مطولاً على أي رسالة لرؤية التفاصيل.',
                     style: TextStyle(fontSize: 12),
                   ),
                 ),
@@ -355,30 +387,35 @@ class _ChatScreenState extends State<ChatScreen> {
                     label: 'Jump to #1',
                     icon: Icons.looks_one,
                     onPressed: () => _jumpToIndex(0),
+                    tooltipMessage: 'انتقل مباشرة إلى أول رسالة باستخدام jumpToIndex',
                   ),
                   const SizedBox(width: 8),
                   _QuickJumpChip(
                     label: 'Jump to #10',
                     icon: Icons.looks_two,
                     onPressed: () => _jumpToIndex(9),
+                    tooltipMessage: 'انتقل مباشرة إلى الرسالة رقم 10 باستخدام jumpToIndex',
                   ),
                   const SizedBox(width: 8),
                   _QuickJumpChip(
                     label: 'Jump to #25',
                     icon: Icons.format_list_numbered,
                     onPressed: () => _jumpToIndex(24),
+                    tooltipMessage: 'انتقل مباشرة إلى الرسالة رقم 25 باستخدام jumpToIndex',
                   ),
                   const SizedBox(width: 8),
                   _QuickJumpChip(
                     label: 'Find "bug"',
                     icon: Icons.search,
                     onPressed: () => _searchAndScrollToMessage('bug'),
+                    tooltipMessage: 'ابحث عن كلمة "bug" باستخدام animateFirstWhere',
                   ),
                   const SizedBox(width: 8),
                   _QuickJumpChip(
                     label: 'Find "meeting"',
                     icon: Icons.event,
                     onPressed: () => _searchAndScrollToMessage('meeting'),
+                    tooltipMessage: 'ابحث عن كلمة "meeting" باستخدام animateFirstWhere',
                   ),
                 ],
               ),
@@ -502,12 +539,56 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.small(
-        onPressed: _scrollToTop,
-        backgroundColor: Colors.indigo,
-        child: const Icon(Icons.arrow_upward, color: Colors.white),
+      floatingActionButton: TooltipCard.builder(
+        beakEnabled: true,
+        placementSide: TooltipCardPlacementSide.start,
+        whenContentVisible: WhenContentVisible.onHover,
+        builder: (context, close) => const Padding(
+          padding: EdgeInsets.all(8),
+          child: Text(
+            'انتقل لأعلى (animateToIndex)',
+            style: TextStyle(fontSize: 12),
+          ),
+        ),
+        child: FloatingActionButton.small(
+          onPressed: _scrollToTop,
+          backgroundColor: Colors.indigo,
+          child: const Icon(Icons.arrow_upward, color: Colors.white),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
+    );
+  }
+
+  Widget _buildMethodInfo(String method, String description) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.indigo.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              method,
+              style: const TextStyle(
+                fontSize: 10,
+                fontFamily: 'monospace',
+                color: Colors.indigo,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              description,
+              style: const TextStyle(fontSize: 11),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -602,19 +683,34 @@ class _QuickJumpChip extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onPressed,
+    this.tooltipMessage,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onPressed;
+  final String? tooltipMessage;
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      avatar: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      onPressed: onPressed,
-      backgroundColor: Colors.indigo.withValues(alpha: 0.1),
+    return TooltipCard.builder(
+      beakEnabled: true,
+      placementSide: TooltipCardPlacementSide.bottom,
+      whenContentVisible: WhenContentVisible.onHover,
+      builder: (context, close) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: const BoxConstraints(maxWidth: 200),
+        child: Text(
+          tooltipMessage ?? 'اضغط للانتقال إلى $label',
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
+      child: ActionChip(
+        avatar: Icon(icon, size: 16),
+        label: Text(label, style: const TextStyle(fontSize: 12)),
+        onPressed: onPressed,
+        backgroundColor: Colors.indigo.withValues(alpha: 0.1),
+      ),
     );
   }
 }
@@ -636,6 +732,66 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bubbleContent = Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.7,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isCurrentUser ? Colors.indigo : Colors.grey[200],
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(16),
+          topRight: const Radius.circular(16),
+          bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
+          bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isCurrentUser)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                message.author,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ),
+          Text(
+            message.content,
+            style: TextStyle(
+              color: isCurrentUser ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                DateFormat('HH:mm').format(message.timestamp),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                ),
+              ),
+              if (isCurrentUser) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  message.isRead ? Icons.done_all : Icons.done,
+                  size: 14,
+                  color: message.isRead ? Colors.lightBlueAccent : Colors.white70,
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -646,94 +802,183 @@ class _MessageBubble extends StatelessWidget {
             ? Colors.yellow.withValues(alpha: 0.3)
             : Colors.transparent,
       ),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Row(
-          mainAxisAlignment:
-              isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (!isCurrentUser) ...[
+      child: Row(
+        mainAxisAlignment:
+            isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isCurrentUser) ...[
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.grey[300],
+              child: Text(
+                message.author[0].toUpperCase(),
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: TooltipCard.builder(
+              beakEnabled: true,
+              placementSide: isCurrentUser
+                  ? TooltipCardPlacementSide.start
+                  : TooltipCardPlacementSide.end,
+              whenContentVisible: WhenContentVisible.onLongPress,
+              modalBarrierEnabled: true,
+              builder: (context, close) => _MessageTooltipContent(
+                message: message,
+                index: index,
+                onClose: close,
+                onScrollTo: onTap,
+              ),
+              child: GestureDetector(
+                onTap: onTap,
+                child: bubbleContent,
+              ),
+            ),
+          ),
+          if (isCurrentUser) const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tooltip content widget for message details
+class _MessageTooltipContent extends StatelessWidget {
+  const _MessageTooltipContent({
+    required this.message,
+    required this.index,
+    required this.onClose,
+    required this.onScrollTo,
+  });
+
+  final Message message;
+  final int index;
+  final VoidCallback onClose;
+  final VoidCallback onScrollTo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(maxWidth: 280),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
               CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.grey[300],
+                radius: 18,
+                backgroundColor: Colors.indigo.withValues(alpha: 0.2),
                 child: Text(
                   message.author[0].toUpperCase(),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Flexible(
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.7,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isCurrentUser
-                      ? Colors.indigo
-                      : Colors.grey[200],
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(16),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
-                    bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+                  style: const TextStyle(
+                    color: Colors.indigo,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!isCurrentUser)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          message.author,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ),
                     Text(
-                      message.content,
-                      style: TextStyle(
-                        color: isCurrentUser ? Colors.white : Colors.black87,
+                      message.author,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          DateFormat('HH:mm').format(message.timestamp),
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isCurrentUser
-                                ? Colors.white70
-                                : Colors.grey[600],
-                          ),
-                        ),
-                        if (isCurrentUser) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            message.isRead ? Icons.done_all : Icons.done,
-                            size: 14,
-                            color: message.isRead
-                                ? Colors.lightBlueAccent
-                                : Colors.white70,
-                          ),
-                        ],
-                      ],
+                    Text(
+                      DateFormat('MMM d, yyyy • HH:mm').format(message.timestamp),
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-            if (isCurrentUser) const SizedBox(width: 8),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+
+          // Message preview
+          Text(
+            message.content,
+            style: const TextStyle(fontSize: 13),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 12),
+
+          // Status row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'رسالة #${index + 1}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    message.isRead ? Icons.done_all : Icons.done,
+                    size: 16,
+                    color: message.isRead ? Colors.blue : Colors.grey,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    message.isRead ? 'مقروءة' : 'غير مقروءة',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: message.isRead ? Colors.blue : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Actions
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: onClose,
+                child: const Text('إغلاق'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: () {
+                  onClose();
+                  onScrollTo();
+                },
+                icon: const Icon(Icons.center_focus_strong, size: 18),
+                label: const Text('انتقال'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

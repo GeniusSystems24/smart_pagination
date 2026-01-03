@@ -1197,7 +1197,6 @@ class SmartPaginationCubit<T>
     EdgeInsets padding = EdgeInsets.zero,
     BuildContext? sliverContext,
     bool isFixedHeight = false,
-    Axis scrollDirection = Axis.vertical,
   }) async {
     // Validate index
     final items = currentItems;
@@ -1206,36 +1205,41 @@ class SmartPaginationCubit<T>
       return false;
     }
 
-    if (_listObserverController != null) {
-      await _listObserverController!.animateTo(
-        index: index,
-        duration: duration,
-        curve: curve,
-        alignment: alignment,
-        padding: padding,
-        sliverContext: sliverContext,
-        isFixedHeight: isFixedHeight,
-      );
-      _logger.d('Animated to index $index');
-      return true;
-    }
+    try {
+      if (_listObserverController != null) {
+        await _listObserverController!.animateTo(
+          index: index,
+          duration: duration,
+          curve: curve,
+          alignment: alignment,
+          padding: padding,
+          sliverContext: sliverContext,
+          isFixedHeight: isFixedHeight,
+        );
+        _logger.d('Animated to index $index');
+        return true;
+      }
 
-    if (_gridObserverController != null) {
-      await _gridObserverController!.animateTo(
-        index: index,
-        duration: duration,
-        curve: curve,
-        alignment: alignment,
-        padding: padding,
-        sliverContext: sliverContext,
-        isFixedHeight: isFixedHeight,
-      );
-      _logger.d('Animated to index $index (grid)');
-      return true;
-    }
+      if (_gridObserverController != null) {
+        await _gridObserverController!.animateTo(
+          index: index,
+          duration: duration,
+          curve: curve,
+          alignment: alignment,
+          padding: padding,
+          sliverContext: sliverContext,
+          isFixedHeight: isFixedHeight,
+        );
+        _logger.d('Animated to index $index (grid)');
+        return true;
+      }
 
-    _logger.w('animateToIndex: no observer controller attached');
-    return false;
+      _logger.w('animateToIndex: no observer controller attached');
+      return false;
+    } catch (e, stackTrace) {
+      _logger.e('animateToIndex failed', error: e, stackTrace: stackTrace);
+      return false;
+    }
   }
 
   /// Jumps immediately to the item at the given [index] without animation.
@@ -1265,32 +1269,37 @@ class SmartPaginationCubit<T>
       return false;
     }
 
-    if (_listObserverController != null) {
-      _listObserverController!.jumpTo(
-        index: index,
-        alignment: alignment,
-        padding: padding,
-        sliverContext: sliverContext,
-        isFixedHeight: isFixedHeight,
-      );
-      _logger.d('Jumped to index $index');
-      return true;
-    }
+    try {
+      if (_listObserverController != null) {
+        _listObserverController!.jumpTo(
+          index: index,
+          alignment: alignment,
+          padding: padding,
+          sliverContext: sliverContext,
+          isFixedHeight: isFixedHeight,
+        );
+        _logger.d('Jumped to index $index');
+        return true;
+      }
 
-    if (_gridObserverController != null) {
-      _gridObserverController!.jumpTo(
-        index: index,
-        alignment: alignment,
-        padding: padding,
-        sliverContext: sliverContext,
-        isFixedHeight: isFixedHeight,
-      );
-      _logger.d('Jumped to index $index (grid)');
-      return true;
-    }
+      if (_gridObserverController != null) {
+        _gridObserverController!.jumpTo(
+          index: index,
+          alignment: alignment,
+          padding: padding,
+          sliverContext: sliverContext,
+          isFixedHeight: isFixedHeight,
+        );
+        _logger.d('Jumped to index $index (grid)');
+        return true;
+      }
 
-    _logger.w('jumpToIndex: no observer controller attached');
-    return false;
+      _logger.w('jumpToIndex: no observer controller attached');
+      return false;
+    } catch (e, stackTrace) {
+      _logger.e('jumpToIndex failed', error: e, stackTrace: stackTrace);
+      return false;
+    }
   }
 
   /// Animates to the first item matching the given [test] function.
