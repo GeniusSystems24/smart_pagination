@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show HapticFeedback, Clipboard, ClipboardData;
+import 'package:intl/intl.dart' show DateFormat;
+// import 'package:flutter/services.dart';
 import 'package:smart_pagination/pagination.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 import 'package:tooltip_card/tooltip_card.dart';
 
 import '../../models/message.dart';
@@ -509,7 +511,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 TooltipCard.builder(
                   beakEnabled: true,
                   placementSide: TooltipCardPlacementSide.bottom,
-                  whenContentVisible: WhenContentVisible.onTap,
+                  whenContentVisible: WhenContentVisible.pressButton,
                   builder: (context, close) => _buildUserProfileTooltip(close),
                   child: Row(
                     children: [
@@ -780,7 +782,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             TooltipCard.builder(
               beakEnabled: true,
               placementSide: TooltipCardPlacementSide.top,
-              whenContentVisible: WhenContentVisible.onLongPress,
+              whenContentVisible: WhenContentVisible.longPressButton,
               builder: (context, close) => const Padding(
                 padding: EdgeInsets.all(12),
                 child: Text('اضغط للإرسال\nاضغط مطولاً للتسجيل الصوتي'),
@@ -1119,7 +1121,7 @@ class _NavigationChip extends StatelessWidget {
       child: TooltipCard.builder(
         beakEnabled: true,
         placementSide: TooltipCardPlacementSide.bottom,
-        whenContentVisible: WhenContentVisible.onHover,
+        whenContentVisible: WhenContentVisible.hoverButton,
         builder: (context, close) => Padding(
           padding: const EdgeInsets.all(8),
           child: Text('انتقل إلى: $label'),

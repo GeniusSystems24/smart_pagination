@@ -137,6 +137,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       icon: Icons.auto_awesome_rounded,
       items: [
         _ExampleItem(
+          title: 'Chat Example',
+          description: 'Scroll navigation with chat UI',
+          icon: Icons.chat_bubble_rounded,
+          color: Color(0xFF06B6D4),
+          route: const ChatRoute().location,
+        ),
+        _ExampleItem(
           title: 'Cursor Pagination',
           description: 'Cursor-based pagination for real-time',
           icon: Icons.navigate_next_rounded,
@@ -240,13 +247,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           icon: Icons.sort_rounded,
           color: Color(0xFF4F46E5),
           route: const SortingRoute().location,
-        ),
-        _ExampleItem(
-          title: 'Chat Example',
-          description: 'Scroll navigation with chat UI',
-          icon: Icons.chat_bubble_rounded,
-          color: Color(0xFF06B6D4),
-          route: const ChatRoute().location,
         ),
       ],
     ),
