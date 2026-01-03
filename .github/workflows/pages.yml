@@ -35,6 +35,7 @@ jobs:
 
       - name: Build web
         working-directory: example
+        # run: flutter build web --release --base-href "/smart_pagination/"
         run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
 
       - name: Disable Jekyll

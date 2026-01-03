@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../router/app_router.dart';
 
@@ -504,14 +505,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  Text(
-                                    'Examples & Demos',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Examples & Demos',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                          fontSize: 14,
+                                        ),
                                       ),
-                                      fontSize: 14,
-                                    ),
+                                      TextButton(
+                                        onPressed: () {
+                                          // open package pub.dev link
+                                          launchUrl(Uri.parse(
+                                              'https://pub.dev/packages/smart_pagination'));
+                                        },
+                                        child: Text(
+                                          'Flutter Package',
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

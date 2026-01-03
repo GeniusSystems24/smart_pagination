@@ -29,6 +29,9 @@ dependencies:
   # Chat UI enhancements
   tooltip_card: ^2.6.2
 
+  # URL launcher for opening links
+  url_launcher: ^6.2.5
+
 dev_dependencies:
   analyzer: ^7.2.0
   flutter_test:
