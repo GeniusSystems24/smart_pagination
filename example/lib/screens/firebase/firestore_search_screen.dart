@@ -216,7 +216,7 @@ class _FirestoreSearchScreenState extends State<FirestoreSearchScreen> {
           const SizedBox(height: 8),
 
           // Search dropdown
-          SmartSearchDropdown<FirestoreUser>.withProvider(
+          SmartSearchDropdown<FirestoreUser, FirestoreUser>.withProvider(
             request: const PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(searchUsers),
             showClearButton: true,

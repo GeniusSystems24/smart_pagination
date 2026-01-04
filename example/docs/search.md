@@ -35,7 +35,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.searchProducts(
@@ -132,7 +132,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
             // Basic Multi-Select
             const Text('Basic Multi-Select', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            SmartSearchMultiDropdown<Product>.withProvider(
+            SmartSearchMultiDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(searchProducts),
               searchRequestBuilder: (query) => PaginationRequest(
@@ -156,7 +156,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
             // With Max Selections
             const Text('Max 3 Selections', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            SmartSearchMultiDropdown<Product>.withProvider(
+            SmartSearchMultiDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(searchProducts),
               searchRequestBuilder: (query) => PaginationRequest(
@@ -182,7 +182,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
             // Custom Chip Builder
             const Text('Custom Chips', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            SmartSearchMultiDropdown<Product>.withProvider(
+            SmartSearchMultiDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(searchProducts),
               searchRequestBuilder: (query) => PaginationRequest(
@@ -248,7 +248,7 @@ class _FormValidationSearchScreenState extends State<FormValidationSearchScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Required field
-              SmartSearchDropdown<Product>.withProvider(
+              SmartSearchDropdown<Product, Product>.withProvider(
                 request: const PaginationRequest(page: 1, pageSize: 10),
                 provider: PaginationProvider.future(searchProducts),
                 searchRequestBuilder: (query) => PaginationRequest(
@@ -280,7 +280,7 @@ class _FormValidationSearchScreenState extends State<FormValidationSearchScreen>
               const SizedBox(height: 16),
 
               // With input formatter
-              SmartSearchDropdown<String>.withProvider(
+              SmartSearchDropdown<String, String>.withProvider(
                 request: const PaginationRequest(page: 1, pageSize: 10),
                 provider: PaginationProvider.future(searchCountries),
                 searchRequestBuilder: (query) => PaginationRequest(
@@ -376,7 +376,7 @@ class KeyboardNavigationScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Search with keyboard navigation
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(searchProducts),
               searchRequestBuilder: (query) => PaginationRequest(
@@ -535,7 +535,7 @@ class SearchThemingScreen extends StatelessWidget {
   }
 
   Widget _buildSearchDropdown(BuildContext context) {
-    return SmartSearchDropdown<Product>.withProvider(
+    return SmartSearchDropdown<Product, Product>.withProvider(
       request: const PaginationRequest(page: 1, pageSize: 10),
       provider: PaginationProvider.future(searchProducts),
       searchRequestBuilder: (query) => PaginationRequest(
@@ -596,7 +596,7 @@ class AsyncSearchStatesScreen extends StatelessWidget {
             // Custom Loading State
             const Text('Custom Loading', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(searchProductsWithDelay),
               searchRequestBuilder: (query) => PaginationRequest(
@@ -629,7 +629,7 @@ class AsyncSearchStatesScreen extends StatelessWidget {
             // Custom Empty State
             const Text('Custom Empty State', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (_) async => <Product>[], // Always returns empty
@@ -669,7 +669,7 @@ class AsyncSearchStatesScreen extends StatelessWidget {
             // Custom Error State
             const Text('Custom Error State', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (_) async => throw Exception('Network error'),

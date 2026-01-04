@@ -167,7 +167,7 @@ class _OverlayAnimationsScreenState extends State<OverlayAnimationsScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               key: ValueKey(
                 '${_selectedAnimation.name}_${_animationDuration.inMilliseconds}_${_selectedCurve.hashCode}',
               ),
@@ -380,7 +380,7 @@ class _OverlayValueDemoState extends State<_OverlayValueDemo> {
         (request) => MockApiService.fetchProducts(request),
       ),
     );
-    _controller = SmartSearchController<Product>(
+    _controller = SmartSearchController<Product, Product>(
       cubit: _cubit,
       searchRequestBuilder: (query) => PaginationRequest(
         page: 1,
@@ -486,7 +486,7 @@ class _OverlayValueDemoState extends State<_OverlayValueDemo> {
         const SizedBox(height: 8),
 
         // The search overlay
-        SmartSearchOverlay<Product>(
+        SmartSearchOverlay<Product, Product>(
           controller: _controller,
           overlayConfig: SmartSearchOverlayConfig(
             animationType: widget.animationType,

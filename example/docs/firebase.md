@@ -297,7 +297,7 @@ class _FirestoreSearchScreenState extends State<FirestoreSearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SmartSearchDropdown<User>.withProvider(
+            SmartSearchDropdown<User, User>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(searchUsers),
               searchRequestBuilder: (query) => PaginationRequest(

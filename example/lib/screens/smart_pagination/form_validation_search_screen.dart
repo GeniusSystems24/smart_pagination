@@ -84,7 +84,7 @@ class _FormValidationSearchScreenState
                     ),
               ),
               const SizedBox(height: 8),
-              SmartSearchDropdown<Product>.withProvider(
+              SmartSearchDropdown<Product, Product>.withProvider(
                 request: const PaginationRequest(page: 1, pageSize: 10),
                 provider: PaginationProvider.future(
                   (request) => MockApiService.searchProducts(

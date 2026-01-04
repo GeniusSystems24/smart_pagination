@@ -103,7 +103,7 @@ class _AsyncSearchStatesScreenState extends State<AsyncSearchStatesScreen> {
                   ),
             ),
             const SizedBox(height: 8),
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               key: ValueKey('default-$_simulateError-$_simulateEmpty-$_debounceMs'),
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
@@ -142,7 +142,7 @@ class _AsyncSearchStatesScreenState extends State<AsyncSearchStatesScreen> {
                   ),
             ),
             const SizedBox(height: 8),
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               key: ValueKey('custom-$_simulateError-$_simulateEmpty-$_debounceMs'),
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(

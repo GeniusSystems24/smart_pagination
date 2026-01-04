@@ -125,7 +125,7 @@ class _SearchThemingScreenState extends State<SearchThemingScreen> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 8),
-                SmartSearchDropdown<Product>.withProvider(
+                SmartSearchDropdown<Product, Product>.withProvider(
                   request: const PaginationRequest(page: 1, pageSize: 10),
                   provider: PaginationProvider.future(
                     (request) => MockApiService.searchProducts(
@@ -190,7 +190,7 @@ class _SearchThemingScreenState extends State<SearchThemingScreen> {
                       ),
                     ],
                   ),
-                  child: SmartSearchDropdown<Product>.withProvider(
+                  child: SmartSearchDropdown<Product, Product>.withProvider(
                     request: const PaginationRequest(page: 1, pageSize: 10),
                     provider: PaginationProvider.future(
                       (request) => MockApiService.searchProducts(
@@ -260,7 +260,7 @@ class _SearchThemingScreenState extends State<SearchThemingScreen> {
                       ),
                     ],
                   ),
-                  child: SmartSearchDropdown<Product>.withProvider(
+                  child: SmartSearchDropdown<Product, Product>.withProvider(
                     request: const PaginationRequest(page: 1, pageSize: 10),
                     provider: PaginationProvider.future(
                       (request) => MockApiService.searchProducts(

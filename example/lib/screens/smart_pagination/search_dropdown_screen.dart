@@ -110,7 +110,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
             const SizedBox(height: 8),
             // The SmartSearchDropdown now uses SmartSearchTheme for styling
             // Toggle the theme using the button in the app bar to see the effect
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.searchProducts(
@@ -239,7 +239,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 8),
-            SmartSearchDropdown<Product>.withProvider(
+            SmartSearchDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.searchProducts(

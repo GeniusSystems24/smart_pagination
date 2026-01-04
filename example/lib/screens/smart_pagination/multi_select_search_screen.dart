@@ -80,7 +80,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                   ),
             ),
             const SizedBox(height: 8),
-            SmartSearchMultiDropdown<Product>.withProvider(
+            SmartSearchMultiDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.searchProducts(
@@ -129,7 +129,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                   ),
             ),
             const SizedBox(height: 8),
-            SmartSearchMultiDropdown<Product>.withProvider(
+            SmartSearchMultiDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.searchProducts(
@@ -182,7 +182,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                   ),
             ),
             const SizedBox(height: 8),
-            SmartSearchMultiDropdown<Product>.withProvider(
+            SmartSearchMultiDropdown<Product, Product>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.searchProducts(
