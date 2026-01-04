@@ -5,9 +5,14 @@ part of '../../pagination.dart';
 /// This widget provides a text field that triggers search operations on the
 /// connected cubit when the user types.
 ///
+/// ## Generic Types
+///
+/// - `T`: The data type of items (e.g., Product, User)
+/// - `K`: The key type used for identification (e.g., String, int)
+///
 /// Example:
 /// ```dart
-/// SmartSearchBox<Product>(
+/// SmartSearchBox<Product, String>(
 ///   controller: searchController,
 ///   decoration: InputDecoration(
 ///     hintText: 'Search products...',
@@ -15,7 +20,7 @@ part of '../../pagination.dart';
 ///   ),
 /// )
 /// ```
-class SmartSearchBox<T> extends StatelessWidget {
+class SmartSearchBox<T, K> extends StatelessWidget {
   const SmartSearchBox({
     super.key,
     required this.controller,
@@ -49,7 +54,7 @@ class SmartSearchBox<T> extends StatelessWidget {
   });
 
   /// The search controller managing this search box.
-  final SmartSearchController<T> controller;
+  final SmartSearchController<T, K> controller;
 
   /// Decoration for the text field.
   final InputDecoration? decoration;

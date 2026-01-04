@@ -5,9 +5,37 @@ part of '../../pagination.dart';
 /// This widget allows users to search and select multiple items. The selected
 /// items are displayed below the search box with individual remove buttons.
 ///
+/// ## Generic Types
+///
+/// - `T`: The data type of items (e.g., Product, User)
+/// - `K`: The key type used for identification (e.g., String, int)
+///
+/// ## Key-based Selection
+///
+/// When using key-based selection, you can:
+/// - Set initial selections by keys even before data loads
+/// - Compare items by key instead of object equality
+/// - Get notified of selected keys in addition to items
+///
+/// Example with key-based selection:
+/// ```dart
+/// SmartSearchMultiDropdown<Product, String>.withProvider(
+///   request: PaginationRequest(page: 1, pageSize: 20),
+///   provider: PaginationProvider.future((request) async {
+///     return await api.searchProducts(request.searchQuery ?? '');
+///   }),
+///   searchRequestBuilder: (query) => PaginationRequest(...),
+///   itemBuilder: (context, product) => ListTile(title: Text(product.name)),
+///   keyExtractor: (product) => product.sku,
+///   selectedKeys: ['SKU-001', 'SKU-002', 'SKU-003'],
+///   selectedKeyLabelBuilder: (key) => 'Product: $key',
+///   onKeysChanged: (keys) => print('Selected keys: $keys'),
+/// )
+/// ```
+///
 /// Example with provider:
 /// ```dart
-/// SmartSearchMultiDropdown<Product>.withProvider(
+/// SmartSearchMultiDropdown<Product, Product>.withProvider(
 ///   request: PaginationRequest(page: 1, pageSize: 20),
 ///   provider: PaginationProvider.future((request) async {
 ///     return await api.searchProducts(request.searchQuery ?? '');
@@ -28,7 +56,7 @@ part of '../../pagination.dart';
 ///
 /// Example with showSelected:
 /// ```dart
-/// SmartSearchMultiDropdown<Product>.withProvider(
+/// SmartSearchMultiDropdown<Product, String>.withProvider(
 ///   // ... other properties
 ///   showSelected: true,
 ///   selectedItemBuilder: (context, product, onRemove) => Chip(
@@ -37,7 +65,7 @@ part of '../../pagination.dart';
 ///   ),
 /// )
 /// ```
-class SmartSearchMultiDropdown<T> extends StatefulWidget {
+class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
   /// Creates a multi-selection search dropdown with an internal cubit.
   const SmartSearchMultiDropdown.withProvider({
     super.key,
@@ -46,6 +74,7 @@ class SmartSearchMultiDropdown<T> extends StatefulWidget {
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelectionChanged,
+    this.onKeysChanged,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -63,7 +92,11 @@ class SmartSearchMultiDropdown<T> extends StatefulWidget {
     this.overlayDecoration,
     this.showSelected = true,
     this.selectedItemBuilder,
+    this.selectedKeyBuilder,
     this.initialSelectedValues,
+    this.selectedKeys,
+    this.keyExtractor,
+    this.selectedKeyLabelBuilder,
     this.maxSelections,
     this.validator,
     this.textInputAction = TextInputAction.search,
@@ -102,6 +135,7 @@ class SmartSearchMultiDropdown<T> extends StatefulWidget {
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelectionChanged,
+    this.onKeysChanged,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -119,7 +153,11 @@ class SmartSearchMultiDropdown<T> extends StatefulWidget {
     this.overlayDecoration,
     this.showSelected = true,
     this.selectedItemBuilder,
+    this.selectedKeyBuilder,
     this.initialSelectedValues,
+    this.selectedKeys,
+    this.keyExtractor,
+    this.selectedKeyLabelBuilder,
     this.maxSelections,
     this.validator,
     this.textInputAction = TextInputAction.search,
@@ -224,6 +262,37 @@ class SmartSearchMultiDropdown<T> extends StatefulWidget {
   /// The initially selected values.
   final List<T>? initialSelectedValues;
 
+  /// The initially selected keys.
+  ///
+  /// When provided with [keyExtractor], the widget will try to find and select
+  /// items with these keys. If items haven't been loaded yet, they will be
+  /// selected when the data loads.
+  final List<K>? selectedKeys;
+
+  /// Function to extract the key from an item.
+  ///
+  /// When provided, selections are compared by key instead of object equality.
+  /// This enables key-based initial selection and comparison.
+  final K Function(T item)? keyExtractor;
+
+  /// Function to build a display label for a key when the item is not yet loaded.
+  ///
+  /// This is used when [selectedKeys] is provided but items haven't been
+  /// loaded yet. If not provided, the key's toString() will be used.
+  final String Function(K key)? selectedKeyLabelBuilder;
+
+  /// Called when the selected keys change.
+  ///
+  /// This is called in addition to [onSelectionChanged] when [keyExtractor] is provided.
+  final ValueChanged<List<K>>? onKeysChanged;
+
+  /// Builder for displaying a selected key when the item is not yet loaded.
+  ///
+  /// If not provided, a default display using [selectedKeyLabelBuilder] or
+  /// key.toString() will be used.
+  final Widget Function(BuildContext context, K key, VoidCallback onRemove)?
+      selectedKeyBuilder;
+
   /// Maximum number of items that can be selected.
   final int? maxSelections;
 
@@ -264,14 +333,14 @@ class SmartSearchMultiDropdown<T> extends StatefulWidget {
   final EdgeInsets selectedItemsPadding;
 
   @override
-  State<SmartSearchMultiDropdown<T>> createState() =>
-      _SmartSearchMultiDropdownState<T>();
+  State<SmartSearchMultiDropdown<T, K>> createState() =>
+      _SmartSearchMultiDropdownState<T, K>();
 }
 
-class _SmartSearchMultiDropdownState<T>
-    extends State<SmartSearchMultiDropdown<T>> {
+class _SmartSearchMultiDropdownState<T, K>
+    extends State<SmartSearchMultiDropdown<T, K>> {
   SmartPaginationCubit<T>? _internalCubit;
-  SmartSearchMultiController<T>? _searchController;
+  SmartSearchMultiController<T, K>? _searchController;
 
   SmartPaginationCubit<T> get _cubit => widget._cubit ?? _internalCubit!;
 
@@ -299,12 +368,16 @@ class _SmartSearchMultiDropdownState<T>
   }
 
   void _initializeController() {
-    _searchController = SmartSearchMultiController<T>(
+    _searchController = SmartSearchMultiController<T, K>(
       cubit: _cubit,
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
       onSelectionChanged: widget.onSelectionChanged,
+      onKeysChanged: widget.onKeysChanged,
       initialSelectedValues: widget.initialSelectedValues,
+      selectedKeys: widget.selectedKeys,
+      keyExtractor: widget.keyExtractor,
+      selectedKeyLabelBuilder: widget.selectedKeyLabelBuilder,
       maxSelections: widget.maxSelections,
     );
   }
@@ -326,7 +399,7 @@ class _SmartSearchMultiDropdownState<T>
           mainAxisSize: MainAxisSize.min,
           children: [
             // Search overlay (always visible)
-            _SmartSearchMultiOverlay<T>(
+            _SmartSearchMultiOverlay<T, K>(
               controller: _searchController!,
               itemBuilder: _buildResultItem,
               onItemSelected: (item) {
@@ -357,7 +430,9 @@ class _SmartSearchMultiDropdownState<T>
             ),
 
             // Selected items (shown below search box)
-            if (widget.showSelected && _searchController!.hasSelectedItems)
+            if (widget.showSelected &&
+                (_searchController!.hasSelectedItems ||
+                    _searchController!.hasPendingKeys))
               _buildSelectedItems(context),
           ],
         );
@@ -393,27 +468,65 @@ class _SmartSearchMultiDropdownState<T>
   Widget _buildSelectedItems(BuildContext context) {
     final searchTheme = SmartSearchTheme.of(context);
 
+    // Build list of widgets: selected items + pending keys
+    final List<Widget> children = [];
+
+    // Add selected items
+    for (final item in _searchController!.selectedItems) {
+      children.add(_buildSelectedItemChip(context, item, searchTheme));
+    }
+
+    // Add pending keys (keys that haven't been resolved to items yet)
+    for (final key in _searchController!.pendingKeys) {
+      children.add(_buildPendingKeyChip(context, key, searchTheme));
+    }
+
+    if (children.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: widget.selectedItemsPadding,
       child: widget.selectedItemsWrap
           ? Wrap(
               spacing: widget.selectedItemsSpacing,
               runSpacing: widget.selectedItemsRunSpacing,
-              children: _searchController!.selectedItems.map((item) {
-                return _buildSelectedItemChip(context, item, searchTheme);
-              }).toList(),
+              children: children,
             )
           : SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: _searchController!.selectedItems.map((item) {
+                children: children.map((child) {
                   return Padding(
                     padding: EdgeInsets.only(right: widget.selectedItemsSpacing),
-                    child: _buildSelectedItemChip(context, item, searchTheme),
+                    child: child,
                   );
                 }).toList(),
               ),
             ),
+    );
+  }
+
+  Widget _buildPendingKeyChip(
+    BuildContext context,
+    K key,
+    SmartSearchTheme searchTheme,
+  ) {
+    if (widget.selectedKeyBuilder != null) {
+      return widget.selectedKeyBuilder!(
+        context,
+        key,
+        () => _searchController!.removeByKey(key),
+      );
+    }
+
+    // Default pending key chip display
+    final label = _searchController!.getKeyLabel(key);
+    return _DefaultPendingKeyChip<K>(
+      keyLabel: label,
+      onRemove: () => _searchController!.removeByKey(key),
+      backgroundColor: searchTheme.itemSelectedColor ??
+          Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+      iconColor: searchTheme.searchBoxIconColor,
+      borderRadius: widget.borderRadius ?? searchTheme.searchBoxBorderRadius,
     );
   }
 
@@ -500,7 +613,7 @@ class _DefaultMultiSelectedItemChip<T> extends StatelessWidget {
 }
 
 /// Overlay widget for multi-selection search.
-class _SmartSearchMultiOverlay<T> extends StatefulWidget {
+class _SmartSearchMultiOverlay<T, K> extends StatefulWidget {
   const _SmartSearchMultiOverlay({
     required this.controller,
     required this.itemBuilder,
@@ -529,7 +642,7 @@ class _SmartSearchMultiOverlay<T> extends StatefulWidget {
     this.searchBoxKeyboardType = TextInputType.text,
   });
 
-  final SmartSearchMultiController<T> controller;
+  final SmartSearchMultiController<T, K> controller;
   final Widget Function(BuildContext context, T item) itemBuilder;
   final ValueChanged<T> onItemSelected;
   final InputDecoration? searchBoxDecoration;
@@ -556,12 +669,12 @@ class _SmartSearchMultiOverlay<T> extends StatefulWidget {
   final TextInputType searchBoxKeyboardType;
 
   @override
-  State<_SmartSearchMultiOverlay<T>> createState() =>
-      _SmartSearchMultiOverlayState<T>();
+  State<_SmartSearchMultiOverlay<T, K>> createState() =>
+      _SmartSearchMultiOverlayState<T, K>();
 }
 
-class _SmartSearchMultiOverlayState<T>
-    extends State<_SmartSearchMultiOverlay<T>>
+class _SmartSearchMultiOverlayState<T, K>
+    extends State<_SmartSearchMultiOverlay<T, K>>
     with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
   final GlobalKey _searchBoxKey = GlobalKey();
@@ -627,7 +740,7 @@ class _SmartSearchMultiOverlayState<T>
   OverlayEntry _createOverlayEntry() {
     return OverlayEntry(
       builder: (context) {
-        return _MultiOverlayContent<T>(
+        return _MultiOverlayContent<T, K>(
           layerLink: _layerLink,
           searchBoxKey: _searchBoxKey,
           controller: widget.controller,
@@ -652,7 +765,7 @@ class _SmartSearchMultiOverlayState<T>
   Widget build(BuildContext context) {
     return CompositedTransformTarget(
       link: _layerLink,
-      child: _SmartSearchMultiBox<T>(
+      child: _SmartSearchMultiBox<T, K>(
         key: _searchBoxKey,
         controller: widget.controller,
         decoration: widget.searchBoxDecoration,
@@ -675,7 +788,7 @@ class _SmartSearchMultiOverlayState<T>
 }
 
 /// Search box widget for multi-selection.
-class _SmartSearchMultiBox<T> extends StatelessWidget {
+class _SmartSearchMultiBox<T, K> extends StatelessWidget {
   const _SmartSearchMultiBox({
     super.key,
     required this.controller,
@@ -695,7 +808,7 @@ class _SmartSearchMultiBox<T> extends StatelessWidget {
     this.keyboardType = TextInputType.text,
   });
 
-  final SmartSearchMultiController<T> controller;
+  final SmartSearchMultiController<T, K> controller;
   final InputDecoration? decoration;
   final TextStyle? style;
   final Widget? prefixIcon;
@@ -810,7 +923,7 @@ class _SmartSearchMultiBox<T> extends StatelessWidget {
 }
 
 /// Overlay content widget for multi-selection.
-class _MultiOverlayContent<T> extends StatefulWidget {
+class _MultiOverlayContent<T, K> extends StatefulWidget {
   const _MultiOverlayContent({
     required this.layerLink,
     required this.searchBoxKey,
@@ -831,7 +944,7 @@ class _MultiOverlayContent<T> extends StatefulWidget {
 
   final LayerLink layerLink;
   final GlobalKey searchBoxKey;
-  final SmartSearchMultiController<T> controller;
+  final SmartSearchMultiController<T, K> controller;
   final SmartSearchOverlayConfig config;
   final Animation<double> fadeAnimation;
   final Widget Function(BuildContext context, T item) itemBuilder;
@@ -846,10 +959,11 @@ class _MultiOverlayContent<T> extends StatefulWidget {
   final BoxDecoration? overlayDecoration;
 
   @override
-  State<_MultiOverlayContent<T>> createState() => _MultiOverlayContentState<T>();
+  State<_MultiOverlayContent<T, K>> createState() =>
+      _MultiOverlayContentState<T, K>();
 }
 
-class _MultiOverlayContentState<T> extends State<_MultiOverlayContent<T>> {
+class _MultiOverlayContentState<T, K> extends State<_MultiOverlayContent<T, K>> {
   final ScrollController _scrollController = ScrollController();
   static const double _itemHeight = 56.0;
 
@@ -1257,6 +1371,81 @@ class _FocusableMultiItemState<T> extends State<_FocusableMultiItem<T>> {
           color: backgroundColor,
           child: widget.child,
         ),
+      ),
+    );
+  }
+}
+
+/// Default chip widget for displaying pending keys (items not yet loaded).
+class _DefaultPendingKeyChip<K> extends StatelessWidget {
+  const _DefaultPendingKeyChip({
+    required this.keyLabel,
+    required this.onRemove,
+    this.backgroundColor,
+    this.iconColor,
+    this.borderRadius,
+  });
+
+  final String keyLabel;
+  final VoidCallback onRemove;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final BorderRadius? borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor ??
+            Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: borderRadius ?? BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator.adaptive(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      keyLabel,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: onRemove,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.close,
+                size: 18,
+                color:
+                    iconColor ?? Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
     );
   }

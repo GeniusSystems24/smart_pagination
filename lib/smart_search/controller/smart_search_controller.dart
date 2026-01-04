@@ -10,44 +10,92 @@ part of '../../pagination.dart';
 /// - Keyboard navigation (up/down arrows)
 /// - Focus state persistence
 /// - Selected item state (for showSelected mode)
+/// - Key-based selection with automatic data synchronization
 ///
-/// Example:
+/// The controller supports two generic types:
+/// - `T`: The data type of items (e.g., Product, User)
+/// - `K`: The key type used for identification (e.g., String, int)
+///
+/// Example with key-based selection:
 /// ```dart
-/// final searchController = SmartSearchController<Product>(
+/// final searchController = SmartSearchController<Product, String>(
 ///   cubit: productsCubit,
-///   searchFieldBuilder: (query) => PaginationRequest(
+///   searchRequestBuilder: (query) => PaginationRequest(
 ///     page: 1,
 ///     pageSize: 20,
 ///     searchQuery: query,
 ///   ),
+///   keyExtractor: (product) => product.sku,
+///   selectedKey: 'SKU-001',
+///   selectedKeyLabelBuilder: (key) => 'Product: $key',
 /// );
 /// ```
-class SmartSearchController<T> extends ChangeNotifier {
+///
+/// Example without key (uses item equality):
+/// ```dart
+/// final searchController = SmartSearchController<Product, Product>(
+///   cubit: productsCubit,
+///   searchRequestBuilder: (query) => PaginationRequest(...),
+///   initialSelectedValue: someProduct,
+/// );
+/// ```
+class SmartSearchController<T, K> extends ChangeNotifier {
   SmartSearchController({
     required SmartPaginationCubit<T> cubit,
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
     ValueChanged<T>? onItemSelected,
+    ValueChanged<K>? onKeySelected,
     T? initialSelectedValue,
+    K? selectedKey,
+    K Function(T item)? keyExtractor,
+    String Function(K key)? selectedKeyLabelBuilder,
   })  : _cubit = cubit,
         _searchRequestBuilder = searchRequestBuilder,
         _config = config,
         _onItemSelected = onItemSelected,
-        _selectedItem = initialSelectedValue {
+        _onKeySelected = onKeySelected,
+        _keyExtractor = keyExtractor,
+        _selectedKeyLabelBuilder = selectedKeyLabelBuilder,
+        _selectedItem = initialSelectedValue,
+        _selectedKey = selectedKey ?? (initialSelectedValue != null && keyExtractor != null
+            ? keyExtractor(initialSelectedValue)
+            : null),
+        _pendingKey = selectedKey != null && initialSelectedValue == null ? selectedKey : null {
     _textController = TextEditingController();
     _focusNode = FocusNode();
     _textController.addListener(_onTextChanged);
     _focusNode.addListener(_onFocusChanged);
+
+    // Listen to cubit state changes to sync pending keys with loaded data
+    if (_pendingKey != null) {
+      _cubitSubscription = _cubit.stream.listen(_onCubitStateChanged);
+    }
   }
 
   final SmartPaginationCubit<T> _cubit;
   final PaginationRequest Function(String query) _searchRequestBuilder;
   final SmartSearchConfig _config;
   ValueChanged<T>? _onItemSelected;
+  ValueChanged<K>? _onKeySelected;
+
+  /// Function to extract the key from an item.
+  final K Function(T item)? _keyExtractor;
+
+  /// Function to build a display label for a key when the item is not yet loaded.
+  final String Function(K key)? _selectedKeyLabelBuilder;
+
+  /// Subscription to cubit state changes for syncing pending keys.
+  StreamSubscription<SmartPaginationState<T>>? _cubitSubscription;
 
   /// Sets the item selection callback.
   set onItemSelected(ValueChanged<T>? callback) {
     _onItemSelected = callback;
+  }
+
+  /// Sets the key selection callback.
+  set onKeySelected(ValueChanged<K>? callback) {
+    _onKeySelected = callback;
   }
 
   late final TextEditingController _textController;
@@ -63,6 +111,13 @@ class SmartSearchController<T> extends ChangeNotifier {
 
   /// The currently selected item (for showSelected mode).
   T? _selectedItem;
+
+  /// The currently selected key.
+  K? _selectedKey;
+
+  /// A pending key that hasn't been resolved to an item yet.
+  /// This is used when selectedKey is provided but the data hasn't been loaded.
+  K? _pendingKey;
 
   /// A custom value passed when overlay is shown programmatically.
   /// This can be used to determine what content to display in the overlay.
@@ -109,6 +164,35 @@ class SmartSearchController<T> extends ChangeNotifier {
 
   /// Whether an item is currently selected.
   bool get hasSelectedItem => _selectedItem != null;
+
+  /// The currently selected key.
+  K? get selectedKey => _selectedKey;
+
+  /// Whether a key is currently selected.
+  bool get hasSelectedKey => _selectedKey != null;
+
+  /// Whether there's a pending key that hasn't been resolved yet.
+  bool get hasPendingKey => _pendingKey != null;
+
+  /// The key extractor function.
+  K Function(T item)? get keyExtractor => _keyExtractor;
+
+  /// Returns the display label for the selected key when item is not loaded.
+  /// Returns null if no pending key or no label builder provided.
+  String? get selectedKeyLabel {
+    if (_pendingKey != null && _selectedKeyLabelBuilder != null) {
+      return _selectedKeyLabelBuilder!(_pendingKey!);
+    }
+    return null;
+  }
+
+  /// Returns the display label for a specific key.
+  String getKeyLabel(K key) {
+    if (_selectedKeyLabelBuilder != null) {
+      return _selectedKeyLabelBuilder!(key);
+    }
+    return key.toString();
+  }
 
   /// The custom value passed when overlay was shown.
   /// Use this to determine overlay content type.
@@ -189,6 +273,29 @@ class SmartSearchController<T> extends ChangeNotifier {
       showOverlay();
     }
     notifyListeners();
+  }
+
+  /// Called when cubit state changes to sync pending keys with loaded data.
+  void _onCubitStateChanged(SmartPaginationState<T> state) {
+    if (_pendingKey == null || _keyExtractor == null) return;
+
+    if (state is SmartPaginationLoaded<T>) {
+      // Try to find the item matching the pending key
+      for (final item in state.items) {
+        if (_keyExtractor!(item) == _pendingKey) {
+          _selectedItem = item;
+          _selectedKey = _pendingKey;
+          _pendingKey = null;
+
+          // Cancel subscription since we found the item
+          _cubitSubscription?.cancel();
+          _cubitSubscription = null;
+
+          notifyListeners();
+          break;
+        }
+      }
+    }
   }
 
   void _performSearch(String query) {
@@ -400,22 +507,85 @@ class SmartSearchController<T> extends ChangeNotifier {
   /// and optionally clear the search.
   void selectItem(T item) {
     _selectedItem = item;
+    _pendingKey = null;
+
+    // Extract and store the key if keyExtractor is provided
+    if (_keyExtractor != null) {
+      _selectedKey = _keyExtractor!(item);
+      _onKeySelected?.call(_selectedKey as K);
+    }
+
     _onItemSelected?.call(item);
     hideOverlay();
     unfocus();
     notifyListeners();
   }
 
+  /// Selects an item by its key.
+  /// If the item is already loaded, it will be selected immediately.
+  /// Otherwise, the key will be stored as pending and resolved when data loads.
+  void selectByKey(K key) {
+    if (_keyExtractor == null) {
+      throw StateError('Cannot select by key without keyExtractor');
+    }
+
+    // Try to find the item in current data
+    final state = _cubit.state;
+    if (state is SmartPaginationLoaded<T>) {
+      for (final item in state.items) {
+        if (_keyExtractor!(item) == key) {
+          selectItem(item);
+          return;
+        }
+      }
+    }
+
+    // Item not found - store as pending
+    _selectedKey = key;
+    _pendingKey = key;
+    _selectedItem = null;
+
+    // Start listening for data if not already
+    _cubitSubscription ??= _cubit.stream.listen(_onCubitStateChanged);
+
+    _onKeySelected?.call(key);
+    notifyListeners();
+  }
+
   /// Sets the selected item programmatically.
   void setSelectedItem(T? item) {
     _selectedItem = item;
+    _pendingKey = null;
+
+    if (item != null && _keyExtractor != null) {
+      _selectedKey = _keyExtractor!(item);
+    } else if (item == null) {
+      _selectedKey = null;
+    }
+
     notifyListeners();
+  }
+
+  /// Sets the selected key programmatically.
+  /// This will try to resolve to an item if data is loaded.
+  void setSelectedKey(K? key) {
+    if (key == null) {
+      _selectedKey = null;
+      _selectedItem = null;
+      _pendingKey = null;
+      notifyListeners();
+      return;
+    }
+
+    selectByKey(key);
   }
 
   /// Clears the selected item and shows the search box.
   /// Optionally requests focus on the search field.
   void clearSelection({bool requestFocus = true}) {
     _selectedItem = null;
+    _selectedKey = null;
+    _pendingKey = null;
     clearSearch();
     if (requestFocus) {
       this.requestFocus();
@@ -497,6 +667,7 @@ class SmartSearchController<T> extends ChangeNotifier {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _cubitSubscription?.cancel();
     _textController.removeListener(_onTextChanged);
     _focusNode.removeListener(_onFocusChanged);
     _textController.dispose();

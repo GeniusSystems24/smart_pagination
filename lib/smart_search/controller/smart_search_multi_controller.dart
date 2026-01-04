@@ -8,43 +8,105 @@ part of '../../pagination.dart';
 /// - Connection to pagination cubit for data fetching
 /// - Overlay visibility state
 /// - Keyboard navigation
+/// - Key-based selection with automatic data synchronization
 ///
-/// Example:
+/// The controller supports two generic types:
+/// - `T`: The data type of items (e.g., Product, User)
+/// - `K`: The key type used for identification (e.g., String, int)
+///
+/// Example with key-based selection:
 /// ```dart
-/// final controller = SmartSearchMultiController<Product>(
+/// final controller = SmartSearchMultiController<Product, String>(
 ///   cubit: productsCubit,
 ///   searchRequestBuilder: (query) => PaginationRequest(
 ///     page: 1,
 ///     pageSize: 20,
 ///     searchQuery: query,
 ///   ),
+///   keyExtractor: (product) => product.sku,
+///   selectedKeys: ['SKU-001', 'SKU-002', 'SKU-003'],
+///   selectedKeyLabelBuilder: (key) => 'Product: $key',
 /// );
 /// ```
-class SmartSearchMultiController<T> extends ChangeNotifier {
+///
+/// Example without keys (uses item equality):
+/// ```dart
+/// final controller = SmartSearchMultiController<Product, Product>(
+///   cubit: productsCubit,
+///   searchRequestBuilder: (query) => PaginationRequest(...),
+///   initialSelectedValues: [product1, product2],
+/// );
+/// ```
+class SmartSearchMultiController<T, K> extends ChangeNotifier {
   SmartSearchMultiController({
     required SmartPaginationCubit<T> cubit,
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
     ValueChanged<List<T>>? onSelectionChanged,
+    ValueChanged<List<K>>? onKeysChanged,
     List<T>? initialSelectedValues,
+    List<K>? selectedKeys,
+    K Function(T item)? keyExtractor,
+    String Function(K key)? selectedKeyLabelBuilder,
     int? maxSelections,
   })  : _cubit = cubit,
         _searchRequestBuilder = searchRequestBuilder,
         _config = config,
         _onSelectionChanged = onSelectionChanged,
+        _onKeysChanged = onKeysChanged,
+        _keyExtractor = keyExtractor,
+        _selectedKeyLabelBuilder = selectedKeyLabelBuilder,
         _selectedItems = List<T>.from(initialSelectedValues ?? []),
+        _selectedKeys = _initializeSelectedKeys(
+          initialSelectedValues,
+          selectedKeys,
+          keyExtractor,
+        ),
+        _pendingKeys = selectedKeys != null && initialSelectedValues == null
+            ? Set<K>.from(selectedKeys)
+            : <K>{},
         _maxSelections = maxSelections {
     _textController = TextEditingController();
     _focusNode = FocusNode();
     _textController.addListener(_onTextChanged);
     _focusNode.addListener(_onFocusChanged);
+
+    // Listen to cubit state changes to sync pending keys with loaded data
+    if (_pendingKeys.isNotEmpty) {
+      _cubitSubscription = _cubit.stream.listen(_onCubitStateChanged);
+    }
+  }
+
+  /// Helper to initialize selected keys from values or provided keys.
+  static List<K> _initializeSelectedKeys<T, K>(
+    List<T>? initialSelectedValues,
+    List<K>? selectedKeys,
+    K Function(T item)? keyExtractor,
+  ) {
+    if (selectedKeys != null) {
+      return List<K>.from(selectedKeys);
+    }
+    if (initialSelectedValues != null && keyExtractor != null) {
+      return initialSelectedValues.map(keyExtractor).toList();
+    }
+    return <K>[];
   }
 
   final SmartPaginationCubit<T> _cubit;
   final PaginationRequest Function(String query) _searchRequestBuilder;
   final SmartSearchConfig _config;
   ValueChanged<List<T>>? _onSelectionChanged;
+  ValueChanged<List<K>>? _onKeysChanged;
   final int? _maxSelections;
+
+  /// Function to extract the key from an item.
+  final K Function(T item)? _keyExtractor;
+
+  /// Function to build a display label for a key when the item is not yet loaded.
+  final String Function(K key)? _selectedKeyLabelBuilder;
+
+  /// Subscription to cubit state changes for syncing pending keys.
+  StreamSubscription<SmartPaginationState<T>>? _cubitSubscription;
 
   late final TextEditingController _textController;
   late final FocusNode _focusNode;
@@ -57,6 +119,12 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
 
   /// The list of currently selected items.
   final List<T> _selectedItems;
+
+  /// The list of currently selected keys.
+  final List<K> _selectedKeys;
+
+  /// Set of pending keys that haven't been resolved to items yet.
+  final Set<K> _pendingKeys;
 
   /// The connected pagination cubit.
   SmartPaginationCubit<T> get cubit => _cubit;
@@ -112,6 +180,44 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
     _onSelectionChanged = callback;
   }
 
+  /// Sets the keys changed callback.
+  set onKeysChanged(ValueChanged<List<K>>? callback) {
+    _onKeysChanged = callback;
+  }
+
+  /// The list of currently selected keys (unmodifiable).
+  List<K> get selectedKeys => List.unmodifiable(_selectedKeys);
+
+  /// The number of selected keys (including pending ones).
+  int get totalSelectionCount => _selectedKeys.length;
+
+  /// Whether there are any pending keys that haven't been resolved yet.
+  bool get hasPendingKeys => _pendingKeys.isNotEmpty;
+
+  /// The set of pending keys (unmodifiable).
+  Set<K> get pendingKeys => Set.unmodifiable(_pendingKeys);
+
+  /// The key extractor function.
+  K Function(T item)? get keyExtractor => _keyExtractor;
+
+  /// Returns the display label for a specific key.
+  String getKeyLabel(K key) {
+    if (_selectedKeyLabelBuilder != null) {
+      return _selectedKeyLabelBuilder!(key);
+    }
+    return key.toString();
+  }
+
+  /// Checks if a key is currently selected.
+  bool isKeySelected(K key) {
+    return _selectedKeys.contains(key);
+  }
+
+  /// Checks if a key is pending (not yet resolved to an item).
+  bool isKeyPending(K key) {
+    return _pendingKeys.contains(key);
+  }
+
   /// Returns the currently focused item, or null if none.
   T? get focusedItem {
     final state = _cubit.state;
@@ -161,6 +267,35 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
       showOverlay();
     }
     notifyListeners();
+  }
+
+  /// Called when cubit state changes to sync pending keys with loaded data.
+  void _onCubitStateChanged(SmartPaginationState<T> state) {
+    if (_pendingKeys.isEmpty || _keyExtractor == null) return;
+
+    if (state is SmartPaginationLoaded<T>) {
+      bool hasResolved = false;
+
+      // Try to find items matching the pending keys
+      for (final item in state.items) {
+        final key = _keyExtractor!(item);
+        if (_pendingKeys.contains(key)) {
+          _selectedItems.add(item);
+          _pendingKeys.remove(key);
+          hasResolved = true;
+        }
+      }
+
+      // If we've resolved all pending keys, cancel subscription
+      if (_pendingKeys.isEmpty) {
+        _cubitSubscription?.cancel();
+        _cubitSubscription = null;
+      }
+
+      if (hasResolved) {
+        notifyListeners();
+      }
+    }
   }
 
   void _performSearch(String query) {
@@ -309,6 +444,10 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
 
   /// Checks if an item is selected.
   bool isItemSelected(T item) {
+    if (_keyExtractor != null) {
+      final key = _keyExtractor!(item);
+      return _selectedKeys.contains(key);
+    }
     return _selectedItems.contains(item);
   }
 
@@ -324,19 +463,38 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
 
   /// Toggles selection of an item.
   void toggleItemSelection(T item) {
-    if (_selectedItems.contains(item)) {
+    if (isItemSelected(item)) {
       removeItem(item);
     } else {
       addItem(item);
     }
   }
 
+  /// Toggles selection by key.
+  void toggleKeySelection(K key) {
+    if (_selectedKeys.contains(key)) {
+      removeByKey(key);
+    } else {
+      addByKey(key);
+    }
+  }
+
   /// Adds an item to the selection.
   void addItem(T item) {
     if (isMaxSelectionsReached) return;
-    if (_selectedItems.contains(item)) return;
 
-    _selectedItems.add(item);
+    if (_keyExtractor != null) {
+      final key = _keyExtractor!(item);
+      if (_selectedKeys.contains(key)) return;
+
+      _selectedItems.add(item);
+      _selectedKeys.add(key);
+      _pendingKeys.remove(key);
+    } else {
+      if (_selectedItems.contains(item)) return;
+      _selectedItems.add(item);
+    }
+
     _notifySelectionChanged();
 
     // Clear search after selection for next search
@@ -344,27 +502,101 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Adds an item by its key.
+  /// If the item is already loaded, it will be added immediately.
+  /// Otherwise, the key will be stored as pending.
+  void addByKey(K key) {
+    if (_keyExtractor == null) {
+      throw StateError('Cannot add by key without keyExtractor');
+    }
+
+    if (isMaxSelectionsReached) return;
+    if (_selectedKeys.contains(key)) return;
+
+    // Try to find the item in current data
+    final state = _cubit.state;
+    if (state is SmartPaginationLoaded<T>) {
+      for (final item in state.items) {
+        if (_keyExtractor!(item) == key) {
+          addItem(item);
+          return;
+        }
+      }
+    }
+
+    // Item not found - add key and mark as pending
+    _selectedKeys.add(key);
+    _pendingKeys.add(key);
+
+    // Start listening for data if not already
+    _cubitSubscription ??= _cubit.stream.listen(_onCubitStateChanged);
+
+    _notifySelectionChanged();
+    notifyListeners();
+  }
+
   /// Removes an item from the selection.
   void removeItem(T item) {
+    bool removed = false;
+
+    if (_keyExtractor != null) {
+      final key = _keyExtractor!(item);
+      if (_selectedKeys.remove(key)) {
+        _pendingKeys.remove(key);
+        removed = true;
+      }
+    }
+
     if (_selectedItems.remove(item)) {
+      removed = true;
+    }
+
+    if (removed) {
       _notifySelectionChanged();
       notifyListeners();
     }
+  }
+
+  /// Removes an item by its key.
+  void removeByKey(K key) {
+    if (_keyExtractor == null) {
+      throw StateError('Cannot remove by key without keyExtractor');
+    }
+
+    if (!_selectedKeys.contains(key)) return;
+
+    _selectedKeys.remove(key);
+    _pendingKeys.remove(key);
+
+    // Also remove from items if present
+    _selectedItems.removeWhere((item) => _keyExtractor!(item) == key);
+
+    _notifySelectionChanged();
+    notifyListeners();
   }
 
   /// Removes an item at the given index.
   void removeItemAt(int index) {
     if (index >= 0 && index < _selectedItems.length) {
-      _selectedItems.removeAt(index);
-      _notifySelectionChanged();
-      notifyListeners();
+      final item = _selectedItems[index];
+      removeItem(item);
+    }
+  }
+
+  /// Removes a key at the given index.
+  void removeKeyAt(int index) {
+    if (index >= 0 && index < _selectedKeys.length) {
+      final key = _selectedKeys[index];
+      removeByKey(key);
     }
   }
 
   /// Clears all selected items.
   void clearAllSelections() {
-    if (_selectedItems.isNotEmpty) {
+    if (_selectedItems.isNotEmpty || _selectedKeys.isNotEmpty) {
       _selectedItems.clear();
+      _selectedKeys.clear();
+      _pendingKeys.clear();
       _notifySelectionChanged();
       notifyListeners();
     }
@@ -373,17 +605,75 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
   /// Sets the selected items programmatically.
   void setSelectedItems(List<T> items) {
     _selectedItems.clear();
-    if (_maxSelections != null) {
-      _selectedItems.addAll(items.take(_maxSelections!));
-    } else {
-      _selectedItems.addAll(items);
+    _selectedKeys.clear();
+    _pendingKeys.clear();
+
+    final itemsToAdd = _maxSelections != null
+        ? items.take(_maxSelections!)
+        : items;
+
+    for (final item in itemsToAdd) {
+      _selectedItems.add(item);
+      if (_keyExtractor != null) {
+        _selectedKeys.add(_keyExtractor!(item));
+      }
     }
+
+    _notifySelectionChanged();
+    notifyListeners();
+  }
+
+  /// Sets the selected keys programmatically.
+  /// This will try to resolve to items if data is loaded.
+  void setSelectedKeys(List<K> keys) {
+    if (_keyExtractor == null) {
+      throw StateError('Cannot set selected keys without keyExtractor');
+    }
+
+    _selectedItems.clear();
+    _selectedKeys.clear();
+    _pendingKeys.clear();
+
+    final keysToAdd = _maxSelections != null
+        ? keys.take(_maxSelections!)
+        : keys;
+
+    for (final key in keysToAdd) {
+      _selectedKeys.add(key);
+
+      // Try to find the item
+      final state = _cubit.state;
+      if (state is SmartPaginationLoaded<T>) {
+        bool found = false;
+        for (final item in state.items) {
+          if (_keyExtractor!(item) == key) {
+            _selectedItems.add(item);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          _pendingKeys.add(key);
+        }
+      } else {
+        _pendingKeys.add(key);
+      }
+    }
+
+    // Start listening for data if there are pending keys
+    if (_pendingKeys.isNotEmpty) {
+      _cubitSubscription ??= _cubit.stream.listen(_onCubitStateChanged);
+    }
+
     _notifySelectionChanged();
     notifyListeners();
   }
 
   void _notifySelectionChanged() {
     _onSelectionChanged?.call(List.unmodifiable(_selectedItems));
+    if (_keyExtractor != null) {
+      _onKeysChanged?.call(List.unmodifiable(_selectedKeys));
+    }
   }
 
   /// Handles keyboard events for navigation.
@@ -457,6 +747,7 @@ class SmartSearchMultiController<T> extends ChangeNotifier {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _cubitSubscription?.cancel();
     _textController.removeListener(_onTextChanged);
     _focusNode.removeListener(_onFocusChanged);
     _textController.dispose();

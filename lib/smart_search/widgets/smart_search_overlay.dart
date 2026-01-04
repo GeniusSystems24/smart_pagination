@@ -6,9 +6,14 @@ part of '../../pagination.dart';
 /// (top, bottom, left, or right) relative to the search box, unless a
 /// specific position is configured.
 ///
+/// ## Generic Types
+///
+/// - `T`: The data type of items (e.g., Product, User)
+/// - `K`: The key type used for identification (e.g., String, int)
+///
 /// Example:
 /// ```dart
-/// SmartSearchOverlay<Product>(
+/// SmartSearchOverlay<Product, String>(
 ///   controller: searchController,
 ///   itemBuilder: (context, product) => ListTile(
 ///     title: Text(product.name),
@@ -19,7 +24,7 @@ part of '../../pagination.dart';
 ///   },
 /// )
 /// ```
-class SmartSearchOverlay<T> extends StatefulWidget {
+class SmartSearchOverlay<T, K> extends StatefulWidget {
   const SmartSearchOverlay({
     super.key,
     required this.controller,
@@ -50,7 +55,7 @@ class SmartSearchOverlay<T> extends StatefulWidget {
   });
 
   /// The search controller managing the search state.
-  final SmartSearchController<T> controller;
+  final SmartSearchController<T, K> controller;
 
   /// Builder for each result item.
   final Widget Function(BuildContext context, T item) itemBuilder;
@@ -125,10 +130,11 @@ class SmartSearchOverlay<T> extends StatefulWidget {
   final TextInputType searchBoxKeyboardType;
 
   @override
-  State<SmartSearchOverlay<T>> createState() => _SmartSearchOverlayState<T>();
+  State<SmartSearchOverlay<T, K>> createState() =>
+      _SmartSearchOverlayState<T, K>();
 }
 
-class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
+class _SmartSearchOverlayState<T, K> extends State<SmartSearchOverlay<T, K>>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   final LayerLink _layerLink = LayerLink();
   final GlobalKey _searchBoxKey = GlobalKey();
@@ -323,7 +329,7 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
   OverlayEntry _createOverlayEntry() {
     return OverlayEntry(
       builder: (context) {
-        return _OverlayContent<T>(
+        return _OverlayContent<T, K>(
           layerLink: _layerLink,
           searchBoxKey: _searchBoxKey,
           controller: widget.controller,
@@ -354,7 +360,7 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
   Widget build(BuildContext context) {
     Widget child = CompositedTransformTarget(
       link: _layerLink,
-      child: SmartSearchBox<T>(
+      child: SmartSearchBox<T, K>(
         key: _searchBoxKey,
         controller: widget.controller,
         decoration: widget.searchBoxDecoration,
@@ -390,7 +396,7 @@ class _SmartSearchOverlayState<T> extends State<SmartSearchOverlay<T>>
   }
 }
 
-class _OverlayContent<T> extends StatefulWidget {
+class _OverlayContent<T, K> extends StatefulWidget {
   const _OverlayContent({
     required this.layerLink,
     required this.searchBoxKey,
@@ -413,7 +419,7 @@ class _OverlayContent<T> extends StatefulWidget {
 
   final LayerLink layerLink;
   final GlobalKey searchBoxKey;
-  final SmartSearchController<T> controller;
+  final SmartSearchController<T, K> controller;
   final SmartSearchOverlayConfig config;
   final Animation<double> animation;
   final OverlayAnimationType animationType;
@@ -430,10 +436,10 @@ class _OverlayContent<T> extends StatefulWidget {
   final BoxDecoration? focusedItemDecoration;
 
   @override
-  State<_OverlayContent<T>> createState() => _OverlayContentState<T>();
+  State<_OverlayContent<T, K>> createState() => _OverlayContentState<T, K>();
 }
 
-class _OverlayContentState<T> extends State<_OverlayContent<T>> {
+class _OverlayContentState<T, K> extends State<_OverlayContent<T, K>> {
   final ScrollController _scrollController = ScrollController();
   static const double _itemHeight = 56.0; // Approximate item height
 

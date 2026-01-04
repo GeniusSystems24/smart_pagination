@@ -7,9 +7,37 @@ part of '../../pagination.dart';
 /// placed anywhere in your UI. The results dropdown automatically positions
 /// itself in the best available space.
 ///
+/// ## Generic Types
+///
+/// - `T`: The data type of items (e.g., Product, User)
+/// - `K`: The key type used for identification (e.g., String, int)
+///
+/// ## Key-based Selection
+///
+/// When using key-based selection, you can:
+/// - Set initial selection by key even before data loads
+/// - Compare items by key instead of object equality
+/// - Get notified of selected keys in addition to items
+///
+/// Example with key-based selection:
+/// ```dart
+/// SmartSearchDropdown<Product, String>.withProvider(
+///   request: PaginationRequest(page: 1, pageSize: 20),
+///   provider: PaginationProvider.future((request) async {
+///     return await api.searchProducts(request.searchQuery ?? '');
+///   }),
+///   searchRequestBuilder: (query) => PaginationRequest(...),
+///   itemBuilder: (context, product) => ListTile(title: Text(product.name)),
+///   keyExtractor: (product) => product.sku,
+///   selectedKey: 'SKU-001',
+///   selectedKeyLabelBuilder: (key) => 'Product: $key',
+///   onKeySelected: (key) => print('Selected key: $key'),
+/// )
+/// ```
+///
 /// Example with provider (creates cubit internally):
 /// ```dart
-/// SmartSearchDropdown<Product>.withProvider(
+/// SmartSearchDropdown<Product, Product>.withProvider(
 ///   request: PaginationRequest(page: 1, pageSize: 20),
 ///   provider: PaginationProvider.future((request) async {
 ///     return await api.searchProducts(request.searchQuery ?? '');
@@ -30,7 +58,7 @@ part of '../../pagination.dart';
 ///
 /// Example with showSelected mode:
 /// ```dart
-/// SmartSearchDropdown<Product>.withProvider(
+/// SmartSearchDropdown<Product, String>.withProvider(
 ///   // ... other properties
 ///   showSelected: true,
 ///   selectedItemBuilder: (context, product, onClear) => ListTile(
@@ -45,7 +73,7 @@ part of '../../pagination.dart';
 ///
 /// Example with external cubit:
 /// ```dart
-/// SmartSearchDropdown<Product>.withCubit(
+/// SmartSearchDropdown<Product, String>.withCubit(
 ///   cubit: productSearchCubit,
 ///   searchRequestBuilder: (query) => PaginationRequest(
 ///     page: 1,
@@ -60,7 +88,7 @@ part of '../../pagination.dart';
 ///   },
 /// )
 /// ```
-class SmartSearchDropdown<T> extends StatefulWidget {
+class SmartSearchDropdown<T, K> extends StatefulWidget {
   /// Creates a search dropdown with an internal cubit.
   const SmartSearchDropdown.withProvider({
     super.key,
@@ -69,6 +97,7 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onItemSelected,
+    this.onKeySelected,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -86,7 +115,11 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.overlayDecoration,
     this.showSelected = false,
     this.selectedItemBuilder,
+    this.selectedKeyBuilder,
     this.initialSelectedValue,
+    this.selectedKey,
+    this.keyExtractor,
+    this.selectedKeyLabelBuilder,
     this.validator,
     this.textInputAction = TextInputAction.search,
     this.inputFormatters,
@@ -120,6 +153,7 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onItemSelected,
+    this.onKeySelected,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -137,7 +171,11 @@ class SmartSearchDropdown<T> extends StatefulWidget {
     this.overlayDecoration,
     this.showSelected = false,
     this.selectedItemBuilder,
+    this.selectedKeyBuilder,
     this.initialSelectedValue,
+    this.selectedKey,
+    this.keyExtractor,
+    this.selectedKeyLabelBuilder,
     this.validator,
     this.textInputAction = TextInputAction.search,
     this.inputFormatters,
@@ -246,6 +284,37 @@ class SmartSearchDropdown<T> extends StatefulWidget {
   /// [showSelected] is true.
   final T? initialSelectedValue;
 
+  /// The initially selected key.
+  ///
+  /// When provided with [keyExtractor], the widget will try to find and select
+  /// the item with this key. If the item hasn't been loaded yet, it will be
+  /// selected when the data loads.
+  final K? selectedKey;
+
+  /// Function to extract the key from an item.
+  ///
+  /// When provided, selections are compared by key instead of object equality.
+  /// This enables key-based initial selection and comparison.
+  final K Function(T item)? keyExtractor;
+
+  /// Function to build a display label for a key when the item is not yet loaded.
+  ///
+  /// This is used when [selectedKey] is provided but the data hasn't been
+  /// loaded yet. If not provided, the key's toString() will be used.
+  final String Function(K key)? selectedKeyLabelBuilder;
+
+  /// Called when an item is selected by key.
+  ///
+  /// This is called in addition to [onItemSelected] when [keyExtractor] is provided.
+  final ValueChanged<K>? onKeySelected;
+
+  /// Builder for displaying the selected key when item is not yet loaded.
+  ///
+  /// If not provided, a default display using [selectedKeyLabelBuilder] or
+  /// key.toString() will be used.
+  final Widget Function(BuildContext context, K key, VoidCallback onClear)?
+      selectedKeyBuilder;
+
   /// Validator function for form validation.
   ///
   /// Returns an error string if validation fails, null otherwise.
@@ -282,12 +351,13 @@ class SmartSearchDropdown<T> extends StatefulWidget {
   final TextInputType keyboardType;
 
   @override
-  State<SmartSearchDropdown<T>> createState() => _SmartSearchDropdownState<T>();
+  State<SmartSearchDropdown<T, K>> createState() =>
+      _SmartSearchDropdownState<T, K>();
 }
 
-class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
+class _SmartSearchDropdownState<T, K> extends State<SmartSearchDropdown<T, K>> {
   SmartPaginationCubit<T>? _internalCubit;
-  SmartSearchController<T>? _searchController;
+  SmartSearchController<T, K>? _searchController;
 
   SmartPaginationCubit<T> get _cubit => widget._cubit ?? _internalCubit!;
 
@@ -315,12 +385,16 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
   }
 
   void _initializeController() {
-    _searchController = SmartSearchController<T>(
+    _searchController = SmartSearchController<T, K>(
       cubit: _cubit,
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
       onItemSelected: widget.onItemSelected,
+      onKeySelected: widget.onKeySelected,
       initialSelectedValue: widget.initialSelectedValue,
+      selectedKey: widget.selectedKey,
+      keyExtractor: widget.keyExtractor,
+      selectedKeyLabelBuilder: widget.selectedKeyLabelBuilder,
     );
   }
 
@@ -341,8 +415,13 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
           return _buildSelectedItemDisplay(context);
         }
 
+        // Show pending key display if showSelected is true and we have a pending key
+        if (widget.showSelected && _searchController!.hasPendingKey) {
+          return _buildPendingKeyDisplay(context);
+        }
+
         // Show the search overlay
-        return SmartSearchOverlay<T>(
+        return SmartSearchOverlay<T, K>(
           controller: _searchController!,
           itemBuilder: widget.itemBuilder,
           onItemSelected: widget.onItemSelected,
@@ -370,6 +449,33 @@ class _SmartSearchDropdownState<T> extends State<SmartSearchDropdown<T>> {
           searchBoxKeyboardType: widget.keyboardType,
         );
       },
+    );
+  }
+
+  Widget _buildPendingKeyDisplay(BuildContext context) {
+    final pendingKey = _searchController!.selectedKey;
+    if (pendingKey == null) return const SizedBox.shrink();
+
+    final searchTheme = SmartSearchTheme.of(context);
+
+    // Use custom selectedKeyBuilder if provided
+    if (widget.selectedKeyBuilder != null) {
+      return widget.selectedKeyBuilder!(
+        context,
+        pendingKey,
+        () => _searchController!.clearSelection(),
+      );
+    }
+
+    // Default pending key display
+    final label = _searchController!.getKeyLabel(pendingKey);
+    return _DefaultPendingKeyDisplay<K>(
+      keyLabel: label,
+      onClear: () => _searchController!.clearSelection(),
+      borderRadius: widget.borderRadius ?? searchTheme.searchBoxBorderRadius,
+      backgroundColor: searchTheme.searchBoxBackgroundColor,
+      borderColor: searchTheme.searchBoxBorderColor,
+      iconColor: searchTheme.searchBoxIconColor,
     );
   }
 
@@ -440,6 +546,89 @@ class _DefaultSelectedItemDisplay<T> extends StatelessWidget {
             children: [
               Expanded(
                 child: itemBuilder(context, item),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.close,
+                  size: 20,
+                  color: iconColor ?? Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Default display widget for pending key (item not yet loaded).
+class _DefaultPendingKeyDisplay<K> extends StatelessWidget {
+  const _DefaultPendingKeyDisplay({
+    required this.keyLabel,
+    required this.onClear,
+    this.borderRadius,
+    this.backgroundColor,
+    this.borderColor,
+    this.iconColor,
+  });
+
+  final String keyLabel;
+  final VoidCallback onClear;
+  final BorderRadius? borderRadius;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(12);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onClear,
+        borderRadius: effectiveBorderRadius,
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor ?? Theme.of(context).cardColor,
+            borderRadius: effectiveBorderRadius,
+            border: Border.all(
+              color: borderColor ?? Colors.grey[300]!,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator.adaptive(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          keyLabel,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 8),
