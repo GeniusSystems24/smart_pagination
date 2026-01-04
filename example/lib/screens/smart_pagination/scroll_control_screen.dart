@@ -12,35 +12,31 @@ class ScrollControlScreen extends StatefulWidget {
 }
 
 class _ScrollControlScreenState extends State<ScrollControlScreen> {
-  late SmartPaginationController<Product> _controller;
+  late SmartPaginationCubit<Product> _cubit;
   final TextEditingController _indexController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Create a cubit and wrap it in a controller
-    final cubit = SmartPaginationCubit<Product>(
+    // Create a cubit with built-in scroll navigation support
+    _cubit = SmartPaginationCubit<Product>(
       request: const PaginationRequest(page: 1, pageSize: 100),
       provider: PaginationProvider.future(
         (request) => MockApiService.fetchProducts(request),
       ),
     );
-
-    _controller = SmartPaginationController(
-      cubit: cubit,
-      estimatedItemHeight: 80,
-    );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _cubit.dispose();
     _indexController.dispose();
     super.dispose();
   }
 
   Future<void> _scrollToIndex(int index) async {
-    final success = await _controller.scrollToIndex(
+    // Use the cubit's built-in scroll navigation methods
+    final success = await _cubit.animateToIndex(
       index,
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
@@ -210,7 +206,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
           // Product List
           Expanded(
             child: SmartPagination<Product>.listViewWithCubit(
-              cubit: _controller.cubit,
+              cubit: _cubit,
               itemBuilder: (context, items, index) {
                 return _buildProductCard(items[index], index);
               },

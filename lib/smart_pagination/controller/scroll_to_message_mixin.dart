@@ -1,7 +1,7 @@
 part of '../../pagination.dart';
 
 /// Signature for a function that scrolls the pagination list to a specific item ID.
-typedef SmartPaginationScrollToItem =
+typedef PaginationScrollToItem =
     Future<bool> Function(
       String itemId, {
       Duration duration,
@@ -11,7 +11,7 @@ typedef SmartPaginationScrollToItem =
     });
 
 /// Signature for a function that scrolls the pagination list to a specific index.
-typedef SmartPaginationScrollToIndex =
+typedef PaginationScrollToIndex =
     Future<bool> Function(
       int index, {
       Duration duration,
@@ -25,15 +25,15 @@ typedef SmartPaginationScrollToIndex =
 ///
 /// The actual scrolling logic is provided by the UI layer (e.g., `PaginateApiView`)
 /// via the [attachScrollMethods] function.
-mixin SmartPaginationScrollToItemMixin {
-  SmartPaginationScrollToItem? _scrollToItem;
-  SmartPaginationScrollToIndex? _scrollToIndex;
+mixin PaginationScrollToItemMixin {
+  PaginationScrollToItem? _scrollToItem;
+  PaginationScrollToIndex? _scrollToIndex;
 
   /// Attaches the scroll methods that will be used for scrolling operations.
   /// This is called automatically by PaginateApiView.
   void attachScrollMethods({
-    required SmartPaginationScrollToItem scrollToItem,
-    required SmartPaginationScrollToIndex scrollToIndex,
+    required PaginationScrollToItem scrollToItem,
+    required PaginationScrollToIndex scrollToIndex,
   }) {
     _scrollToItem = scrollToItem;
     _scrollToIndex = scrollToIndex;
@@ -60,7 +60,7 @@ mixin SmartPaginationScrollToItemMixin {
       return Future.value(false);
     }
 
-    return (_scrollToItem as SmartPaginationScrollToItem)(
+    return (_scrollToItem as PaginationScrollToItem)(
       itemPath,
       duration: duration,
       curve: curve,
@@ -84,7 +84,7 @@ mixin SmartPaginationScrollToItemMixin {
       return Future.value(false);
     }
 
-    return (_scrollToIndex as SmartPaginationScrollToIndex)(
+    return (_scrollToIndex as PaginationScrollToIndex)(
       index,
       duration: duration,
       curve: curve,
