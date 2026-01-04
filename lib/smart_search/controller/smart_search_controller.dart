@@ -61,7 +61,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
         _selectedKey = selectedKey ?? (initialSelectedValue != null && keyExtractor != null
             ? keyExtractor(initialSelectedValue)
             : null),
-        _pendingKey = selectedKey != null && initialSelectedValue == null ? selectedKey : null {
+        _pendingKey = (selectedKey != null && initialSelectedValue == null ? selectedKey : null) as K? {
     _textController = TextEditingController();
     _focusNode = FocusNode();
     _textController.addListener(_onTextChanged);
@@ -180,8 +180,10 @@ class SmartSearchController<T, K> extends ChangeNotifier {
   /// Returns the display label for the selected key when item is not loaded.
   /// Returns null if no pending key or no label builder provided.
   String? get selectedKeyLabel {
-    if (_pendingKey != null && _selectedKeyLabelBuilder != null) {
-      return _selectedKeyLabelBuilder!(_pendingKey!);
+    final pendingKey = _pendingKey;
+    final labelBuilder = _selectedKeyLabelBuilder;
+    if (pendingKey != null && labelBuilder != null) {
+      return labelBuilder(pendingKey);
     }
     return null;
   }
