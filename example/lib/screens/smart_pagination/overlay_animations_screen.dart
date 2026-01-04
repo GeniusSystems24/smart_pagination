@@ -336,9 +336,8 @@ class _OverlayAnimationsScreenState extends State<OverlayAnimationsScreen> {
                 '${entry.key.name}: ${entry.value}',
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
+                  color:
+                      isSelected ? Theme.of(context).colorScheme.primary : null,
                 ),
               ),
             ),
@@ -368,7 +367,7 @@ class _OverlayValueDemo extends StatefulWidget {
 }
 
 class _OverlayValueDemoState extends State<_OverlayValueDemo> {
-  late SmartSearchController<Product> _controller;
+  late SmartSearchController<Product, Product> _controller;
   late SmartPaginationCubit<Product> _cubit;
 
   @override
@@ -474,7 +473,8 @@ class _OverlayValueDemoState extends State<_OverlayValueDemo> {
                           ? 'Overlay value: $value (${value.runtimeType})'
                           : 'No overlay value set',
                       style: TextStyle(
-                        fontWeight: hasValue ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            hasValue ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
