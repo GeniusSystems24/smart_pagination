@@ -43,6 +43,8 @@ import '../screens/smart_pagination/keyboard_navigation_search_screen.dart';
 import '../screens/smart_pagination/search_theming_screen.dart';
 import '../screens/smart_pagination/async_search_states_screen.dart';
 import '../screens/smart_pagination/overlay_animations_screen.dart';
+import '../screens/smart_pagination/key_based_selection_screen.dart';
+import '../screens/smart_pagination/initial_selection_screen.dart';
 
 // Error examples
 import '../screens/errors/basic_error_example.dart';
@@ -518,6 +520,8 @@ class ChatRoute extends GoRouteData with $ChatRoute {
     TypedGoRoute<SearchThemingRoute>(path: 'theming'),
     TypedGoRoute<AsyncStatesRoute>(path: 'async-states'),
     TypedGoRoute<OverlayAnimationsRoute>(path: 'overlay-animations'),
+    TypedGoRoute<KeyBasedSelectionRoute>(path: 'key-based-selection'),
+    TypedGoRoute<InitialSelectionRoute>(path: 'initial-selection'),
   ],
 )
 class SearchRoute extends GoRouteData with $SearchRoute {
@@ -617,6 +621,32 @@ class OverlayAnimationsRoute extends GoRouteData with $OverlayAnimationsRoute {
       context: context,
       state: state,
       child: const OverlayAnimationsScreen(),
+    );
+  }
+}
+
+class KeyBasedSelectionRoute extends GoRouteData with $KeyBasedSelectionRoute {
+  const KeyBasedSelectionRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const KeyBasedSelectionScreen(),
+    );
+  }
+}
+
+class InitialSelectionRoute extends GoRouteData with $InitialSelectionRoute {
+  const InitialSelectionRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const InitialSelectionScreen(),
     );
   }
 }
