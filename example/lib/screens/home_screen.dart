@@ -305,6 +305,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           color: Color(0xFF8B5CF6),
           route: const OverlayAnimationsRoute().location,
         ),
+        _ExampleItem(
+          title: 'Key-Based Selection',
+          description: 'Select by key/ID instead of object',
+          icon: Icons.key_rounded,
+          color: Color(0xFF14B8A6),
+          route: const KeyBasedSelectionRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Initial Selection',
+          description: 'Pre-populate with initial values',
+          icon: Icons.playlist_add_check_rounded,
+          color: Color(0xFFEA580C),
+          route: const InitialSelectionRoute().location,
+        ),
       ],
     ),
     _ExampleCategory(

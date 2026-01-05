@@ -5,6 +5,127 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-01-05
+
+### Added
+
+#### Key-Based Selection for SmartSearchDropdown 🔑
+
+New powerful key-based selection feature that allows selecting items by their unique key/ID instead of by object reference. This is especially useful when working with API data where object instances may differ but the underlying ID is the same.
+
+**New Parameters for SmartSearchDropdown:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyExtractor` | `K Function(T item)?` | Extracts unique key from item |
+| `selectedKey` | `K?` | Currently selected key (for controlled selection) |
+| `onKeySelected` | `void Function(K key, T item)?` | Called when item is selected with its key |
+| `selectedKeyLabelBuilder` | `String Function(K key)?` | Builds display label from key when item not loaded |
+
+**New Parameters for SmartSearchMultiDropdown:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyExtractor` | `K Function(T item)?` | Extracts unique key from item |
+| `selectedKeys` | `Set<K>?` | Currently selected keys (for controlled selection) |
+| `onKeysChanged` | `void Function(Set<K> keys, List<T> items)?` | Called when selection changes with keys |
+| `initialSelectedKeys` | `Set<K>?` | Pre-selected keys on widget load |
+
+**Usage Example - Single Selection:**
+```dart
+SmartSearchDropdown<Product, int>.withProvider(
+  keyExtractor: (product) => product.id,
+  selectedKey: selectedProductId, // int
+  onKeySelected: (id, product) {
+    setState(() => selectedProductId = id);
+    print('Selected product ID: $id');
+  },
+  // When item isn't loaded yet, show the ID
+  selectedKeyLabelBuilder: (id) => 'Product #$id',
+  // ... other properties
+)
+```
+
+**Usage Example - Multi Selection:**
+```dart
+SmartSearchMultiDropdown<Product, int>.withProvider(
+  keyExtractor: (product) => product.id,
+  selectedKeys: selectedProductIds, // Set<int>
+  onKeysChanged: (ids, products) {
+    setState(() => selectedProductIds = ids);
+    print('Selected ${ids.length} products');
+  },
+  initialSelectedKeys: {1, 2, 3}, // Pre-select by IDs
+  // ... other properties
+)
+```
+
+**Benefits:**
+- **Pre-selection before data loads**: Select by ID even when item hasn't been fetched
+- **Consistent state management**: Use primitive keys instead of object references
+- **API-friendly**: Works naturally with REST APIs returning IDs
+- **Form integration**: Easily bind to form fields with ID values
+
+---
+
+#### Initial/Pre-Selection Support 📋
+
+Enhanced support for pre-populating search dropdowns with initial values, perfect for edit forms and default selections.
+
+**SmartSearchDropdown:**
+- `initialSelectedValue`: Set an initial item object
+- `selectedKey` + `selectedKeyLabelBuilder`: Pre-select by key with placeholder label
+
+**SmartSearchMultiDropdown:**
+- `initialSelectedValues`: Set initial list of item objects
+- `initialSelectedKeys`: Set initial set of keys
+
+**Form Usage Example:**
+```dart
+// Edit form with pre-selected category
+SmartSearchDropdown<Category, int>.withProvider(
+  initialSelectedValue: existingProduct.category,
+  // OR use key-based pre-selection
+  selectedKey: existingProduct.categoryId,
+  selectedKeyLabelBuilder: (id) => 'Category #$id (loading...)',
+  showSelected: true,
+  onKeySelected: (categoryId, category) {
+    formData.categoryId = categoryId;
+  },
+)
+```
+
+---
+
+#### New Example Screens 📱
+
+Added two comprehensive example screens demonstrating the new features:
+
+1. **Key-Based Selection Screen**: Shows 4 examples of key-based selection:
+   - Basic key extraction and selection
+   - Pre-selection by key with pending label
+   - Multi-select with key sets
+   - Custom key label builder display
+
+2. **Initial Selection Screen**: Shows 4 examples of initial value handling:
+   - Initial selected value for single dropdown
+   - Form integration with default values
+   - Multi-select with initial values list
+   - Conditional initial value based on context
+
+---
+
+### Fixed
+
+- Fixed type inference issues in `SmartSearchController` where `Object?` couldn't be assigned to generic type `K?`
+- Fixed null check operator usage on nullable type parameters in `selectedKeyLabel` getter
+- Renamed scroll mixin and typedefs for consistency:
+  - `SmartPaginationScrollToItem` → `PaginationScrollToItem`
+  - `SmartPaginationScrollToIndex` → `PaginationScrollToIndex`
+  - `SmartPaginationScrollToItemMixin` → `PaginationScrollToItemMixin`
+
+---
+
 ## [2.6.0] - 2026-01-02
 
 ### Added

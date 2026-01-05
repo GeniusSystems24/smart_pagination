@@ -740,6 +740,14 @@ RouteBase get $searchRoute => GoRouteData.$route(
       path: 'overlay-animations',
       factory: $OverlayAnimationsRoute._fromState,
     ),
+    GoRouteData.$route(
+      path: 'key-based-selection',
+      factory: $KeyBasedSelectionRoute._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'initial-selection',
+      factory: $InitialSelectionRoute._fromState,
+    ),
   ],
 );
 
@@ -895,6 +903,48 @@ mixin $OverlayAnimationsRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/search/overlay-animations');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $KeyBasedSelectionRoute on GoRouteData {
+  static KeyBasedSelectionRoute _fromState(GoRouterState state) =>
+      const KeyBasedSelectionRoute();
+
+  @override
+  String get location => GoRouteData.$location('/search/key-based-selection');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $InitialSelectionRoute on GoRouteData {
+  static InitialSelectionRoute _fromState(GoRouterState state) =>
+      const InitialSelectionRoute();
+
+  @override
+  String get location => GoRouteData.$location('/search/initial-selection');
 
   @override
   void go(BuildContext context) => context.go(location);

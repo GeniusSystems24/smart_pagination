@@ -75,7 +75,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  smart_pagination: ^2.5.0
+  smart_pagination: ^2.7.0
 ```
 
 Install it:
@@ -1033,6 +1033,59 @@ controller.removeItem(item);
 controller.toggleItemSelection(item);
 controller.clearAllSelections();
 ```
+
+### Key-Based Selection (v2.7.0+)
+
+Select items by their unique key/ID instead of by object reference. Useful for API data and form integrations:
+
+```dart
+// Single selection with key
+SmartSearchDropdown<Product, int>.withProvider(
+  keyExtractor: (product) => product.id,
+  selectedKey: selectedProductId, // int
+  onKeySelected: (id, product) {
+    setState(() => selectedProductId = id);
+  },
+  // Show placeholder when item not yet loaded
+  selectedKeyLabelBuilder: (id) => 'Product #$id',
+  // ... other properties
+)
+
+// Multi-selection with keys
+SmartSearchMultiDropdown<Product, int>.withProvider(
+  keyExtractor: (product) => product.id,
+  selectedKeys: selectedProductIds, // Set<int>
+  initialSelectedKeys: {1, 2, 3}, // Pre-select by IDs
+  onKeysChanged: (ids, products) {
+    setState(() => selectedProductIds = ids);
+  },
+  // ... other properties
+)
+```
+
+**Parameters for SmartSearchDropdown:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyExtractor` | `K Function(T)?` | Extracts unique key from item |
+| `selectedKey` | `K?` | Currently selected key |
+| `onKeySelected` | `void Function(K, T)?` | Called with key and item on selection |
+| `selectedKeyLabelBuilder` | `String Function(K)?` | Label when item not loaded |
+
+**Parameters for SmartSearchMultiDropdown:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyExtractor` | `K Function(T)?` | Extracts unique key from item |
+| `selectedKeys` | `Set<K>?` | Currently selected keys |
+| `initialSelectedKeys` | `Set<K>?` | Pre-selected keys |
+| `onKeysChanged` | `void Function(Set<K>, List<T>)?` | Called on selection change |
+
+**Benefits:**
+- Pre-select by ID before data loads
+- Use primitive keys for state management
+- Works naturally with REST APIs
+- Easy form field binding
 
 ### SmartSearchTheme (Light & Dark Mode)
 
