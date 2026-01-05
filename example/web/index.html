@@ -19,7 +19,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Smart Pagination - Powerful pagination library for Flutter.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS meta tags & icons -->
@@ -31,802 +31,190 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>smart_pagination_example</title>
+  <title>Smart Pagination Demo</title>
   <link rel="manifest" href="manifest.json">
+</head>
 
-  <!-- Splash Screen Styles -->
+<body>
+  <div class="loading-container">
+    <div class="logo-container">
+      <div class="super-text">
+        <span class="word">Smart</span><span class="word highlight">Pagination</span>
+      </div>
+      <div class="tagline">Powerful Pagination for Flutter</div>
+    </div>
+
+    <div class="features-demo">
+      <div class="demo-line" style="--delay: 0s">
+        <span class="icon">📜</span> <span class="text">Infinite Scroll</span>
+      </div>
+      <div class="demo-line" style="--delay: 0.15s">
+        <span class="icon">🔄</span> <span class="text">Cursor Pagination</span>
+      </div>
+      <div class="demo-line" style="--delay: 0.3s">
+        <span class="icon">⚡</span> <span class="text">Smart Caching</span>
+      </div>
+      <div class="demo-line" style="--delay: 0.45s">
+        <span class="icon">📡</span> <span class="text">Real-time Streams</span>
+      </div>
+      <div class="demo-line" style="--delay: 0.6s">
+        <span class="icon">🔥</span> <span class="text">Firebase Support</span>
+      </div>
+      <div class="demo-line" style="--delay: 0.75s">
+        <span class="icon">🛡️</span> <span class="text">Error Handling</span>
+      </div>
+      <div class="demo-line" style="--delay: 0.9s">
+        <span class="icon">🔃</span> <span class="text">Pull to Refresh</span>
+      </div>
+      <div class="demo-line" style="--delay: 1.05s">
+        <span class="icon">🔍</span> <span class="text">Search & Filter</span>
+      </div>
+    </div>
+
+    <div class="loader">
+      <div class="bar"></div>
+    </div>
+  </div>
+
   <style>
-    * {
+    body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      height: 100%;
-      overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    #splash-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0f2460 100%);
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 9999;
-      opacity: 1;
-      transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+      height: 100vh;
       overflow: hidden;
     }
 
-    #splash-screen.hidden {
+    .loading-container {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .super-text {
+      font-size: 4rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 0.5rem;
+    }
+
+    .word {
+      display: inline-block;
       opacity: 0;
-      visibility: hidden;
+      transform: translateY(20px);
+      animation: fadeSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
 
-    /* Stars container */
-    #stars-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 1;
+    .word:nth-child(2) {
+      animation-delay: 0.2s;
     }
 
-    /* Interactive star styles */
-    .star {
-      position: absolute;
-      cursor: pointer;
-      pointer-events: auto;
-      font-size: 24px;
-      transition: transform 0.1s ease;
-      animation: twinkle 2s ease-in-out infinite, float 4s ease-in-out infinite;
-      user-select: none;
-      text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
-      z-index: 10;
+    .highlight {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .star:hover {
-      transform: scale(1.3);
+    .tagline {
+      font-size: 1.2rem;
+      color: #aaa;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.6s forwards;
     }
 
-    .star.collected {
-      animation: collect 0.4s ease-out forwards;
-      pointer-events: none;
+    .features-demo {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    @keyframes twinkle {
-
-      0%,
-      100% {
-        opacity: 0.6;
-      }
-
-      50% {
-        opacity: 1;
-      }
-    }
-
-    @keyframes float {
-
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(-10px);
-      }
-    }
-
-    @keyframes collect {
-      0% {
-        transform: scale(1);
-        opacity: 1;
-      }
-
-      50% {
-        transform: scale(2);
-        opacity: 0.8;
-      }
-
-      100% {
-        transform: scale(0);
-        opacity: 0;
-      }
-    }
-
-    /* Score display */
-    #score-container {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      padding: 15px 25px;
+    .demo-line {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      z-index: 100;
-      box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+      gap: 0.5rem;
+      opacity: 0;
+      transform: scale(0.9);
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation-delay: calc(1s + var(--delay));
     }
 
-    #score-icon {
-      font-size: 28px;
-      animation: bounce-icon 1s ease-in-out infinite;
+    .demo-line .icon {
+      font-size: 1.2rem;
     }
 
-    @keyframes bounce-icon {
-
-      0%,
-      100% {
-        transform: scale(1);
-      }
-
-      50% {
-        transform: scale(1.1);
-      }
-    }
-
-    #score-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
-    }
-
-    #score-label {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.6);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    /* Game instruction */
-    #game-instruction {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.2) 100%);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 215, 0, 0.3);
-      border-radius: 16px;
-      padding: 12px 20px;
-      z-index: 100;
-      animation: pulse-glow 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-glow {
-
-      0%,
-      100% {
-        box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
-      }
-
-      50% {
-        box-shadow: 0 4px 30px rgba(255, 215, 0, 0.4);
-      }
-    }
-
-    #game-instruction p {
-      color: #ffd700;
-      font-size: 14px;
+    .demo-line .text {
+      font-size: 0.9rem;
       font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
-    /* Point popup */
-    .point-popup {
-      position: absolute;
-      font-size: 20px;
-      font-weight: 700;
-      color: #ffd700;
-      text-shadow: 0 2px 10px rgba(255, 215, 0, 0.8);
-      pointer-events: none;
-      animation: popup 0.8s ease-out forwards;
-      z-index: 1000;
-    }
-
-    @keyframes popup {
-      0% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
-
-      100% {
-        transform: translateY(-60px) scale(1.5);
-        opacity: 0;
-      }
-    }
-
-    /* Main content area */
-    .main-content {
-      position: relative;
-      z-index: 50;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .splash-logo {
-      width: 120px;
-      height: 120px;
-      position: relative;
-      margin-bottom: 40px;
-    }
-
-    .splash-logo::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100px;
-      height: 100px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 24px;
-      animation: pulse 2s ease-in-out infinite;
-      box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
-    }
-
-    .splash-logo::after {
-      content: 'SP';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 36px;
-      font-weight: 700;
-      color: white;
-      z-index: 1;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
-
-    @keyframes pulse {
-
-      0%,
-      100% {
-        transform: translate(-50%, -50%) scale(1);
-        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
-      }
-
-      50% {
-        transform: translate(-50%, -50%) scale(1.05);
-        box-shadow: 0 25px 80px rgba(102, 126, 234, 0.6);
-      }
-    }
-
-    .splash-title {
-      font-size: 28px;
-      font-weight: 600;
-      color: #ffffff;
-      margin-bottom: 8px;
-      letter-spacing: 1px;
-      text-shadow: 0 2px 20px rgba(102, 126, 234, 0.5);
-    }
-
-    .splash-subtitle {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.6);
-      margin-bottom: 50px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    .loader-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .loader-spinner {
-      width: 50px;
-      height: 50px;
-      position: relative;
-    }
-
-    .loader-spinner::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    .loader-spinner::after {
-      content: '';
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      width: calc(100% - 12px);
-      height: calc(100% - 12px);
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-bottom-color: #764ba2;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite reverse;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    .loader-dots {
-      display: flex;
-      gap: 8px;
-    }
-
-    .loader-dots span {
-      width: 8px;
-      height: 8px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 50%;
-      animation: bounce 1.4s ease-in-out infinite both;
-    }
-
-    .loader-dots span:nth-child(1) {
-      animation-delay: -0.32s;
-    }
-
-    .loader-dots span:nth-child(2) {
-      animation-delay: -0.16s;
-    }
-
-    .loader-dots span:nth-child(3) {
-      animation-delay: 0s;
-    }
-
-    @keyframes bounce {
-
-      0%,
-      80%,
-      100% {
-        transform: scale(0.6);
-        opacity: 0.5;
-      }
-
-      40% {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-
-    .loader-text {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.5);
-      letter-spacing: 1px;
-    }
-
-    /* Progress bar */
-    .progress-container {
+    .loader {
       width: 200px;
       height: 4px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 2px;
       overflow: hidden;
-      margin-top: 10px;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-      width: 0%;
-      border-radius: 2px;
-      animation: progress 2.5s ease-in-out infinite;
-    }
-
-    @keyframes progress {
-      0% {
-        width: 0%;
-        margin-left: 0%;
-      }
-
-      50% {
-        width: 100%;
-        margin-left: 0%;
-      }
-
-      100% {
-        width: 0%;
-        margin-left: 100%;
-      }
-    }
-
-    /* Background particles */
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      animation: drift 20s linear infinite;
-    }
-
-    @keyframes drift {
-      0% {
-        transform: translateY(100vh) translateX(0);
-        opacity: 0;
-      }
-
-      10% {
-        opacity: 1;
-      }
-
-      90% {
-        opacity: 1;
-      }
-
-      100% {
-        transform: translateY(-100vh) translateX(100px);
-        opacity: 0;
-      }
-    }
-
-    /* Combo display */
-    #combo-container {
-      position: absolute;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
+      margin-top: 2rem;
       opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 100;
+      animation: fadeIn 0.5s ease-out 2s forwards;
     }
 
-    #combo-container.show {
-      opacity: 1;
+    .bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transform: translateX(-100%);
+      animation: loading 2s infinite ease-in-out;
     }
 
-    #combo-text {
-      font-size: 32px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #ffd700 0%, #ff6b6b 50%, #ff69b4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: none;
-      animation: combo-pulse 0.5s ease-out;
-    }
-
-    @keyframes combo-pulse {
-      0% {
-        transform: scale(0.5);
+    @keyframes fadeSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
+    }
 
-      50% {
-        transform: scale(1.2);
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
       }
+    }
 
-      100% {
+    @keyframes popIn {
+      to {
+        opacity: 1;
         transform: scale(1);
       }
     }
 
-    /* High score display */
-    #high-score {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 10px 16px;
-      z-index: 100;
-    }
+    @keyframes loading {
+      0% {
+        transform: translateX(-100%);
+      }
 
-    #high-score p {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+      50% {
+        transform: translateX(0);
+      }
 
-    #high-score-value {
-      color: #ffd700;
-      font-weight: 700;
+      100% {
+        transform: translateX(100%);
+      }
     }
   </style>
-</head>
-
-<body>
-  <!-- Splash Screen -->
-  <div id="splash-screen">
-    <!-- Stars Container -->
-    <div id="stars-container"></div>
-
-    <!-- Game Instruction -->
-    <div id="game-instruction">
-      <p>⭐ اضغط على النجوم لجمع النقاط!</p>
-    </div>
-
-    <!-- Score Display -->
-    <div id="score-container">
-      <span id="score-icon">🌟</span>
-      <div>
-        <div id="score-value">0</div>
-        <div id="score-label">نقاط</div>
-      </div>
-    </div>
-
-    <!-- Combo Display -->
-    <div id="combo-container">
-      <span id="combo-text"></span>
-    </div>
-
-    <!-- High Score -->
-    <div id="high-score">
-      <p>🏆 أعلى نتيجة: <span id="high-score-value">0</span></p>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      <div class="splash-logo"></div>
-      <h1 class="splash-title">Smart Pagination</h1>
-      <p class="splash-subtitle">Flutter Package Demo</p>
-      <div class="loader-container">
-        <div class="loader-spinner"></div>
-        <div class="loader-dots">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <div class="progress-container">
-          <div class="progress-bar"></div>
-        </div>
-        <p class="loader-text">جاري التحميل...</p>
-      </div>
-    </div>
-  </div>
 
   <script src="flutter_bootstrap.js" async></script>
-
-  <script>
-    // Game state
-    let score = 0;
-    let combo = 0;
-    let lastCollectTime = 0;
-    let highScore = parseInt(localStorage.getItem('starGameHighScore') || '0');
-    let gameActive = true;
-    let starIntervalId = null;
-
-    // Update high score display
-    document.getElementById('high-score-value').textContent = highScore;
-
-    // Star emojis with different values
-    const starTypes = [
-      { emoji: '⭐', color: '#ffd700', points: 10 },
-      { emoji: '🌟', color: '#ffeb3b', points: 15 },
-      { emoji: '✨', color: '#fff59d', points: 5 },
-      { emoji: '💫', color: '#ffe082', points: 20 },
-      { emoji: '🔮', color: '#e040fb', points: 25 },
-      { emoji: '💎', color: '#00bcd4', points: 30 },
-      { emoji: '🌙', color: '#b388ff', points: 15 },
-    ];
-
-    // Create a star
-    function createStar() {
-      if (!gameActive) return;
-
-      const container = document.getElementById('stars-container');
-      if (!container) return;
-
-      const star = document.createElement('div');
-      star.className = 'star';
-
-      const starType = starTypes[Math.floor(Math.random() * starTypes.length)];
-      star.textContent = starType.emoji;
-      star.dataset.points = starType.points;
-      star.style.color = starType.color;
-
-      // Random position (avoid center area where logo is)
-      let x, y;
-      do {
-        x = Math.random() * (window.innerWidth - 60);
-        y = Math.random() * (window.innerHeight - 60);
-      } while (
-        x > window.innerWidth / 2 - 150 && x < window.innerWidth / 2 + 150 &&
-        y > window.innerHeight / 2 - 200 && y < window.innerHeight / 2 + 200
-      );
-
-      star.style.left = x + 'px';
-      star.style.top = y + 'px';
-
-      // Random animation delay
-      star.style.animationDelay = Math.random() * 2 + 's';
-
-      // Click handler
-      star.addEventListener('click', function (e) {
-        if (star.classList.contains('collected')) return;
-
-        collectStar(star, e);
-      });
-
-      container.appendChild(star);
-
-      // Remove star after some time if not collected
-      setTimeout(() => {
-        if (!star.classList.contains('collected') && star.parentNode) {
-          star.style.opacity = '0';
-          star.style.transition = 'opacity 0.5s ease';
-          setTimeout(() => star.remove(), 500);
-        }
-      }, 5000 + Math.random() * 3000);
-    }
-
-    // Collect a star
-    function collectStar(star, event) {
-      star.classList.add('collected');
-
-      const points = parseInt(star.dataset.points);
-      const now = Date.now();
-
-      // Combo system
-      if (now - lastCollectTime < 1000) {
-        combo++;
-      } else {
-        combo = 1;
-      }
-      lastCollectTime = now;
-
-      // Calculate bonus
-      const comboMultiplier = Math.min(combo, 5);
-      const totalPoints = points * comboMultiplier;
-
-      // Update score
-      score += totalPoints;
-      document.getElementById('score-value').textContent = score;
-
-      // Update high score
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('starGameHighScore', highScore.toString());
-        document.getElementById('high-score-value').textContent = highScore;
-      }
-
-      // Show point popup
-      showPointPopup(event.clientX, event.clientY, totalPoints, comboMultiplier);
-
-      // Show combo if > 1
-      if (combo > 1) {
-        showCombo(combo);
-      }
-
-      // Animate score
-      const scoreElement = document.getElementById('score-value');
-      scoreElement.style.transform = 'scale(1.3)';
-      setTimeout(() => {
-        scoreElement.style.transform = 'scale(1)';
-      }, 150);
-
-      // Remove star after animation
-      setTimeout(() => star.remove(), 400);
-    }
-
-    // Show point popup
-    function showPointPopup(x, y, points, multiplier) {
-      const popup = document.createElement('div');
-      popup.className = 'point-popup';
-      popup.textContent = multiplier > 1 ? `+${points} x${multiplier}🔥` : `+${points}`;
-      popup.style.left = x + 'px';
-      popup.style.top = y + 'px';
-
-      document.getElementById('splash-screen').appendChild(popup);
-
-      setTimeout(() => popup.remove(), 800);
-    }
-
-    // Show combo
-    function showCombo(comboCount) {
-      const container = document.getElementById('combo-container');
-      const text = document.getElementById('combo-text');
-
-      const comboMessages = ['', 'Nice!', 'Great!', 'Amazing!', 'Incredible!', 'LEGENDARY!'];
-      const message = comboMessages[Math.min(comboCount, 5)];
-
-      text.textContent = `${message} ${comboCount}x COMBO! 🔥`;
-      container.classList.add('show');
-
-      // Force re-animation
-      text.style.animation = 'none';
-      text.offsetHeight; // Trigger reflow
-      text.style.animation = 'combo-pulse 0.5s ease-out';
-
-      clearTimeout(container.hideTimeout);
-      container.hideTimeout = setTimeout(() => {
-        container.classList.remove('show');
-      }, 1500);
-    }
-
-    // Create background particles
-    function createParticles() {
-      const container = document.getElementById('splash-screen');
-      if (!container) return;
-
-      for (let i = 0; i < 30; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 20 + 's';
-        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
-        container.appendChild(particle);
-      }
-    }
-
-    // Initialize game
-    function initGame() {
-      createParticles();
-
-      // Create initial stars
-      for (let i = 0; i < 8; i++) {
-        setTimeout(createStar, i * 300);
-      }
-
-      // Continuously create new stars
-      starIntervalId = setInterval(createStar, 800);
-    }
-
-    // Stop game
-    function stopGame() {
-      gameActive = false;
-      if (starIntervalId) {
-        clearInterval(starIntervalId);
-        starIntervalId = null;
-      }
-    }
-
-    // Start the game
-    initGame();
-
-    // Hide splash screen when Flutter app is ready
-    window.addEventListener('flutter-first-frame', function () {
-      stopGame();
-      const splash = document.getElementById('splash-screen');
-      if (splash) {
-        splash.classList.add('hidden');
-        // Remove from DOM after animation
-        setTimeout(function () {
-          splash.remove();
-        }, 500);
-      }
-    });
-
-    // Fallback: hide splash after 10 seconds if event doesn't fire
-    setTimeout(function () {
-      const splash = document.getElementById('splash-screen');
-      if (splash && !splash.classList.contains('hidden')) {
-        stopGame();
-        splash.classList.add('hidden');
-        setTimeout(function () {
-          splash.remove();
-        }, 500);
-      }
-    }, 10000);
-  </script>
 </body>
 
 </html>
