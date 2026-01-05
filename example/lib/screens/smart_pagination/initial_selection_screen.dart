@@ -29,6 +29,7 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
     stock: 50,
     imageUrl: '',
     category: 'Electronics',
+    createdAt: DateTime.now(),
   );
 
   Product? _selectedProduct;
@@ -63,7 +64,9 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                       children: [
                         Icon(
                           Icons.playlist_add_check_rounded,
-                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -71,7 +74,9 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                             'Initial Selection',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onSecondaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer,
                             ),
                           ),
                         ),
@@ -82,7 +87,8 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                       'Pre-populate dropdowns with previously selected values, '
                       'user preferences, or default selections.',
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        color:
+                            Theme.of(context).colorScheme.onSecondaryContainer,
                       ),
                     ),
                   ],
@@ -128,7 +134,8 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
               showSelected: true,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
                   child: Text(
                     product.name[0].toUpperCase(),
                     style: TextStyle(
@@ -150,7 +157,10 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                   color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -343,7 +353,8 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
               selectedItemsRunSpacing: 8,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.tertiaryContainer,
                   child: Text(product.name[0].toUpperCase()),
                 ),
                 title: Text(product.name),
@@ -384,9 +395,11 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Row(
                               children: [
-                                const Icon(Icons.check, size: 16, color: Colors.green),
+                                const Icon(Icons.check,
+                                    size: 16, color: Colors.green),
                                 const SizedBox(width: 8),
-                                Text('${p.name} (\$${p.price.toStringAsFixed(2)})'),
+                                Text(
+                                    '${p.name} (\$${p.price.toStringAsFixed(2)})'),
                               ],
                             ),
                           ))),
