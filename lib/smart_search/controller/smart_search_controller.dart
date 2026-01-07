@@ -28,15 +28,7 @@ part of '../../pagination.dart';
 ///   keyExtractor: (product) => product.sku,
 ///   selectedKey: 'SKU-001',
 ///   selectedKeyLabelBuilder: (key) => 'Product: $key',
-/// );
-/// ```
-///
-/// Example without key (uses item equality):
-/// ```dart
-/// final searchController = SmartSearchController<Product, Product>(
-///   cubit: productsCubit,
-///   searchRequestBuilder: (query) => PaginationRequest(...),
-///   initialSelectedValue: someProduct,
+///   onSelected: (item, key) => print('Selected: $item with key: $key'),
 /// );
 /// ```
 class SmartSearchController<T, K> extends ChangeNotifier {
@@ -44,8 +36,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     required SmartPaginationCubit<T> cubit,
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
-    ValueChanged<T>? onItemSelected,
-    ValueChanged<K>? onKeySelected,
+    void Function(T item, K key)? onSelected,
     T? initialSelectedValue,
     K? selectedKey,
     K Function(T item)? keyExtractor,
@@ -53,8 +44,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
   })  : _cubit = cubit,
         _searchRequestBuilder = searchRequestBuilder,
         _config = config,
-        _onItemSelected = onItemSelected,
-        _onKeySelected = onKeySelected,
+        _onSelected = onSelected,
         _keyExtractor = keyExtractor,
         _selectedKeyLabelBuilder = selectedKeyLabelBuilder,
         _selectedItem = initialSelectedValue,
@@ -76,8 +66,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
   final SmartPaginationCubit<T> _cubit;
   final PaginationRequest Function(String query) _searchRequestBuilder;
   final SmartSearchConfig _config;
-  ValueChanged<T>? _onItemSelected;
-  ValueChanged<K>? _onKeySelected;
+  void Function(T item, K key)? _onSelected;
 
   /// Function to extract the key from an item.
   final K Function(T item)? _keyExtractor;
@@ -88,14 +77,9 @@ class SmartSearchController<T, K> extends ChangeNotifier {
   /// Subscription to cubit state changes for syncing pending keys.
   StreamSubscription<SmartPaginationState<T>>? _cubitSubscription;
 
-  /// Sets the item selection callback.
-  set onItemSelected(ValueChanged<T>? callback) {
-    _onItemSelected = callback;
-  }
-
-  /// Sets the key selection callback.
-  set onKeySelected(ValueChanged<K>? callback) {
-    _onKeySelected = callback;
+  /// Sets the selection callback.
+  set onSelected(void Function(T item, K key)? callback) {
+    _onSelected = callback;
   }
 
   late final TextEditingController _textController;
@@ -287,11 +271,15 @@ class SmartSearchController<T, K> extends ChangeNotifier {
         if (_keyExtractor!(item) == _pendingKey) {
           _selectedItem = item;
           _selectedKey = _pendingKey;
+          final resolvedKey = _pendingKey!;
           _pendingKey = null;
 
           // Cancel subscription since we found the item
           _cubitSubscription?.cancel();
           _cubitSubscription = null;
+
+          // Call the callback with resolved item and key
+          _onSelected?.call(item, resolvedKey);
 
           notifyListeners();
           break;
@@ -505,7 +493,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
   }
 
   /// Selects an item from the search results.
-  /// This will store the selected item, hide the overlay, call the onItemSelected callback,
+  /// This will store the selected item, hide the overlay, call the onSelected callback,
   /// and optionally clear the search.
   void selectItem(T item) {
     _selectedItem = item;
@@ -514,10 +502,9 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     // Extract and store the key if keyExtractor is provided
     if (_keyExtractor != null) {
       _selectedKey = _keyExtractor!(item);
-      _onKeySelected?.call(_selectedKey as K);
+      _onSelected?.call(item, _selectedKey as K);
     }
 
-    _onItemSelected?.call(item);
     hideOverlay();
     unfocus();
     notifyListeners();
@@ -550,7 +537,6 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     // Start listening for data if not already
     _cubitSubscription ??= _cubit.stream.listen(_onCubitStateChanged);
 
-    _onKeySelected?.call(key);
     notifyListeners();
   }
 

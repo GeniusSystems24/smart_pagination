@@ -109,7 +109,8 @@ SmartSearchDropdown<Product, int>.withProvider(
   provider: PaginationProvider.future((req) => api.search(req.searchQuery)),
   searchRequestBuilder: (query) => PaginationRequest(page: 1, pageSize: 20, searchQuery: query),
   itemBuilder: (context, product) => ListTile(title: Text(product.name)),
-  onItemSelected: (product) => print('Selected: ${product.name}'),
+  keyExtractor: (product) => product.id,
+  onSelected: (product, id) => print('Selected: ${product.name} (ID: $id)'),
 )
 ```
 
@@ -125,7 +126,7 @@ SmartSearchDropdown<Product, int>.withProvider(
   // Key-based selection
   keyExtractor: (product) => product.id,
   selectedKey: selectedProductId,
-  onKeySelected: (id) => setState(() => selectedProductId = id),
+  onSelected: (product, id) => setState(() => selectedProductId = id),
   selectedKeyLabelBuilder: (id) => 'Product #$id (loading...)',
   showSelected: true,
 )
@@ -138,8 +139,7 @@ SmartSearchMultiDropdown<Product, int>.withProvider(
   // ... provider config
   keyExtractor: (product) => product.id,
   selectedKeys: selectedIds,
-  initialSelectedKeys: {1, 2, 3},
-  onKeysChanged: (ids, products) => setState(() => selectedIds = ids),
+  onSelected: (products, ids) => setState(() => selectedIds = ids),
   maxSelections: 5,
 )
 ```
@@ -185,12 +185,11 @@ SmartSearchDropdown<Product, int>.withProvider(
 | `searchRequestBuilder` | `PaginationRequest Function(String)` | Yes | - | Builds request from search query |
 | `itemBuilder` | `Widget Function(BuildContext, T)` | Yes | - | Builds each result item |
 
-#### Selection Callbacks
+#### Selection Callback
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `onItemSelected` | `ValueChanged<T>?` | No | `null` | Called when item is selected |
-| `onKeySelected` | `ValueChanged<K>?` | No | `null` | Called with selected key |
+| `onSelected` | `void Function(T, K)?` | No | `null` | Called with item and key when selected |
 | `onChanged` | `ValueChanged<String>?` | No | `null` | Called when text changes |
 
 #### Key-Based Selection
@@ -283,12 +282,11 @@ SmartSearchDropdown<Product, int>.withProvider(
 | `searchRequestBuilder` | `PaginationRequest Function(String)` | Yes | - | Builds request from search query |
 | `itemBuilder` | `Widget Function(BuildContext, T)` | Yes | - | Builds each result item |
 
-#### Selection Callbacks
+#### Selection Callback
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `onSelectionChanged` | `ValueChanged<List<T>>?` | No | `null` | Called when selection changes |
-| `onKeysChanged` | `ValueChanged<List<K>>?` | No | `null` | Called with selected keys |
+| `onSelected` | `void Function(List<T>, List<K>)?` | No | `null` | Called with items and keys when selection changes |
 | `onChanged` | `ValueChanged<String>?` | No | `null` | Called when text changes |
 | `maxSelections` | `int?` | No | `null` | Maximum items to select |
 

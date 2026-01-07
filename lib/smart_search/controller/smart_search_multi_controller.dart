@@ -26,15 +26,7 @@ part of '../../pagination.dart';
 ///   keyExtractor: (product) => product.sku,
 ///   selectedKeys: ['SKU-001', 'SKU-002', 'SKU-003'],
 ///   selectedKeyLabelBuilder: (key) => 'Product: $key',
-/// );
-/// ```
-///
-/// Example without keys (uses item equality):
-/// ```dart
-/// final controller = SmartSearchMultiController<Product, Product>(
-///   cubit: productsCubit,
-///   searchRequestBuilder: (query) => PaginationRequest(...),
-///   initialSelectedValues: [product1, product2],
+///   onSelected: (items, keys) => print('Selected ${items.length} items'),
 /// );
 /// ```
 class SmartSearchMultiController<T, K> extends ChangeNotifier {
@@ -42,8 +34,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     required SmartPaginationCubit<T> cubit,
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
-    ValueChanged<List<T>>? onSelectionChanged,
-    ValueChanged<List<K>>? onKeysChanged,
+    void Function(List<T> items, List<K> keys)? onSelected,
     List<T>? initialSelectedValues,
     List<K>? selectedKeys,
     K Function(T item)? keyExtractor,
@@ -52,8 +43,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
   })  : _cubit = cubit,
         _searchRequestBuilder = searchRequestBuilder,
         _config = config,
-        _onSelectionChanged = onSelectionChanged,
-        _onKeysChanged = onKeysChanged,
+        _onSelected = onSelected,
         _keyExtractor = keyExtractor,
         _selectedKeyLabelBuilder = selectedKeyLabelBuilder,
         _selectedItems = List<T>.from(initialSelectedValues ?? []),
@@ -95,8 +85,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
   final SmartPaginationCubit<T> _cubit;
   final PaginationRequest Function(String query) _searchRequestBuilder;
   final SmartSearchConfig _config;
-  ValueChanged<List<T>>? _onSelectionChanged;
-  ValueChanged<List<K>>? _onKeysChanged;
+  void Function(List<T> items, List<K> keys)? _onSelected;
   final int? _maxSelections;
 
   /// Function to extract the key from an item.
@@ -175,14 +164,9 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
   bool get isMaxSelectionsReached =>
       _maxSelections != null && _selectedItems.length >= _maxSelections!;
 
-  /// Sets the selection changed callback.
-  set onSelectionChanged(ValueChanged<List<T>>? callback) {
-    _onSelectionChanged = callback;
-  }
-
-  /// Sets the keys changed callback.
-  set onKeysChanged(ValueChanged<List<K>>? callback) {
-    _onKeysChanged = callback;
+  /// Sets the selection callback.
+  set onSelected(void Function(List<T> items, List<K> keys)? callback) {
+    _onSelected = callback;
   }
 
   /// The list of currently selected keys (unmodifiable).
@@ -670,10 +654,10 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
   }
 
   void _notifySelectionChanged() {
-    _onSelectionChanged?.call(List.unmodifiable(_selectedItems));
-    if (_keyExtractor != null) {
-      _onKeysChanged?.call(List.unmodifiable(_selectedKeys));
-    }
+    _onSelected?.call(
+      List.unmodifiable(_selectedItems),
+      List.unmodifiable(_selectedKeys),
+    );
   }
 
   /// Handles keyboard events for navigation.

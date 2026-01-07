@@ -17,7 +17,7 @@ part of '../../pagination.dart';
 /// When using key-based selection, you can:
 /// - Set initial selection by key even before data loads
 /// - Compare items by key instead of object equality
-/// - Get notified of selected keys in addition to items
+/// - Get notified of both item and key when selection happens
 ///
 /// Example with key-based selection:
 /// ```dart
@@ -31,28 +31,7 @@ part of '../../pagination.dart';
 ///   keyExtractor: (product) => product.sku,
 ///   selectedKey: 'SKU-001',
 ///   selectedKeyLabelBuilder: (key) => 'Product: $key',
-///   onKeySelected: (key) => print('Selected key: $key'),
-/// )
-/// ```
-///
-/// Example with provider (creates cubit internally):
-/// ```dart
-/// SmartSearchDropdown<Product, Product>.withProvider(
-///   request: PaginationRequest(page: 1, pageSize: 20),
-///   provider: PaginationProvider.future((request) async {
-///     return await api.searchProducts(request.searchQuery ?? '');
-///   }),
-///   searchRequestBuilder: (query) => PaginationRequest(
-///     page: 1,
-///     pageSize: 20,
-///     searchQuery: query,
-///   ),
-///   itemBuilder: (context, product) => ListTile(
-///     title: Text(product.name),
-///   ),
-///   onItemSelected: (product) {
-///     print('Selected: ${product.name}');
-///   },
+///   onSelected: (product, key) => print('Selected: ${product.name} with key: $key'),
 /// )
 /// ```
 ///
@@ -83,7 +62,8 @@ part of '../../pagination.dart';
 ///   itemBuilder: (context, product) => ListTile(
 ///     title: Text(product.name),
 ///   ),
-///   onItemSelected: (product) {
+///   keyExtractor: (product) => product.sku,
+///   onSelected: (product, key) {
 ///     print('Selected: ${product.name}');
 ///   },
 /// )
@@ -96,8 +76,7 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
     required PaginationProvider<T> provider,
     required this.searchRequestBuilder,
     required this.itemBuilder,
-    this.onItemSelected,
-    this.onKeySelected,
+    this.onSelected,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -152,8 +131,7 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
     required SmartPaginationCubit<T> cubit,
     required this.searchRequestBuilder,
     required this.itemBuilder,
-    this.onItemSelected,
-    this.onKeySelected,
+    this.onSelected,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -212,8 +190,9 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
   /// Builder for each result item.
   final Widget Function(BuildContext context, T item) itemBuilder;
 
-  /// Called when an item is selected.
-  final ValueChanged<T>? onItemSelected;
+  /// Called when an item is selected with its key.
+  /// Requires [keyExtractor] to be provided.
+  final void Function(T item, K key)? onSelected;
 
   /// Configuration for search behavior.
   final SmartSearchConfig searchConfig;
@@ -303,11 +282,6 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
   /// loaded yet. If not provided, the key's toString() will be used.
   final String Function(K key)? selectedKeyLabelBuilder;
 
-  /// Called when an item is selected by key.
-  ///
-  /// This is called in addition to [onItemSelected] when [keyExtractor] is provided.
-  final ValueChanged<K>? onKeySelected;
-
   /// Builder for displaying the selected key when item is not yet loaded.
   ///
   /// If not provided, a default display using [selectedKeyLabelBuilder] or
@@ -389,8 +363,7 @@ class _SmartSearchDropdownState<T, K> extends State<SmartSearchDropdown<T, K>> {
       cubit: _cubit,
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
-      onItemSelected: widget.onItemSelected,
-      onKeySelected: widget.onKeySelected,
+      onSelected: widget.onSelected,
       initialSelectedValue: widget.initialSelectedValue,
       selectedKey: widget.selectedKey,
       keyExtractor: widget.keyExtractor,
@@ -424,7 +397,6 @@ class _SmartSearchDropdownState<T, K> extends State<SmartSearchDropdown<T, K>> {
         return SmartSearchOverlay<T, K>(
           controller: _searchController!,
           itemBuilder: widget.itemBuilder,
-          onItemSelected: widget.onItemSelected,
           searchBoxDecoration: widget.decoration,
           overlayConfig: widget.overlayConfig,
           loadingBuilder: widget.loadingBuilder,
