@@ -1,15 +1,11 @@
 # Smart Pagination
 
-<p align="center">
-  <a href="https://pub.dev/packages/smart_pagination"><img src="https://img.shields.io/pub/v/smart_pagination.svg?label=pub&color=blue" alt="Pub Version"></a>
-  <a href="https://github.com/GeniusSystems24/smart_pagination/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
-  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/flutter-3.9.0+-02569B?logo=flutter" alt="Flutter"></a>
-  <a href="https://github.com/GeniusSystems24/smart_pagination/actions"><img src="https://img.shields.io/badge/tests-60%2B%20passed-brightgreen" alt="Tests"></a>
-  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Platform-All-blueviolet?style=for-the-badge" alt="Platform"></a>
-  <a href="https://geniussystems24.github.io/smart_pagination"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Online-success?style=for-the-badge" alt="Live Demo"></a>
-  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Platform-All-blueviolet?style=for-the-badge" alt="Platform"></a>
-  <a href="https://geniussystems24.github.io/smart_pagination"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Online-success?style=for-the-badge" alt="Live Demo"></a>
-</p>
+[![pub package](https://img.shields.io/pub/v/smart_pagination.svg)](https://pub.dev/packages/smart_pagination)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Flutter](https://img.shields.io/badge/Flutter-3.9.0+-02569B.svg?logo=flutter)](https://flutter.dev)
+[![Tests](https://img.shields.io/badge/Tests-60%2B_passed-brightgreen.svg)](https://github.com/GeniusSystems24/smart_pagination/actions)
+[![Platform](https://img.shields.io/badge/Platform-All-blueviolet.svg)](https://flutter.dev)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-View_Demo-blue?logo=github)](https://geniussystems24.github.io/smart_pagination)
 
 <p align="center">
   <b>A powerful, flexible, and production-ready Flutter pagination library</b><br>
