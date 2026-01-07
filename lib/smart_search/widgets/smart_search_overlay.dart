@@ -544,6 +544,9 @@ class _OverlayContentState<T, K> extends State<_OverlayContent<T, K>> {
       child: _buildContent(context),
     );
 
+    // When position is top, anchor from bottom so overlay grows upward
+    final isTopPosition = positionData.resolvedPosition == OverlayPosition.top;
+
     return Stack(
       children: [
         // Barrier
@@ -562,11 +565,26 @@ class _OverlayContentState<T, K> extends State<_OverlayContent<T, K>> {
           ),
 
         // Overlay content
-        Positioned(
-          left: positionData.offset.dx,
-          top: positionData.offset.dy,
-          child: _buildAnimatedOverlay(overlayChild),
-        ),
+        if (isTopPosition)
+          // When overlay is above search box, anchor to bottom and grow upward
+          Positioned(
+            left: positionData.offset.dx,
+            bottom: screenSize.height - searchBoxRect.top + widget.config.offset,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: positionData.size.width,
+                maxHeight: positionData.size.height,
+              ),
+              child: _buildAnimatedOverlay(overlayChild),
+            ),
+          )
+        else
+          // For other positions, use top-based positioning
+          Positioned(
+            left: positionData.offset.dx,
+            top: positionData.offset.dy,
+            child: _buildAnimatedOverlay(overlayChild),
+          ),
       ],
     );
   }
