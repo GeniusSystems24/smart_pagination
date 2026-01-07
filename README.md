@@ -1036,56 +1036,196 @@ controller.clearAllSelections();
 
 ### Key-Based Selection (v2.7.0+)
 
-Select items by their unique key/ID instead of by object reference. Useful for API data and form integrations:
+Select items by their unique key/ID instead of by object reference. This is especially useful when working with API data where object instances may differ but the underlying ID is the same.
+
+#### Why Key-Based Selection?
+
+| Use Case | Problem | Solution |
+|----------|---------|----------|
+| **Edit Forms** | Need to pre-select category by ID from API | Use `selectedKey` with `selectedKeyLabelBuilder` |
+| **State Management** | Object references don't match after API refresh | Compare by `keyExtractor` instead of equality |
+| **Lazy Loading** | Item not loaded yet but have its ID | Show placeholder via `selectedKeyLabelBuilder` |
+| **Form Submission** | Need to send ID, not full object | Get key from `onKeySelected` callback |
+
+#### Single Selection with Key
 
 ```dart
-// Single selection with key
 SmartSearchDropdown<Product, int>.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(searchProducts),
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+  itemBuilder: (context, product) => ListTile(
+    leading: CircleAvatar(child: Text(product.name[0])),
+    title: Text(product.name),
+    subtitle: Text('\$${product.price}'),
+  ),
+
+  // Key-based selection
   keyExtractor: (product) => product.id,
-  selectedKey: selectedProductId, // int
+  selectedKey: selectedProductId, // int - from form state
   onKeySelected: (id, product) {
     setState(() => selectedProductId = id);
+    // id is ready for API submission
   },
-  // Show placeholder when item not yet loaded
-  selectedKeyLabelBuilder: (id) => 'Product #$id',
-  // ... other properties
-)
 
-// Multi-selection with keys
+  // Show loading placeholder when item not yet fetched
+  selectedKeyLabelBuilder: (id) => 'Product #$id (loading...)',
+  showSelected: true,
+)
+```
+
+#### Multi-Selection with Keys
+
+```dart
 SmartSearchMultiDropdown<Product, int>.withProvider(
+  // ... provider config
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+  ),
+
+  // Key-based multi-selection
   keyExtractor: (product) => product.id,
   selectedKeys: selectedProductIds, // Set<int>
   initialSelectedKeys: {1, 2, 3}, // Pre-select by IDs
   onKeysChanged: (ids, products) {
     setState(() => selectedProductIds = ids);
+    print('Selected ${ids.length} products');
   },
-  // ... other properties
+  selectedKeyLabelBuilder: (id) => 'Product #$id',
+
+  // Display options
+  showSelected: true,
+  maxSelections: 5,
 )
 ```
 
-**Parameters for SmartSearchDropdown:**
+#### Custom Key Display (Pending State)
+
+When an item is selected by key but not yet loaded, show a custom widget:
+
+```dart
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... other properties
+  selectedKeyBuilder: (context, key, onClear) => Container(
+    padding: EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.blue.shade50,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      children: [
+        CircularProgressIndicator.adaptive(strokeWidth: 2),
+        SizedBox(width: 12),
+        Text('Loading product #$key...'),
+        Spacer(),
+        IconButton(
+          icon: Icon(Icons.close),
+          onPressed: onClear,
+        ),
+      ],
+    ),
+  ),
+)
+```
+
+#### Parameters Reference
+
+**SmartSearchDropdown<T, K>:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `keyExtractor` | `K Function(T)?` | Extracts unique key from item |
-| `selectedKey` | `K?` | Currently selected key |
-| `onKeySelected` | `void Function(K, T)?` | Called with key and item on selection |
-| `selectedKeyLabelBuilder` | `String Function(K)?` | Label when item not loaded |
+| `selectedKey` | `K?` | Currently selected key (controlled) |
+| `onKeySelected` | `void Function(K)?` | Called with key when item selected |
+| `selectedKeyLabelBuilder` | `String Function(K)?` | Label for key when item not loaded |
+| `selectedKeyBuilder` | `Widget Function(BuildContext, K, VoidCallback)?` | Custom widget for pending key state |
 
-**Parameters for SmartSearchMultiDropdown:**
+**SmartSearchMultiDropdown<T, K>:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `keyExtractor` | `K Function(T)?` | Extracts unique key from item |
-| `selectedKeys` | `Set<K>?` | Currently selected keys |
-| `initialSelectedKeys` | `Set<K>?` | Pre-selected keys |
-| `onKeysChanged` | `void Function(Set<K>, List<T>)?` | Called on selection change |
+| `selectedKeys` | `Set<K>?` | Currently selected keys (controlled) |
+| `initialSelectedKeys` | `Set<K>?` | Pre-selected keys on load |
+| `onKeysChanged` | `void Function(Set<K>, List<T>)?` | Called when selection changes |
+| `selectedKeyLabelBuilder` | `String Function(K)?` | Label for keys when items not loaded |
 
-**Benefits:**
-- Pre-select by ID before data loads
-- Use primitive keys for state management
-- Works naturally with REST APIs
-- Easy form field binding
+#### Controller Methods for Key Selection
+
+```dart
+// Get current selection state
+controller.selectedKey;      // K? - currently selected key
+controller.hasSelectedKey;   // bool - whether a key is selected
+controller.hasPendingKey;    // bool - key selected but item not loaded yet
+controller.selectedKeyLabel; // String? - label for pending key
+
+// Programmatic selection
+controller.selectByKey(productId);  // Select by key, resolves when data loads
+controller.setSelectedKey(productId); // Same as selectByKey
+controller.clearSelection();  // Clear selection and show search box
+
+// Get key label
+controller.getKeyLabel(key);  // Returns label from selectedKeyLabelBuilder
+```
+
+#### Form Integration Example
+
+```dart
+class EditProductForm extends StatefulWidget {
+  final int productId; // From route params
+
+  @override
+  _EditProductFormState createState() => _EditProductFormState();
+}
+
+class _EditProductFormState extends State<EditProductForm> {
+  int? _categoryId;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryId = widget.productId; // Pre-select from existing data
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      child: Column(
+        children: [
+          // Category dropdown with key-based selection
+          SmartSearchDropdown<Category, int>.withProvider(
+            provider: PaginationProvider.future(fetchCategories),
+            // ... config
+
+            // Pre-select by ID
+            keyExtractor: (cat) => cat.id,
+            selectedKey: _categoryId,
+            selectedKeyLabelBuilder: (id) => 'Category #$id',
+            showSelected: true,
+
+            // Update form state
+            onKeySelected: (id, category) {
+              setState(() => _categoryId = id);
+            },
+          ),
+
+          ElevatedButton(
+            onPressed: () {
+              // _categoryId is ready for API submission
+              api.updateProduct(categoryId: _categoryId);
+            },
+            child: Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
 
 ### SmartSearchTheme (Light & Dark Mode)
 
