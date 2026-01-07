@@ -19,7 +19,7 @@ part of '../../pagination.dart';
 ///     title: Text(product.name),
 ///     subtitle: Text('\$${product.price}'),
 ///   ),
-///   onItemSelected: (product) {
+///   onSelected: (product, key) {
 ///     // Handle selection
 ///   },
 /// )
@@ -29,7 +29,7 @@ class SmartSearchOverlay<T, K> extends StatefulWidget {
     super.key,
     required this.controller,
     required this.itemBuilder,
-    this.onItemSelected,
+    this.onSelected,
     this.searchBoxDecoration,
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.loadingBuilder,
@@ -61,7 +61,8 @@ class SmartSearchOverlay<T, K> extends StatefulWidget {
   final Widget Function(BuildContext context, T item) itemBuilder;
 
   /// Called when an item is selected from the results.
-  final ValueChanged<T>? onItemSelected;
+  /// Provides both the selected item and its key.
+  final void Function(T item, K key)? onSelected;
 
   /// Decoration for the search text field.
   final InputDecoration? searchBoxDecoration;
@@ -353,7 +354,10 @@ class _SmartSearchOverlayState<T, K> extends State<SmartSearchOverlay<T, K>>
 
   void _onItemSelected(T item) {
     widget.controller.selectItem(item);
-    widget.onItemSelected?.call(item);
+    final key = widget.controller.selectedKey;
+    if (key != null) {
+      widget.onSelected?.call(item, key);
+    }
   }
 
   @override
