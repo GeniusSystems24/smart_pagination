@@ -173,6 +173,210 @@ SmartSearchDropdown<Product, int>.withProvider(
 )
 ```
 
+### SmartSearchDropdown Parameters
+
+#### Core Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `request` | `PaginationRequest` | Yes* | - | Pagination config (for `.withProvider`) |
+| `provider` | `PaginationProvider<T>` | Yes* | - | Data source (for `.withProvider`) |
+| `cubit` | `SmartPaginationCubit<T>` | Yes* | - | External cubit (for `.withCubit`) |
+| `searchRequestBuilder` | `PaginationRequest Function(String)` | Yes | - | Builds request from search query |
+| `itemBuilder` | `Widget Function(BuildContext, T)` | Yes | - | Builds each result item |
+
+#### Selection Callbacks
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `onItemSelected` | `ValueChanged<T>?` | No | `null` | Called when item is selected |
+| `onKeySelected` | `ValueChanged<K>?` | No | `null` | Called with selected key |
+| `onChanged` | `ValueChanged<String>?` | No | `null` | Called when text changes |
+
+#### Key-Based Selection
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `keyExtractor` | `K Function(T)?` | No | `null` | Extracts unique key from item |
+| `selectedKey` | `K?` | No | `null` | Currently selected key |
+| `selectedKeyLabelBuilder` | `String Function(K)?` | No | `null` | Label for pending key |
+| `selectedKeyBuilder` | `Widget Function(BuildContext, K, VoidCallback)?` | No | `null` | Custom pending key widget |
+
+#### Show Selected Mode
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `showSelected` | `bool` | No | `false` | Show selected item instead of search box |
+| `initialSelectedValue` | `T?` | No | `null` | Pre-selected item on load |
+| `selectedItemBuilder` | `Widget Function(BuildContext, T, VoidCallback)?` | No | `null` | Custom selected item widget |
+
+#### Search Box Appearance
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `decoration` | `InputDecoration?` | No | `null` | TextField decoration |
+| `style` | `TextStyle?` | No | `null` | Text style |
+| `prefixIcon` | `Widget?` | No | `null` | Leading icon |
+| `suffixIcon` | `Widget?` | No | `null` | Trailing icon |
+| `showClearButton` | `bool` | No | `true` | Show clear button |
+| `borderRadius` | `BorderRadius?` | No | `null` | Border radius |
+
+#### Input Configuration
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `textInputAction` | `TextInputAction` | No | `search` | Keyboard action button |
+| `textCapitalization` | `TextCapitalization` | No | `none` | Text capitalization |
+| `keyboardType` | `TextInputType` | No | `text` | Keyboard type |
+| `inputFormatters` | `List<TextInputFormatter>?` | No | `null` | Input formatters |
+| `maxLength` | `int?` | No | `null` | Max input length |
+
+#### Validation
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `validator` | `String? Function(String?)?` | No | `null` | Validation function |
+| `autovalidateMode` | `AutovalidateMode?` | No | `null` | When to validate |
+
+#### Overlay State Builders
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `loadingBuilder` | `WidgetBuilder?` | No | `null` | Loading state widget |
+| `emptyBuilder` | `WidgetBuilder?` | No | `null` | Empty results widget |
+| `errorBuilder` | `Widget Function(BuildContext, Exception)?` | No | `null` | Error state widget |
+| `headerBuilder` | `WidgetBuilder?` | No | `null` | Dropdown header |
+| `footerBuilder` | `WidgetBuilder?` | No | `null` | Dropdown footer |
+| `separatorBuilder` | `IndexedWidgetBuilder?` | No | `null` | Item separator |
+| `overlayDecoration` | `BoxDecoration?` | No | `null` | Overlay container decoration |
+
+#### Configuration Objects
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `searchConfig` | `SmartSearchConfig` | No | `SmartSearchConfig()` | Search behavior config |
+| `overlayConfig` | `SmartSearchOverlayConfig` | No | `SmartSearchOverlayConfig()` | Overlay appearance config |
+
+#### Cubit Options (`.withProvider` only)
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `listBuilder` | `List<T> Function(List<T>)?` | No | `null` | Transform items |
+| `onInsertionCallback` | `void Function(List<T>)?` | No | `null` | Called on data load |
+| `maxPagesInMemory` | `int` | No | `5` | Max cached pages |
+| `retryConfig` | `RetryConfig?` | No | `null` | Retry configuration |
+| `dataAge` | `Duration?` | No | `null` | Data expiration |
+| `orders` | `SortOrderCollection<T>?` | No | `null` | Sort orders |
+| `logger` | `Logger?` | No | `null` | Debug logger |
+
+---
+
+### SmartSearchMultiDropdown Parameters
+
+#### Core Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `request` | `PaginationRequest` | Yes* | - | Pagination config (for `.withProvider`) |
+| `provider` | `PaginationProvider<T>` | Yes* | - | Data source (for `.withProvider`) |
+| `cubit` | `SmartPaginationCubit<T>` | Yes* | - | External cubit (for `.withCubit`) |
+| `searchRequestBuilder` | `PaginationRequest Function(String)` | Yes | - | Builds request from search query |
+| `itemBuilder` | `Widget Function(BuildContext, T)` | Yes | - | Builds each result item |
+
+#### Selection Callbacks
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `onSelectionChanged` | `ValueChanged<List<T>>?` | No | `null` | Called when selection changes |
+| `onKeysChanged` | `ValueChanged<List<K>>?` | No | `null` | Called with selected keys |
+| `onChanged` | `ValueChanged<String>?` | No | `null` | Called when text changes |
+| `maxSelections` | `int?` | No | `null` | Maximum items to select |
+
+#### Key-Based Selection
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `keyExtractor` | `K Function(T)?` | No | `null` | Extracts unique key from item |
+| `selectedKeys` | `List<K>?` | No | `null` | Currently selected keys |
+| `selectedKeyLabelBuilder` | `String Function(K)?` | No | `null` | Label for pending keys |
+| `selectedKeyBuilder` | `Widget Function(BuildContext, K, VoidCallback)?` | No | `null` | Custom pending key chip |
+
+#### Show Selected Mode
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `showSelected` | `bool` | No | `true` | Show selected chips below search |
+| `initialSelectedValues` | `List<T>?` | No | `null` | Pre-selected items on load |
+| `selectedItemBuilder` | `Widget Function(BuildContext, T, VoidCallback)?` | No | `null` | Custom selected chip |
+
+#### Selected Items Layout
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `selectedItemsWrap` | `bool` | No | `true` | Wrap chips or scroll horizontally |
+| `selectedItemsSpacing` | `double` | No | `8.0` | Horizontal spacing between chips |
+| `selectedItemsRunSpacing` | `double` | No | `8.0` | Vertical spacing when wrapped |
+| `selectedItemsPadding` | `EdgeInsets` | No | `EdgeInsets.only(top: 12)` | Padding around chips container |
+
+#### Search Box Appearance
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `decoration` | `InputDecoration?` | No | `null` | TextField decoration |
+| `style` | `TextStyle?` | No | `null` | Text style |
+| `prefixIcon` | `Widget?` | No | `null` | Leading icon |
+| `suffixIcon` | `Widget?` | No | `null` | Trailing icon |
+| `showClearButton` | `bool` | No | `true` | Show clear button |
+| `borderRadius` | `BorderRadius?` | No | `null` | Border radius |
+
+#### Input Configuration
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `textInputAction` | `TextInputAction` | No | `search` | Keyboard action button |
+| `textCapitalization` | `TextCapitalization` | No | `none` | Text capitalization |
+| `keyboardType` | `TextInputType` | No | `text` | Keyboard type |
+| `inputFormatters` | `List<TextInputFormatter>?` | No | `null` | Input formatters |
+| `maxLength` | `int?` | No | `null` | Max input length |
+
+#### Validation
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `validator` | `String? Function(String?)?` | No | `null` | Validation function |
+| `autovalidateMode` | `AutovalidateMode?` | No | `null` | When to validate |
+
+#### Overlay State Builders
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `loadingBuilder` | `WidgetBuilder?` | No | `null` | Loading state widget |
+| `emptyBuilder` | `WidgetBuilder?` | No | `null` | Empty results widget |
+| `errorBuilder` | `Widget Function(BuildContext, Exception)?` | No | `null` | Error state widget |
+| `headerBuilder` | `WidgetBuilder?` | No | `null` | Dropdown header |
+| `footerBuilder` | `WidgetBuilder?` | No | `null` | Dropdown footer |
+| `separatorBuilder` | `IndexedWidgetBuilder?` | No | `null` | Item separator |
+| `overlayDecoration` | `BoxDecoration?` | No | `null` | Overlay container decoration |
+
+#### Configuration Objects
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `searchConfig` | `SmartSearchConfig` | No | `SmartSearchConfig()` | Search behavior config |
+| `overlayConfig` | `SmartSearchOverlayConfig` | No | `SmartSearchOverlayConfig()` | Overlay appearance config |
+
+#### Cubit Options (`.withProvider` only)
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `listBuilder` | `List<T> Function(List<T>)?` | No | `null` | Transform items |
+| `onInsertionCallback` | `void Function(List<T>)?` | No | `null` | Called on data load |
+| `maxPagesInMemory` | `int` | No | `5` | Max cached pages |
+| `retryConfig` | `RetryConfig?` | No | `null` | Retry configuration |
+| `dataAge` | `Duration?` | No | `null` | Data expiration |
+| `orders` | `SortOrderCollection<T>?` | No | `null` | Sort orders |
+| `logger` | `Logger?` | No | `null` | Debug logger |
+
 ---
 
 ## Error Handling
