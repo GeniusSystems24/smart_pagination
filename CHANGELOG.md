@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-01-07
+
+### Breaking Changes
+
+#### Unified Selection Callbacks 🔄
+
+The selection callbacks have been simplified and unified into a single `onSelected` callback that returns both the item and its key.
+
+**SmartSearchDropdown:**
+
+| Old API | New API |
+|---------|---------|
+| `onItemSelected: (item) => ...` | `onSelected: (item, key) => ...` |
+| `onKeySelected: (key) => ...` | _(merged into onSelected)_ |
+
+**SmartSearchMultiDropdown:**
+
+| Old API | New API |
+|---------|---------|
+| `onSelectionChanged: (items) => ...` | `onSelected: (items, keys) => ...` |
+| `onKeysChanged: (keys) => ...` | _(merged into onSelected)_ |
+
+**Migration:**
+
+```dart
+// Before (v2.x)
+SmartSearchDropdown<Product, int>.withProvider(
+  onItemSelected: (product) => print(product.name),
+  onKeySelected: (id) => setState(() => selectedId = id),
+  // ...
+)
+
+// After (v3.0)
+SmartSearchDropdown<Product, int>.withProvider(
+  keyExtractor: (product) => product.id,
+  onSelected: (product, id) {
+    print(product.name);
+    setState(() => selectedId = id);
+  },
+  // ...
+)
+```
+
+```dart
+// Before (v2.x)
+SmartSearchMultiDropdown<Product, int>.withProvider(
+  onSelectionChanged: (products) => print(products.length),
+  onKeysChanged: (ids) => setState(() => selectedIds = ids),
+  // ...
+)
+
+// After (v3.0)
+SmartSearchMultiDropdown<Product, int>.withProvider(
+  keyExtractor: (product) => product.id,
+  onSelected: (products, ids) {
+    print(products.length);
+    setState(() => selectedIds = ids);
+  },
+  // ...
+)
+```
+
+---
+
 ## [2.7.0] - 2026-01-05
 
 ### Added

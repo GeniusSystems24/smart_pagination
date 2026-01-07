@@ -137,9 +137,12 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              // Get notified of key changes
-              onKeySelected: (key) {
-                setState(() => _selectedProductId = key);
+              // Get notified of selection with both item and key
+              onSelected: (product, key) {
+                setState(() {
+                  _selectedProductId = key;
+                  _selectedProduct = product;
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Selected Key: $key'),
@@ -147,10 +150,6 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                     duration: const Duration(seconds: 2),
                   ),
                 );
-              },
-              // Also get the full item
-              onItemSelected: (product) {
-                setState(() => _selectedProduct = product);
               },
             ),
             if (_selectedProductId != null) ...[
@@ -210,7 +209,7 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                 title: Text(product.name),
                 subtitle: Text('ID: ${product.id}'),
               ),
-              onKeySelected: (key) {
+              onSelected: (product, key) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Changed to: $key'),
@@ -296,13 +295,12 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                 deleteIcon: const Icon(Icons.close, size: 18),
                 onDeleted: onRemove,
               ),
-              // Get notified of key changes
-              onKeysChanged: (keys) {
-                setState(() => _selectedMultiKeys = keys);
-              },
-              // Also get the full items
-              onSelectionChanged: (products) {
-                setState(() => _selectedMultiProducts = products);
+              // Get notified of selection with both items and keys
+              onSelected: (products, keys) {
+                setState(() {
+                  _selectedMultiKeys = keys;
+                  _selectedMultiProducts = products;
+                });
               },
             ),
             if (_selectedMultiKeys.isNotEmpty) ...[

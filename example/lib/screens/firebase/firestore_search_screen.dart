@@ -279,7 +279,7 @@ class _FirestoreSearchScreenState extends State<FirestoreSearchScreen> {
                 ),
               ),
             ),
-            onItemSelected: (user) {
+            onSelected: (user, _) {
               setState(() => _selectedUser = user);
             },
             emptyBuilder: (context) => Padding(

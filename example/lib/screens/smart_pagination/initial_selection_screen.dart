@@ -198,7 +198,7 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                   ],
                 ),
               ),
-              onItemSelected: (product) {
+              onSelected: (product, _) {
                 setState(() => _selectedProduct = product);
               },
             ),
@@ -374,7 +374,7 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                 onDeleted: onRemove,
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               ),
-              onSelectionChanged: (products) {
+              onSelected: (products, _) {
                 setState(() => _selectedProducts = products);
               },
             ),
@@ -603,7 +603,7 @@ class _ConditionalDropdownState extends State<_ConditionalDropdown> {
                 title: Text(product.name),
                 subtitle: Text('ID: ${product.id}'),
               ),
-              onKeySelected: (key) {
+              onSelected: (product, key) {
                 if (_rememberSelection) {
                   setState(() => _savedProductId = key);
                 }

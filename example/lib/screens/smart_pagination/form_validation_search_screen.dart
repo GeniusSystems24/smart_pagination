@@ -194,7 +194,7 @@ class _FormValidationSearchScreenState
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                onItemSelected: (product) {
+                onSelected: (product, _) {
                   setState(() => _selectedProduct = product);
                 },
               ),

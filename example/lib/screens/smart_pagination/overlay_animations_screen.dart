@@ -198,7 +198,7 @@ class _OverlayAnimationsScreenState extends State<OverlayAnimationsScreen> {
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
               ),
-              onItemSelected: (product) {
+              onSelected: (product, _) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Selected: ${product.name}'),
@@ -511,7 +511,7 @@ class _OverlayValueDemoState extends State<_OverlayValueDemo> {
               subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
             );
           },
-          onItemSelected: (product) {
+          onSelected: (product, _) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(

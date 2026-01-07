@@ -29,28 +29,7 @@ part of '../../pagination.dart';
 ///   keyExtractor: (product) => product.sku,
 ///   selectedKeys: ['SKU-001', 'SKU-002', 'SKU-003'],
 ///   selectedKeyLabelBuilder: (key) => 'Product: $key',
-///   onKeysChanged: (keys) => print('Selected keys: $keys'),
-/// )
-/// ```
-///
-/// Example with provider:
-/// ```dart
-/// SmartSearchMultiDropdown<Product, Product>.withProvider(
-///   request: PaginationRequest(page: 1, pageSize: 20),
-///   provider: PaginationProvider.future((request) async {
-///     return await api.searchProducts(request.searchQuery ?? '');
-///   }),
-///   searchRequestBuilder: (query) => PaginationRequest(
-///     page: 1,
-///     pageSize: 20,
-///     searchQuery: query,
-///   ),
-///   itemBuilder: (context, product) => ListTile(
-///     title: Text(product.name),
-///   ),
-///   onSelectionChanged: (products) {
-///     print('Selected ${products.length} items');
-///   },
+///   onSelected: (products, keys) => print('Selected ${products.length} items with keys: $keys'),
 /// )
 /// ```
 ///
@@ -73,8 +52,7 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
     required PaginationProvider<T> provider,
     required this.searchRequestBuilder,
     required this.itemBuilder,
-    this.onSelectionChanged,
-    this.onKeysChanged,
+    this.onSelected,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -134,8 +112,7 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
     required SmartPaginationCubit<T> cubit,
     required this.searchRequestBuilder,
     required this.itemBuilder,
-    this.onSelectionChanged,
-    this.onKeysChanged,
+    this.onSelected,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
     this.decoration,
@@ -199,8 +176,9 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
   /// Builder for each result item.
   final Widget Function(BuildContext context, T item) itemBuilder;
 
-  /// Called when the selection changes.
-  final ValueChanged<List<T>>? onSelectionChanged;
+  /// Called when the selection changes with both items and keys.
+  /// Requires [keyExtractor] to be provided for keys.
+  final void Function(List<T> items, List<K> keys)? onSelected;
 
   /// Configuration for search behavior.
   final SmartSearchConfig searchConfig;
@@ -280,11 +258,6 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
   /// This is used when [selectedKeys] is provided but items haven't been
   /// loaded yet. If not provided, the key's toString() will be used.
   final String Function(K key)? selectedKeyLabelBuilder;
-
-  /// Called when the selected keys change.
-  ///
-  /// This is called in addition to [onSelectionChanged] when [keyExtractor] is provided.
-  final ValueChanged<List<K>>? onKeysChanged;
 
   /// Builder for displaying a selected key when the item is not yet loaded.
   ///
@@ -372,8 +345,7 @@ class _SmartSearchMultiDropdownState<T, K>
       cubit: _cubit,
       searchRequestBuilder: widget.searchRequestBuilder,
       config: widget.searchConfig,
-      onSelectionChanged: widget.onSelectionChanged,
-      onKeysChanged: widget.onKeysChanged,
+      onSelected: widget.onSelected,
       initialSelectedValues: widget.initialSelectedValues,
       selectedKeys: widget.selectedKeys,
       keyExtractor: widget.keyExtractor,
