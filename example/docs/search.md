@@ -68,7 +68,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
               ),
-              onItemSelected: (product) {
+              onSelected: (product, _) {
                 setState(() => _selectedProduct = product);
               },
             ),
@@ -146,7 +146,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
               ),
-              onSelectionChanged: (products) {
+              onSelected: (products, _) {
                 setState(() => _selectedProducts = products);
               },
             ),
@@ -174,7 +174,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                   const SnackBar(content: Text('Maximum 3 items allowed')),
                 );
               },
-              onSelectionChanged: (products) {},
+              onSelected: (products, _) {},
             ),
 
             const SizedBox(height: 32),
@@ -209,7 +209,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                 deleteIcon: const Icon(Icons.close, size: 18),
                 onDeleted: onRemove,
               ),
-              onSelectionChanged: (products) {},
+              onSelected: (products, _) {},
             ),
           ],
         ),
@@ -269,7 +269,7 @@ class _FormValidationSearchScreenState extends State<FormValidationSearchScreen>
                   title: Text(product.name),
                   subtitle: Text('\$${product.price}'),
                 ),
-                onItemSelected: (product) {
+                onSelected: (product, _) {
                   setState(() {
                     _selectedProduct = product;
                     _errorText = null;
@@ -297,7 +297,7 @@ class _FormValidationSearchScreenState extends State<FormValidationSearchScreen>
                   leading: const Icon(Icons.flag),
                   title: Text(country),
                 ),
-                onItemSelected: (country) {},
+                onSelected: (country, _) {},
               ),
 
               const Spacer(),
@@ -393,7 +393,7 @@ class KeyboardNavigationScreen extends StatelessWidget {
                 subtitle: Text(product.description),
                 trailing: Text('\$${product.price.toStringAsFixed(2)}'),
               ),
-              onItemSelected: (product) {
+              onSelected: (product, _) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Selected: ${product.name}')),
                 );
@@ -548,7 +548,7 @@ class SearchThemingScreen extends StatelessWidget {
         title: Text(product.name),
         subtitle: Text('\$${product.price}'),
       ),
-      onItemSelected: (product) {},
+      onSelected: (product, _) {},
     );
   }
 }
@@ -621,7 +621,7 @@ class AsyncSearchStatesScreen extends StatelessWidget {
               itemBuilder: (context, product) => ListTile(
                 title: Text(product.name),
               ),
-              onItemSelected: (product) {},
+              onSelected: (product, _) {},
             ),
 
             const SizedBox(height: 32),
@@ -661,7 +661,7 @@ class AsyncSearchStatesScreen extends StatelessWidget {
               itemBuilder: (context, product) => ListTile(
                 title: Text(product.name),
               ),
-              onItemSelected: (product) {},
+              onSelected: (product, _) {},
             ),
 
             const SizedBox(height: 32),
@@ -708,7 +708,7 @@ class AsyncSearchStatesScreen extends StatelessWidget {
               itemBuilder: (context, product) => ListTile(
                 title: Text(product.name),
               ),
-              onItemSelected: (product) {},
+              onSelected: (product, _) {},
             ),
           ],
         ),

@@ -322,7 +322,7 @@ class _FirestoreSearchScreenState extends State<FirestoreSearchScreen> {
                     ? const Icon(Icons.circle, color: Colors.green, size: 12)
                     : null,
               ),
-              onItemSelected: (user) {
+              onSelected: (user, _) {
                 setState(() => _selectedUser = user);
               },
             ),

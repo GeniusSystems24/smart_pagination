@@ -168,7 +168,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              onItemSelected: (product) {
+              onSelected: (product, _) {
                 setState(() => _selectedProduct = product);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -304,7 +304,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
               ),
-              onItemSelected: (product) {
+              onSelected: (product, _) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Selected: ${product.name}'),

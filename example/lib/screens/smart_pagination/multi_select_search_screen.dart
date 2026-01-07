@@ -115,7 +115,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              onSelectionChanged: (products) {
+              onSelected: (products, _) {
                 setState(() => _selectedProducts = products);
               },
             ),
@@ -161,7 +161,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
               ),
-              onSelectionChanged: (products) {
+              onSelected: (products, _) {
                 if (products.length == 3) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -232,7 +232,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                 onDeleted: onRemove,
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               ),
-              onSelectionChanged: (products) {
+              onSelected: (products, _) {
                 // Handle selection change
               },
             ),

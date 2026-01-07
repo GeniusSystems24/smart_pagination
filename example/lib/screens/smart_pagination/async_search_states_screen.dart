@@ -130,7 +130,7 @@ class _AsyncSearchStatesScreenState extends State<AsyncSearchStatesScreen> {
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
               ),
-              onItemSelected: (product) {},
+              onSelected: (product, _) {},
             ),
             const SizedBox(height: 32),
 
@@ -284,7 +284,7 @@ class _AsyncSearchStatesScreenState extends State<AsyncSearchStatesScreen> {
                   ),
                 ),
               ),
-              onItemSelected: (product) {},
+              onSelected: (product, _) {},
             ),
             const SizedBox(height: 32),
 
