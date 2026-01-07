@@ -542,35 +542,79 @@ SmartPagination.listViewWithProvider<Product>(
 
 ## 🔍 Smart Search
 
-Smart Search provides a search input with an auto-positioning overlay dropdown that connects to `SmartPaginationCubit` for real-time search results.
+Smart Search provides powerful search components with auto-positioning overlay dropdowns, key-based selection, and full integration with `SmartPaginationCubit`.
 
-### SmartSearchDropdown (All-in-One)
+### Overview
 
-The easiest way to add search with dropdown results:
+| Component | Description |
+|-----------|-------------|
+| `SmartSearchDropdown<T, K>` | Single-selection search with dropdown |
+| `SmartSearchMultiDropdown<T, K>` | Multi-selection search with chips |
+| `SmartSearchController<T, K>` | Controller for manual search management |
+| `SmartSearchBox<T, K>` | Standalone search input field |
+| `SmartSearchOverlay<T, K>` | Standalone results overlay |
+| `SmartSearchTheme` | ThemeExtension for styling |
+
+> **Generic Types:**
+> - `T` - The data type (e.g., `Product`, `User`)
+> - `K` - The key type for identification (e.g., `int`, `String`)
+
+---
+
+### Quick Start
 
 ```dart
-SmartSearchDropdown<Product>.withProvider(
+SmartSearchDropdown<Product, int>.withProvider(
+  // Data source
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future((request) async {
     return await api.searchProducts(request.searchQuery ?? '');
   }),
+
+  // Search configuration
+  searchRequestBuilder: (query) => PaginationRequest(
+    page: 1,
+    pageSize: 20,
+    searchQuery: query,
+  ),
+
+  // Item display
+  itemBuilder: (context, product) => ListTile(
+    leading: CircleAvatar(child: Text(product.name[0])),
+    title: Text(product.name),
+    subtitle: Text('\$${product.price}'),
+  ),
+
+  // Selection handling
+  onItemSelected: (product) {
+    print('Selected: ${product.name}');
+  },
+)
+```
+
+---
+
+### SmartSearchDropdown
+
+#### With Internal Provider
+
+```dart
+SmartSearchDropdown<Product, int>.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(searchProducts),
   searchRequestBuilder: (query) => PaginationRequest(
     page: 1,
     pageSize: 20,
     searchQuery: query,
   ),
   itemBuilder: (context, product) => ListTile(
-    leading: CircleAvatar(child: Text(product.name[0])),
     title: Text(product.name),
-    subtitle: Text('\$${product.price}'),
   ),
-  onItemSelected: (product) {
-    Navigator.pop(context, product);
-  },
+  onItemSelected: (product) => handleSelection(product),
 )
 ```
 
-### With External Cubit
+#### With External Cubit
 
 ```dart
 final searchCubit = SmartPaginationCubit<Product>(
@@ -578,7 +622,7 @@ final searchCubit = SmartPaginationCubit<Product>(
   provider: PaginationProvider.future(searchProducts),
 );
 
-SmartSearchDropdown<Product>.withCubit(
+SmartSearchDropdown<Product, int>.withCubit(
   cubit: searchCubit,
   searchRequestBuilder: (query) => PaginationRequest(
     page: 1,
@@ -592,226 +636,353 @@ SmartSearchDropdown<Product>.withCubit(
 )
 ```
 
-### Overlay Position
+---
 
-The dropdown automatically positions itself in the best available space. You can also force a specific position:
+### Key-Based Selection
+
+Select items by unique key/ID instead of object reference. Essential for:
+- **Edit Forms**: Pre-select by ID from API data
+- **State Management**: Compare by key instead of object equality
+- **Lazy Loading**: Show placeholder while item loads
+- **Form Submission**: Get ID ready for API calls
+
+#### Single Selection
 
 ```dart
-SmartSearchDropdown<Product>.withProvider(
-  // ... other properties
-  overlayConfig: SmartSearchOverlayConfig(
-    position: OverlayPosition.bottom, // Force bottom position
-    // position: OverlayPosition.auto, // Auto (default)
-    // position: OverlayPosition.top,
-    // position: OverlayPosition.left,
-    // position: OverlayPosition.right,
-    maxHeight: 400,
-    borderRadius: 12,
-    elevation: 8,
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... provider config
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+    subtitle: Text('\$${product.price}'),
+  ),
+
+  // Key-based selection
+  keyExtractor: (product) => product.id,
+  selectedKey: selectedProductId,           // int - controlled state
+  onKeySelected: (id) {
+    setState(() => selectedProductId = id);
+  },
+
+  // Placeholder when item not yet loaded
+  selectedKeyLabelBuilder: (id) => 'Product #$id (loading...)',
+  showSelected: true,
+)
+```
+
+#### Multi-Selection
+
+```dart
+SmartSearchMultiDropdown<Product, int>.withProvider(
+  // ... provider config
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+  ),
+
+  // Key-based multi-selection
+  keyExtractor: (product) => product.id,
+  selectedKeys: selectedIds,                // Set<int>
+  initialSelectedKeys: {1, 2, 3},           // Pre-select by IDs
+  onKeysChanged: (ids, products) {
+    setState(() => selectedIds = ids);
+  },
+  selectedKeyLabelBuilder: (id) => 'Product #$id',
+
+  showSelected: true,
+  maxSelections: 5,
+)
+```
+
+#### Custom Pending Key Display
+
+```dart
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... config
+  selectedKeyBuilder: (context, key, onClear) => Container(
+    padding: EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.blue.shade50,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      children: [
+        CircularProgressIndicator.adaptive(strokeWidth: 2),
+        SizedBox(width: 12),
+        Text('Loading product #$key...'),
+        Spacer(),
+        IconButton(icon: Icon(Icons.close), onPressed: onClear),
+      ],
+    ),
   ),
 )
 ```
+
+#### Key-Based Parameters
+
+**SmartSearchDropdown<T, K>:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyExtractor` | `K Function(T)?` | Extract unique key from item |
+| `selectedKey` | `K?` | Currently selected key |
+| `onKeySelected` | `void Function(K)?` | Called when item selected |
+| `selectedKeyLabelBuilder` | `String Function(K)?` | Label for pending key |
+| `selectedKeyBuilder` | `Widget Function(BuildContext, K, VoidCallback)?` | Custom pending widget |
+
+**SmartSearchMultiDropdown<T, K>:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyExtractor` | `K Function(T)?` | Extract unique key from item |
+| `selectedKeys` | `Set<K>?` | Currently selected keys |
+| `initialSelectedKeys` | `Set<K>?` | Pre-selected keys on load |
+| `onKeysChanged` | `void Function(Set<K>, List<T>)?` | Called on selection change |
+| `selectedKeyLabelBuilder` | `String Function(K)?` | Label for pending keys |
+
+---
+
+### Show Selected Mode
+
+Display selected item instead of search box:
+
+```dart
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... config
+  showSelected: true,
+  initialSelectedValue: preSelectedProduct,  // Optional initial value
+
+  selectedItemBuilder: (context, product, onClear) => Container(
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: ListTile(
+      leading: CircleAvatar(child: Text(product.name[0])),
+      title: Text(product.name),
+      trailing: IconButton(
+        icon: Icon(Icons.close),
+        onPressed: onClear,
+      ),
+    ),
+  ),
+)
+```
+
+**Controller Methods:**
+
+```dart
+controller.selectedItem;       // T? - current selection
+controller.hasSelectedItem;    // bool
+controller.setSelectedItem(product);
+controller.clearSelection();   // Show search box again
+```
+
+---
+
+### SmartSearchMultiDropdown
+
+Multi-selection with chip display:
+
+```dart
+SmartSearchMultiDropdown<Product, int>.withProvider(
+  // ... provider config
+  itemBuilder: (context, product) => ListTile(
+    title: Text(product.name),
+    subtitle: Text('\$${product.price}'),
+  ),
+
+  // Selection
+  initialSelectedValues: preSelectedProducts,
+  maxSelections: 5,
+  onSelectionChanged: (products) {
+    print('Selected ${products.length} items');
+  },
+
+  // Display
+  showSelected: true,
+  selectedItemsWrap: true,
+  selectedItemsSpacing: 8.0,
+  selectedItemsRunSpacing: 8.0,
+
+  // Custom chip
+  selectedItemBuilder: (context, product, onRemove) => Chip(
+    avatar: CircleAvatar(child: Text(product.name[0])),
+    label: Text(product.name),
+    onDeleted: onRemove,
+  ),
+)
+```
+
+**Controller Methods:**
+
+```dart
+controller.selectedItems;              // List<T>
+controller.selectionCount;             // int
+controller.isItemSelected(item);       // bool
+controller.isMaxSelectionsReached;     // bool
+
+controller.addItem(item);
+controller.removeItem(item);
+controller.toggleItemSelection(item);
+controller.clearAllSelections();
+```
+
+---
 
 ### Search Configuration
 
-Control search behavior with `SmartSearchConfig`:
-
 ```dart
-SmartSearchDropdown<Product>.withProvider(
-  // ... other properties
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... config
   searchConfig: SmartSearchConfig(
-    debounceDelay: Duration(milliseconds: 500), // Wait before searching
-    minSearchLength: 2, // Minimum characters to trigger search
-    searchOnEmpty: false, // Don't search when input is empty
-    clearOnClose: true, // Clear text when overlay closes
-    autoFocus: false, // Don't auto-focus on mount
+    debounceDelay: Duration(milliseconds: 500),
+    minSearchLength: 2,
+    searchOnEmpty: false,
+    clearOnClose: true,
+    autoFocus: false,
   ),
 )
 ```
 
-### Overlay Animation Types
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `debounceDelay` | 300ms | Wait before triggering search |
+| `minSearchLength` | 1 | Minimum chars to search |
+| `searchOnEmpty` | false | Search when input empty |
+| `clearOnClose` | false | Clear text when overlay closes |
+| `autoFocus` | false | Auto-focus on mount |
 
-Choose from 13 different animation styles for the overlay show/hide transitions:
+---
+
+### Overlay Configuration
 
 ```dart
-SmartSearchDropdown<Product>.withProvider(
-  // ... other properties
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... config
   overlayConfig: SmartSearchOverlayConfig(
-    animationType: OverlayAnimationType.bounceScale,
+    position: OverlayPosition.auto,
+    maxHeight: 400,
+    borderRadius: 12,
+    elevation: 8,
+    followTargetOnScroll: true,
+    animationType: OverlayAnimationType.fadeScale,
     animationDuration: Duration(milliseconds: 300),
     animationCurve: Curves.easeOutBack,
   ),
 )
 ```
 
-**Available Animation Types:**
+**Positions:** `auto`, `top`, `bottom`, `left`, `right`
+
+**Animation Types:**
 
 | Animation | Description |
 |-----------|-------------|
-| `fade` | Simple fade in/out (default) |
-| `scale` | Scale animation from center |
-| `fadeScale` | Combined scale with fade |
-| `slideDown` | Slide from top with fade |
-| `slideUp` | Slide from bottom with fade |
-| `slideLeft` | Slide from left with fade |
-| `slideRight` | Slide from right with fade |
-| `bounceScale` | Elastic bounce scale effect |
-| `elasticScale` | Smooth elastic scale with overshoot |
-| `flipX` | 3D flip on X axis |
-| `flipY` | 3D flip on Y axis |
-| `zoomIn` | Zoom from 50% to 100% |
-| `none` | Instant show/hide, no animation |
+| `fade` | Simple fade (default) |
+| `scale` | Scale from center |
+| `fadeScale` | Combined scale + fade |
+| `slideDown` | Slide from top |
+| `slideUp` | Slide from bottom |
+| `slideLeft` | Slide from left |
+| `slideRight` | Slide from right |
+| `bounceScale` | Elastic bounce |
+| `elasticScale` | Smooth elastic |
+| `flipX` | 3D flip on X |
+| `flipY` | 3D flip on Y |
+| `zoomIn` | Zoom 50% to 100% |
+| `none` | Instant, no animation |
 
-### Overlay Value Parameter
+---
 
-Pass a context value when showing the overlay to determine what content to display:
+### Overlay Value
+
+Pass context value when showing overlay:
 
 ```dart
-// Show overlay with different values
-controller.showOverlay(value: 'users');     // Search users
-controller.showOverlay(value: 'products');  // Search products
-controller.showOverlay(value: 1);           // Category ID
+// Show with different values
+controller.showOverlay(value: 'users');
+controller.showOverlay(value: 'products');
+controller.showOverlay(value: 1);
 
-// In your widget, check the value
+// Check value in widget
 if (controller.overlayValue == 'users') {
-  return UserSearchResults();
+  return UserSearchContent();
 }
 
 // Type-safe access
-final categoryId = controller.getOverlayValue<int>(); // Returns int? or null
+final categoryId = controller.getOverlayValue<int>();
 ```
-
-**Controller Methods:**
 
 | Method | Description |
 |--------|-------------|
-| `showOverlay({Object? value})` | Show overlay with optional context value |
-| `hideOverlay({bool clearValue})` | Hide overlay, optionally preserving value |
-| `toggleOverlay({Object? value})` | Toggle visibility with optional value |
-| `setOverlayValue(Object? value)` | Set value without showing overlay |
-| `clearOverlayValue()` | Clear the overlay value |
-| `getOverlayValue<V>()` | Type-safe value access |
+| `showOverlay({Object? value})` | Show with optional value |
+| `hideOverlay({bool clearValue})` | Hide, optionally preserve value |
+| `toggleOverlay({Object? value})` | Toggle visibility |
+| `setOverlayValue(Object?)` | Set value without showing |
+| `clearOverlayValue()` | Clear the value |
+| `getOverlayValue<V>()` | Type-safe access |
 
-**Properties:**
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `overlayValue` | `Object?` | Current overlay value |
-| `hasOverlayValue` | `bool` | Whether a value is set |
-
-### Scroll-Aware Positioning
-
-The overlay automatically tracks the search field position during scrolling:
-
-```dart
-SmartSearchDropdown<Product>.withProvider(
-  // ... other properties
-  overlayConfig: SmartSearchOverlayConfig(
-    followTargetOnScroll: true, // Default: true
-  ),
-)
-```
-
-**Features:**
-
-- Real-time position updates during scrolling
-- Automatic attachment to nearest scrollable ancestor
-- Screen orientation/size change handling
-- Can be disabled via `followTargetOnScroll: false`
-
-### Separate Search Box & Overlay
-
-For more control, use `SmartSearchBox` and `SmartSearchOverlay` separately:
-
-```dart
-// Create controller
-final controller = SmartSearchController<Product>(
-  cubit: productsCubit,
-  searchRequestBuilder: (query) => PaginationRequest(
-    page: 1,
-    pageSize: 20,
-    searchQuery: query,
-  ),
-  config: SmartSearchConfig(
-    debounceDelay: Duration(milliseconds: 300),
-  ),
-);
-
-// Place search box anywhere (e.g., in AppBar)
-AppBar(
-  title: SmartSearchBox<Product>(
-    controller: controller,
-    decoration: InputDecoration(
-      hintText: 'Search products...',
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-    ),
-  ),
-)
-
-// Place overlay in your body
-Scaffold(
-  body: Stack(
-    children: [
-      YourMainContent(),
-      SmartSearchOverlay<Product>(
-        controller: controller,
-        itemBuilder: (context, product) => ProductTile(product),
-        onItemSelected: (product) {
-          Navigator.push(context, ProductDetailsPage(product));
-        },
-      ),
-    ],
-  ),
-)
-```
+---
 
 ### Keyboard Navigation
 
-The search dropdown supports full keyboard navigation:
-
 | Key | Action |
 |-----|--------|
-| `↓` Arrow Down | Move focus to next item / Open overlay |
-| `↑` Arrow Up | Move focus to previous item / Open overlay |
-| `Enter` | Select the focused item |
-| `Escape` | Close the overlay |
-| `Home` | Move focus to first item |
-| `End` | Move focus to last item |
-| `Page Down` | Move focus 5 items down |
-| `Page Up` | Move focus 5 items up |
-
-**Focus Persistence**: The focused item position is remembered when the overlay closes and restored when it reopens.
+| `↓` Arrow Down | Next item / Open overlay |
+| `↑` Arrow Up | Previous item / Open overlay |
+| `Enter` | Select focused item |
+| `Escape` | Close overlay |
+| `Home` | First item |
+| `End` | Last item |
+| `Page Down` | 5 items down |
+| `Page Up` | 5 items up |
 
 ```dart
 // Programmatic navigation
 controller.moveToNextItem();
 controller.moveToPreviousItem();
+controller.moveToFirstItem();
+controller.moveToLastItem();
 controller.setFocusedIndex(3);
 controller.selectFocusedItem();
 
 // Check focus state
-if (controller.hasItemFocus) {
-  print('Focused: ${controller.focusedItem}');
-}
+controller.focusedIndex;     // int (-1 if none)
+controller.hasItemFocus;     // bool
+controller.focusedItem;      // T?
 ```
 
-### Customizing Overlay Appearance
+---
+
+### Customizing Appearance
 
 ```dart
-SmartSearchDropdown<Product>.withProvider(
-  // ... other properties
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... config
 
-  // Custom states
-  loadingBuilder: (context) => Center(child: CircularProgressIndicator()),
-  emptyBuilder: (context) => Center(child: Text('No results found')),
-  errorBuilder: (context, error) => Center(child: Text('Error: $error')),
+  // Search box
+  decoration: InputDecoration(hintText: 'Search...'),
+  style: TextStyle(fontSize: 16),
+  prefixIcon: Icon(Icons.search),
+  suffixIcon: Icon(Icons.mic),
+  showClearButton: true,
+  borderRadius: BorderRadius.circular(12),
 
-  // Header and footer
+  // State builders
+  loadingBuilder: (context) => Center(
+    child: CircularProgressIndicator(),
+  ),
+  emptyBuilder: (context) => Center(
+    child: Text('No results found'),
+  ),
+  errorBuilder: (context, error) => Center(
+    child: Text('Error: $error'),
+  ),
+
+  // Header/Footer
   headerBuilder: (context) => Padding(
     padding: EdgeInsets.all(8),
-    child: Text('Search Results', style: TextStyle(fontWeight: FontWeight.bold)),
+    child: Text('Search Results',
+      style: TextStyle(fontWeight: FontWeight.bold)),
   ),
   footerBuilder: (context) => TextButton(
     onPressed: () {},
@@ -833,70 +1004,21 @@ SmartSearchDropdown<Product>.withProvider(
 )
 ```
 
-### Show Selected Mode
+---
 
-Display the selected item instead of the search box after selection:
-
-```dart
-SmartSearchDropdown<Product>.withProvider(
-  // ... other properties
-  showSelected: true,
-  selectedItemBuilder: (context, product, onClear) => Container(
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.primaryContainer,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: ListTile(
-      leading: CircleAvatar(child: Text(product.name[0])),
-      title: Text(product.name),
-      subtitle: Text('\$${product.price}'),
-      trailing: IconButton(
-        icon: Icon(Icons.close),
-        onPressed: onClear, // Clears selection and shows search box
-      ),
-    ),
-  ),
-)
-```
-
-**Parameters:**
-
-| Parameter | Description |
-|-----------|-------------|
-| `showSelected` | When true, shows selected item instead of search box |
-| `selectedItemBuilder` | Custom builder for the selected item display |
-| `initialSelectedValue` | Pre-selected item to display on widget load |
-
-**Controller Methods:**
+### Form Validation
 
 ```dart
-// Access selected item
-final item = controller.selectedItem;
-if (controller.hasSelectedItem) { ... }
+SmartSearchDropdown<Product, int>.withProvider(
+  // ... config
 
-// Programmatic control
-controller.setSelectedItem(product);
-controller.clearSelection(); // Shows search box again
-```
-
-### Form Validation & Input Formatting
-
-SmartSearchDropdown supports form validation and input formatting for integration with Flutter forms:
-
-```dart
-SmartSearchDropdown<Product>.withProvider(
-  // ... other properties
-
-  // Pre-select an item
-  initialSelectedValue: preSelectedProduct,
-
-  // Form validation
+  // Validation
   validator: (value) {
     if (value == null || value.isEmpty) {
       return 'Please enter a search term';
     }
     if (value.length < 3) {
-      return 'Search term must be at least 3 characters';
+      return 'Minimum 3 characters';
     }
     return null;
   },
@@ -909,33 +1031,17 @@ SmartSearchDropdown<Product>.withProvider(
   ],
   maxLength: 50,
 
-  // Keyboard options
+  // Keyboard
   textInputAction: TextInputAction.search,
   textCapitalization: TextCapitalization.words,
   keyboardType: TextInputType.text,
 
-  // Text change callback
-  onChanged: (value) {
-    print('Search text: $value');
-  },
+  // Callbacks
+  onChanged: (value) => print('Text: $value'),
 )
 ```
 
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `initialSelectedValue` | `T?` | Pre-selected item to display on widget load |
-| `validator` | `String? Function(String?)?` | Form validation function (uses TextFormField) |
-| `autovalidateMode` | `AutovalidateMode?` | When to validate the input |
-| `inputFormatters` | `List<TextInputFormatter>?` | Input formatters for text formatting |
-| `maxLength` | `int?` | Maximum input length |
-| `textInputAction` | `TextInputAction` | Keyboard action button (default: search) |
-| `textCapitalization` | `TextCapitalization` | Text capitalization behavior |
-| `keyboardType` | `TextInputType` | Type of keyboard to display |
-| `onChanged` | `ValueChanged<String>?` | Called when text changes |
-
-**Usage in Forms:**
+**Form Usage:**
 
 ```dart
 final _formKey = GlobalKey<FormState>();
@@ -944,19 +1050,17 @@ Form(
   key: _formKey,
   child: Column(
     children: [
-      SmartSearchDropdown<Product>.withProvider(
-        // ... properties
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Required field';
-          }
-          return null;
-        },
+      SmartSearchDropdown<Category, int>.withProvider(
+        // ... config
+        keyExtractor: (cat) => cat.id,
+        selectedKey: _categoryId,
+        onKeySelected: (id) => setState(() => _categoryId = id),
+        showSelected: true,
       ),
       ElevatedButton(
         onPressed: () {
           if (_formKey.currentState!.validate()) {
-            // Form is valid
+            api.submit(categoryId: _categoryId);
           }
         },
         child: Text('Submit'),
@@ -966,273 +1070,58 @@ Form(
 )
 ```
 
-### SmartSearchMultiDropdown
+---
 
-Multi-selection search dropdown that allows selecting multiple items from search results:
+### Separate Components
+
+For advanced control, use components separately:
 
 ```dart
-SmartSearchMultiDropdown<Product>.withProvider(
-  request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future(fetchProducts),
+// Create controller
+final controller = SmartSearchController<Product, int>(
+  cubit: productsCubit,
   searchRequestBuilder: (query) => PaginationRequest(
-    page: 1,
-    pageSize: 20,
-    searchQuery: query,
+    page: 1, pageSize: 20, searchQuery: query,
   ),
-  itemBuilder: (context, product) => ListTile(
-    title: Text(product.name),
-    subtitle: Text('\$${product.price}'),
-  ),
-  showSelected: true, // Show selected items below search box
-  maxSelections: 5, // Optional: limit selections
-  onSelectionChanged: (products) {
-    print('Selected ${products.length} items');
-  },
-)
-```
-
-**Custom Selected Item Display:**
-
-```dart
-SmartSearchMultiDropdown<Product>.withProvider(
-  // ... other properties
-  selectedItemBuilder: (context, product, onRemove) => Chip(
-    avatar: CircleAvatar(child: Text(product.name[0])),
-    label: Text(product.name),
-    onDeleted: onRemove,
-  ),
-  selectedItemsWrap: true, // Wrap items or horizontal scroll
-  selectedItemsSpacing: 8.0,
-  selectedItemsRunSpacing: 8.0,
-)
-```
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `onSelectionChanged` | `ValueChanged<List<T>>?` | Called when selection changes |
-| `initialSelectedValues` | `List<T>?` | Pre-selected items |
-| `maxSelections` | `int?` | Maximum selectable items |
-| `showSelected` | `bool` | Show selected items below search |
-| `selectedItemBuilder` | `Widget Function(...)` | Custom chip builder |
-| `selectedItemsWrap` | `bool` | Wrap items (true) or scroll (false) |
-
-**Controller Methods:**
-
-```dart
-// Selection state
-controller.selectedItems; // Get all selected items
-controller.selectionCount; // Number of selections
-controller.isItemSelected(item); // Check if item is selected
-controller.isMaxSelectionsReached; // Check if limit reached
-
-// Modify selection
-controller.addItem(item);
-controller.removeItem(item);
-controller.toggleItemSelection(item);
-controller.clearAllSelections();
-```
-
-### Key-Based Selection (v2.7.0+)
-
-Select items by their unique key/ID instead of by object reference. This is especially useful when working with API data where object instances may differ but the underlying ID is the same.
-
-#### Why Key-Based Selection?
-
-| Use Case | Problem | Solution |
-|----------|---------|----------|
-| **Edit Forms** | Need to pre-select category by ID from API | Use `selectedKey` with `selectedKeyLabelBuilder` |
-| **State Management** | Object references don't match after API refresh | Compare by `keyExtractor` instead of equality |
-| **Lazy Loading** | Item not loaded yet but have its ID | Show placeholder via `selectedKeyLabelBuilder` |
-| **Form Submission** | Need to send ID, not full object | Get key from `onKeySelected` callback |
-
-#### Single Selection with Key
-
-```dart
-SmartSearchDropdown<Product, int>.withProvider(
-  request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future(searchProducts),
-  searchRequestBuilder: (query) => PaginationRequest(
-    page: 1,
-    pageSize: 20,
-    searchQuery: query,
-  ),
-  itemBuilder: (context, product) => ListTile(
-    leading: CircleAvatar(child: Text(product.name[0])),
-    title: Text(product.name),
-    subtitle: Text('\$${product.price}'),
-  ),
-
-  // Key-based selection
+  config: SmartSearchConfig(debounceDelay: Duration(milliseconds: 300)),
   keyExtractor: (product) => product.id,
-  selectedKey: selectedProductId, // int - from form state
-  onKeySelected: (id, product) {
-    setState(() => selectedProductId = id);
-    // id is ready for API submission
-  },
+);
 
-  // Show loading placeholder when item not yet fetched
-  selectedKeyLabelBuilder: (id) => 'Product #$id (loading...)',
-  showSelected: true,
-)
-```
-
-#### Multi-Selection with Keys
-
-```dart
-SmartSearchMultiDropdown<Product, int>.withProvider(
-  // ... provider config
-  itemBuilder: (context, product) => ListTile(
-    title: Text(product.name),
-  ),
-
-  // Key-based multi-selection
-  keyExtractor: (product) => product.id,
-  selectedKeys: selectedProductIds, // Set<int>
-  initialSelectedKeys: {1, 2, 3}, // Pre-select by IDs
-  onKeysChanged: (ids, products) {
-    setState(() => selectedProductIds = ids);
-    print('Selected ${ids.length} products');
-  },
-  selectedKeyLabelBuilder: (id) => 'Product #$id',
-
-  // Display options
-  showSelected: true,
-  maxSelections: 5,
-)
-```
-
-#### Custom Key Display (Pending State)
-
-When an item is selected by key but not yet loaded, show a custom widget:
-
-```dart
-SmartSearchDropdown<Product, int>.withProvider(
-  // ... other properties
-  selectedKeyBuilder: (context, key, onClear) => Container(
-    padding: EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.blue.shade50,
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      children: [
-        CircularProgressIndicator.adaptive(strokeWidth: 2),
-        SizedBox(width: 12),
-        Text('Loading product #$key...'),
-        Spacer(),
-        IconButton(
-          icon: Icon(Icons.close),
-          onPressed: onClear,
-        ),
-      ],
+// Search box in AppBar
+AppBar(
+  title: SmartSearchBox<Product, int>(
+    controller: controller,
+    decoration: InputDecoration(
+      hintText: 'Search products...',
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
     ),
   ),
 )
-```
 
-#### Parameters Reference
-
-**SmartSearchDropdown<T, K>:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `keyExtractor` | `K Function(T)?` | Extracts unique key from item |
-| `selectedKey` | `K?` | Currently selected key (controlled) |
-| `onKeySelected` | `void Function(K)?` | Called with key when item selected |
-| `selectedKeyLabelBuilder` | `String Function(K)?` | Label for key when item not loaded |
-| `selectedKeyBuilder` | `Widget Function(BuildContext, K, VoidCallback)?` | Custom widget for pending key state |
-
-**SmartSearchMultiDropdown<T, K>:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `keyExtractor` | `K Function(T)?` | Extracts unique key from item |
-| `selectedKeys` | `Set<K>?` | Currently selected keys (controlled) |
-| `initialSelectedKeys` | `Set<K>?` | Pre-selected keys on load |
-| `onKeysChanged` | `void Function(Set<K>, List<T>)?` | Called when selection changes |
-| `selectedKeyLabelBuilder` | `String Function(K)?` | Label for keys when items not loaded |
-
-#### Controller Methods for Key Selection
-
-```dart
-// Get current selection state
-controller.selectedKey;      // K? - currently selected key
-controller.hasSelectedKey;   // bool - whether a key is selected
-controller.hasPendingKey;    // bool - key selected but item not loaded yet
-controller.selectedKeyLabel; // String? - label for pending key
-
-// Programmatic selection
-controller.selectByKey(productId);  // Select by key, resolves when data loads
-controller.setSelectedKey(productId); // Same as selectByKey
-controller.clearSelection();  // Clear selection and show search box
-
-// Get key label
-controller.getKeyLabel(key);  // Returns label from selectedKeyLabelBuilder
-```
-
-#### Form Integration Example
-
-```dart
-class EditProductForm extends StatefulWidget {
-  final int productId; // From route params
-
-  @override
-  _EditProductFormState createState() => _EditProductFormState();
-}
-
-class _EditProductFormState extends State<EditProductForm> {
-  int? _categoryId;
-
-  @override
-  void initState() {
-    super.initState();
-    _categoryId = widget.productId; // Pre-select from existing data
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      child: Column(
-        children: [
-          // Category dropdown with key-based selection
-          SmartSearchDropdown<Category, int>.withProvider(
-            provider: PaginationProvider.future(fetchCategories),
-            // ... config
-
-            // Pre-select by ID
-            keyExtractor: (cat) => cat.id,
-            selectedKey: _categoryId,
-            selectedKeyLabelBuilder: (id) => 'Category #$id',
-            showSelected: true,
-
-            // Update form state
-            onKeySelected: (id, category) {
-              setState(() => _categoryId = id);
-            },
-          ),
-
-          ElevatedButton(
-            onPressed: () {
-              // _categoryId is ready for API submission
-              api.updateProduct(categoryId: _categoryId);
-            },
-            child: Text('Save'),
-          ),
-        ],
+// Overlay in body
+Scaffold(
+  body: Stack(
+    children: [
+      YourMainContent(),
+      SmartSearchOverlay<Product, int>(
+        controller: controller,
+        itemBuilder: (context, product) => ProductTile(product),
+        onItemSelected: (product) {
+          Navigator.push(context, ProductDetailsPage(product));
+        },
       ),
-    );
-  }
-}
+    ],
+  ),
+)
 ```
 
-### SmartSearchTheme (Light & Dark Mode)
+---
 
-SmartSearch widgets support theming via Flutter's `ThemeExtension` pattern:
+### SmartSearchTheme
+
+Style all search components via ThemeExtension:
 
 ```dart
-// Add to your MaterialApp
 MaterialApp(
   theme: ThemeData.light().copyWith(
     extensions: [SmartSearchTheme.light()],
@@ -1254,6 +1143,7 @@ SmartSearchTheme(
   searchBoxBorderColor: Colors.grey[300],
   searchBoxFocusedBorderColor: Colors.blue,
   searchBoxIconColor: Colors.grey[600],
+  searchBoxBorderRadius: BorderRadius.circular(12),
 
   // Overlay
   overlayBackgroundColor: Colors.white,
@@ -1276,14 +1166,11 @@ SmartSearchTheme(
 )
 ```
 
-**Access Theme in Widgets:**
+**Access in Widgets:**
 
 ```dart
-// Get theme with fallback to light theme
-final theme = SmartSearchTheme.of(context);
-
-// Get theme or null if not set
-final theme = SmartSearchTheme.maybeOf(context);
+final theme = SmartSearchTheme.of(context);      // With fallback
+final theme = SmartSearchTheme.maybeOf(context); // Nullable
 ```
 
 **Theme Properties:**
