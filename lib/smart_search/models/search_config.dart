@@ -1,5 +1,15 @@
 part of '../../pagination.dart';
 
+/// Display mode for search dropdowns.
+enum SearchDisplayMode {
+  /// Shows results in an overlay dropdown below/above the search box.
+  overlay,
+
+  /// Opens a fullscreen page for search and selection.
+  /// Better for mobile devices and complex selection scenarios.
+  bottomSheet,
+}
+
 /// Animation types for overlay show/hide transitions.
 enum OverlayAnimationType {
   /// Simple fade in/out animation.
@@ -190,6 +200,120 @@ class SmartSearchOverlayConfig {
       animationCurve: animationCurve ?? this.animationCurve,
       constraints: constraints ?? this.constraints,
       followTargetOnScroll: followTargetOnScroll ?? this.followTargetOnScroll,
+    );
+  }
+}
+
+/// Configuration for the bottom sheet search appearance.
+class SmartSearchBottomSheetConfig {
+  const SmartSearchBottomSheetConfig({
+    this.title,
+    this.titleBuilder,
+    this.confirmText = 'Done',
+    this.cancelText = 'Cancel',
+    this.showConfirmButton = true,
+    this.showCancelButton = true,
+    this.showSelectedCount = true,
+    this.showClearAllButton = true,
+    this.clearAllText = 'Clear All',
+    this.heightFactor = 0.85,
+    this.borderRadius = const BorderRadius.vertical(top: Radius.circular(16)),
+    this.backgroundColor,
+    this.barrierColor,
+    this.enableDrag = true,
+    this.isScrollControlled = true,
+    this.useSafeArea = true,
+    this.showDragHandle = true,
+  });
+
+  /// Title for the bottom sheet.
+  final String? title;
+
+  /// Builder for custom title widget.
+  final Widget Function(int selectedCount)? titleBuilder;
+
+  /// Text for the confirm button.
+  final String confirmText;
+
+  /// Text for the cancel button.
+  final String cancelText;
+
+  /// Whether to show the confirm button.
+  final bool showConfirmButton;
+
+  /// Whether to show the cancel button.
+  final bool showCancelButton;
+
+  /// Whether to show the selected count in the title.
+  final bool showSelectedCount;
+
+  /// Whether to show the clear all button.
+  final bool showClearAllButton;
+
+  /// Text for the clear all button.
+  final String clearAllText;
+
+  /// Height factor for the bottom sheet (0.0 to 1.0).
+  final double heightFactor;
+
+  /// Border radius for the bottom sheet.
+  final BorderRadius borderRadius;
+
+  /// Background color for the bottom sheet.
+  final Color? backgroundColor;
+
+  /// Barrier color behind the bottom sheet.
+  final Color? barrierColor;
+
+  /// Whether the bottom sheet can be dragged.
+  final bool enableDrag;
+
+  /// Whether the bottom sheet should be scrollable.
+  final bool isScrollControlled;
+
+  /// Whether to use safe area.
+  final bool useSafeArea;
+
+  /// Whether to show the drag handle.
+  final bool showDragHandle;
+
+  SmartSearchBottomSheetConfig copyWith({
+    String? title,
+    Widget Function(int selectedCount)? titleBuilder,
+    String? confirmText,
+    String? cancelText,
+    bool? showConfirmButton,
+    bool? showCancelButton,
+    bool? showSelectedCount,
+    bool? showClearAllButton,
+    String? clearAllText,
+    double? heightFactor,
+    BorderRadius? borderRadius,
+    Color? backgroundColor,
+    Color? barrierColor,
+    bool? enableDrag,
+    bool? isScrollControlled,
+    bool? useSafeArea,
+    bool? showDragHandle,
+  }) {
+    return SmartSearchBottomSheetConfig(
+      title: title ?? this.title,
+      titleBuilder: titleBuilder ?? this.titleBuilder,
+      confirmText: confirmText ?? this.confirmText,
+      cancelText: cancelText ?? this.cancelText,
+      showConfirmButton: showConfirmButton ?? this.showConfirmButton,
+      showCancelButton: showCancelButton ?? this.showCancelButton,
+      showSelectedCount: showSelectedCount ?? this.showSelectedCount,
+      showClearAllButton: showClearAllButton ?? this.showClearAllButton,
+      clearAllText: clearAllText ?? this.clearAllText,
+      heightFactor: heightFactor ?? this.heightFactor,
+      borderRadius: borderRadius ?? this.borderRadius,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      barrierColor: barrierColor ?? this.barrierColor,
+      enableDrag: enableDrag ?? this.enableDrag,
+      isScrollControlled: isScrollControlled ?? this.isScrollControlled,
+      useSafeArea: useSafeArea ?? this.useSafeArea,
+      showDragHandle: showDragHandle ?? this.showDragHandle,
     );
   }
 }

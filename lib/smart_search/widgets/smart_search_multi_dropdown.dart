@@ -53,8 +53,10 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelected,
+    this.displayMode = SearchDisplayMode.overlay,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
+    this.bottomSheetConfig = const SmartSearchBottomSheetConfig(),
     this.decoration,
     this.style,
     this.prefixIcon,
@@ -88,6 +90,8 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
     this.selectedItemsSpacing = 8.0,
     this.selectedItemsRunSpacing = 8.0,
     this.selectedItemsPadding = const EdgeInsets.only(top: 12),
+    this.hintText,
+    this.onMaxSelectionsReached,
     ListBuilder<T>? listBuilder,
     OnInsertionCallback<T>? onInsertionCallback,
     int maxPagesInMemory = 5,
@@ -113,8 +117,10 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelected,
+    this.displayMode = SearchDisplayMode.overlay,
     this.searchConfig = const SmartSearchConfig(),
     this.overlayConfig = const SmartSearchOverlayConfig(),
+    this.bottomSheetConfig = const SmartSearchBottomSheetConfig(),
     this.decoration,
     this.style,
     this.prefixIcon,
@@ -148,6 +154,8 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
     this.selectedItemsSpacing = 8.0,
     this.selectedItemsRunSpacing = 8.0,
     this.selectedItemsPadding = const EdgeInsets.only(top: 12),
+    this.hintText,
+    this.onMaxSelectionsReached,
   })  : _cubit = cubit,
         _request = null,
         _provider = null,
@@ -180,11 +188,17 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
   /// Requires [keyExtractor] to be provided for keys.
   final void Function(List<T> items, List<K> keys)? onSelected;
 
+  /// Display mode: overlay dropdown or bottom sheet.
+  final SearchDisplayMode displayMode;
+
   /// Configuration for search behavior.
   final SmartSearchConfig searchConfig;
 
   /// Configuration for the overlay appearance.
   final SmartSearchOverlayConfig overlayConfig;
+
+  /// Configuration for the bottom sheet appearance.
+  final SmartSearchBottomSheetConfig bottomSheetConfig;
 
   /// Decoration for the search text field.
   final InputDecoration? decoration;
@@ -305,6 +319,12 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
   /// Padding around the selected items container.
   final EdgeInsets selectedItemsPadding;
 
+  /// Hint text for the search box or trigger button.
+  final String? hintText;
+
+  /// Called when maximum selections limit is reached.
+  final VoidCallback? onMaxSelectionsReached;
+
   @override
   State<SmartSearchMultiDropdown<T, K>> createState() =>
       _SmartSearchMultiDropdownState<T, K>();
@@ -370,36 +390,43 @@ class _SmartSearchMultiDropdownState<T, K>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Search overlay (always visible)
-            _SmartSearchMultiOverlay<T, K>(
-              controller: _searchController!,
-              itemBuilder: _buildResultItem,
-              onItemSelected: (item) {
-                _searchController!.toggleItemSelection(item);
-              },
-              searchBoxDecoration: widget.decoration,
-              overlayConfig: widget.overlayConfig,
-              loadingBuilder: widget.loadingBuilder,
-              emptyBuilder: widget.emptyBuilder,
-              errorBuilder: widget.errorBuilder,
-              separatorBuilder: widget.separatorBuilder,
-              headerBuilder: widget.headerBuilder,
-              footerBuilder: widget.footerBuilder,
-              overlayDecoration: widget.overlayDecoration,
-              searchBoxStyle: widget.style,
-              searchBoxPrefixIcon: widget.prefixIcon,
-              searchBoxSuffixIcon: widget.suffixIcon,
-              showClearButton: widget.showClearButton,
-              searchBoxBorderRadius: widget.borderRadius,
-              searchBoxValidator: widget.validator,
-              searchBoxInputFormatters: widget.inputFormatters,
-              searchBoxAutovalidateMode: widget.autovalidateMode,
-              searchBoxOnChanged: widget.onChanged,
-              searchBoxMaxLength: widget.maxLength,
-              searchBoxTextInputAction: widget.textInputAction,
-              searchBoxTextCapitalization: widget.textCapitalization,
-              searchBoxKeyboardType: widget.keyboardType,
-            ),
+            // Search input based on display mode
+            if (widget.displayMode == SearchDisplayMode.overlay)
+              _SmartSearchMultiOverlay<T, K>(
+                controller: _searchController!,
+                itemBuilder: _buildResultItem,
+                onItemSelected: (item) {
+                  _searchController!.toggleItemSelection(item);
+                  if (widget.maxSelections != null &&
+                      _searchController!.selectedItems.length >= widget.maxSelections!) {
+                    widget.onMaxSelectionsReached?.call();
+                  }
+                },
+                searchBoxDecoration: widget.decoration,
+                overlayConfig: widget.overlayConfig,
+                loadingBuilder: widget.loadingBuilder,
+                emptyBuilder: widget.emptyBuilder,
+                errorBuilder: widget.errorBuilder,
+                separatorBuilder: widget.separatorBuilder,
+                headerBuilder: widget.headerBuilder,
+                footerBuilder: widget.footerBuilder,
+                overlayDecoration: widget.overlayDecoration,
+                searchBoxStyle: widget.style,
+                searchBoxPrefixIcon: widget.prefixIcon,
+                searchBoxSuffixIcon: widget.suffixIcon,
+                showClearButton: widget.showClearButton,
+                searchBoxBorderRadius: widget.borderRadius,
+                searchBoxValidator: widget.validator,
+                searchBoxInputFormatters: widget.inputFormatters,
+                searchBoxAutovalidateMode: widget.autovalidateMode,
+                searchBoxOnChanged: widget.onChanged,
+                searchBoxMaxLength: widget.maxLength,
+                searchBoxTextInputAction: widget.textInputAction,
+                searchBoxTextCapitalization: widget.textCapitalization,
+                searchBoxKeyboardType: widget.keyboardType,
+              )
+            else
+              _buildBottomSheetTrigger(context),
 
             // Selected items (shown below search box)
             if (widget.showSelected &&
@@ -407,6 +434,94 @@ class _SmartSearchMultiDropdownState<T, K>
                     _searchController!.hasPendingKeys))
               _buildSelectedItems(context),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomSheetTrigger(BuildContext context) {
+    final searchTheme = SmartSearchTheme.of(context);
+    final effectiveBorderRadius =
+        widget.borderRadius ?? searchTheme.searchBoxBorderRadius ?? BorderRadius.circular(12);
+
+    final selectedCount = _searchController!.selectedItems.length +
+        _searchController!.pendingKeys.length;
+
+    return InkWell(
+      onTap: () => _showBottomSheet(context),
+      borderRadius: effectiveBorderRadius,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: searchTheme.searchBoxBackgroundColor,
+          borderRadius: effectiveBorderRadius,
+          border: Border.all(
+            color: searchTheme.searchBoxBorderColor ?? Colors.grey[300]!,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.search,
+              color: searchTheme.searchBoxIconColor ?? Colors.grey[600],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                selectedCount > 0
+                    ? '$selectedCount selected'
+                    : widget.hintText ?? 'Tap to search...',
+                style: TextStyle(
+                  color: selectedCount > 0
+                      ? searchTheme.searchBoxTextColor
+                      : searchTheme.searchBoxHintColor ?? Colors.grey[500],
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_drop_down,
+              color: searchTheme.searchBoxIconColor ?? Colors.grey[600],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBottomSheet(BuildContext context) async {
+    final config = widget.bottomSheetConfig;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: config.isScrollControlled,
+      enableDrag: config.enableDrag,
+      useSafeArea: config.useSafeArea,
+      backgroundColor: config.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+      barrierColor: config.barrierColor,
+      showDragHandle: config.showDragHandle,
+      shape: RoundedRectangleBorder(borderRadius: config.borderRadius),
+      builder: (bottomSheetContext) {
+        return _SmartSearchBottomSheetContent<T, K>(
+          controller: _searchController!,
+          cubit: _cubit,
+          config: config,
+          itemBuilder: widget.itemBuilder,
+          loadingBuilder: widget.loadingBuilder,
+          emptyBuilder: widget.emptyBuilder,
+          errorBuilder: widget.errorBuilder,
+          separatorBuilder: widget.separatorBuilder,
+          headerBuilder: widget.headerBuilder,
+          footerBuilder: widget.footerBuilder,
+          decoration: widget.decoration,
+          style: widget.style,
+          prefixIcon: widget.prefixIcon,
+          showClearButton: widget.showClearButton,
+          borderRadius: widget.borderRadius,
+          hintText: widget.hintText,
+          maxSelections: widget.maxSelections,
+          onMaxSelectionsReached: widget.onMaxSelectionsReached,
+          heightFactor: config.heightFactor,
         );
       },
     );
@@ -1418,6 +1533,479 @@ class _DefaultPendingKeyChip<K> extends StatelessWidget {
           ),
           const SizedBox(width: 4),
         ],
+      ),
+    );
+  }
+}
+
+/// Bottom sheet content for multi-selection search.
+class _SmartSearchBottomSheetContent<T, K> extends StatefulWidget {
+  const _SmartSearchBottomSheetContent({
+    required this.controller,
+    required this.cubit,
+    required this.config,
+    required this.itemBuilder,
+    required this.heightFactor,
+    this.loadingBuilder,
+    this.emptyBuilder,
+    this.errorBuilder,
+    this.separatorBuilder,
+    this.headerBuilder,
+    this.footerBuilder,
+    this.decoration,
+    this.style,
+    this.prefixIcon,
+    this.showClearButton = true,
+    this.borderRadius,
+    this.hintText,
+    this.maxSelections,
+    this.onMaxSelectionsReached,
+  });
+
+  final SmartSearchMultiController<T, K> controller;
+  final SmartPaginationCubit<T> cubit;
+  final SmartSearchBottomSheetConfig config;
+  final Widget Function(BuildContext context, T item) itemBuilder;
+  final double heightFactor;
+  final WidgetBuilder? loadingBuilder;
+  final WidgetBuilder? emptyBuilder;
+  final Widget Function(BuildContext context, Exception error)? errorBuilder;
+  final IndexedWidgetBuilder? separatorBuilder;
+  final WidgetBuilder? headerBuilder;
+  final WidgetBuilder? footerBuilder;
+  final InputDecoration? decoration;
+  final TextStyle? style;
+  final Widget? prefixIcon;
+  final bool showClearButton;
+  final BorderRadius? borderRadius;
+  final String? hintText;
+  final int? maxSelections;
+  final VoidCallback? onMaxSelectionsReached;
+
+  @override
+  State<_SmartSearchBottomSheetContent<T, K>> createState() =>
+      _SmartSearchBottomSheetContentState<T, K>();
+}
+
+class _SmartSearchBottomSheetContentState<T, K>
+    extends State<_SmartSearchBottomSheetContent<T, K>> {
+  final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _textController.addListener(_onTextChanged);
+    // Trigger initial search
+    widget.controller.searchNow();
+  }
+
+  @override
+  void dispose() {
+    _textController.removeListener(_onTextChanged);
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    widget.controller.textController.text = _textController.text;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final config = widget.config;
+    final theme = Theme.of(context);
+    final searchTheme = SmartSearchTheme.of(context);
+
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * widget.heightFactor,
+      child: Column(
+        children: [
+          // Header with title and actions
+          _buildHeader(context, config, theme, searchTheme),
+
+          // Search box
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _buildSearchBox(context, searchTheme),
+          ),
+
+          // Results list
+          Expanded(
+            child: ListenableBuilder(
+              listenable: widget.controller,
+              builder: (context, _) {
+                return BlocBuilder<SmartPaginationCubit<T>, SmartPaginationState<T>>(
+                  bloc: widget.cubit,
+                  builder: (context, state) {
+                    return switch (state) {
+                      SmartPaginationError<T>(:final error) =>
+                        _buildError(context, error, searchTheme),
+                      SmartPaginationLoaded<T>(:final items) =>
+                        _buildResults(context, items, searchTheme),
+                      _ => _buildLoading(context, searchTheme),
+                    };
+                  },
+                );
+              },
+            ),
+          ),
+
+          // Footer with confirm button
+          if (config.showConfirmButton)
+            _buildFooter(context, config, theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(
+    BuildContext context,
+    SmartSearchBottomSheetConfig config,
+    ThemeData theme,
+    SmartSearchTheme searchTheme,
+  ) {
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, _) {
+        final selectedCount = widget.controller.selectedItems.length +
+            widget.controller.pendingKeys.length;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+          child: Row(
+            children: [
+              // Title
+              Expanded(
+                child: config.titleBuilder?.call(selectedCount) ??
+                    Text(
+                      config.title ??
+                          (config.showSelectedCount && selectedCount > 0
+                              ? 'Selected ($selectedCount)'
+                              : 'Select Items'),
+                      style: theme.textTheme.titleLarge,
+                    ),
+              ),
+
+              // Clear all button
+              if (config.showClearAllButton && selectedCount > 0)
+                TextButton(
+                  onPressed: () {
+                    widget.controller.clearSelection();
+                  },
+                  child: Text(config.clearAllText),
+                ),
+
+              // Cancel button
+              if (config.showCancelButton)
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchBox(BuildContext context, SmartSearchTheme searchTheme) {
+    final effectiveBorderRadius =
+        widget.borderRadius ?? searchTheme.searchBoxBorderRadius ?? BorderRadius.circular(12);
+
+    return TextField(
+      controller: _textController,
+      autofocus: true,
+      decoration: widget.decoration ??
+          InputDecoration(
+            hintText: widget.hintText ?? 'Search...',
+            hintStyle: TextStyle(color: searchTheme.searchBoxHintColor),
+            filled: true,
+            fillColor: searchTheme.searchBoxBackgroundColor,
+            prefixIcon: widget.prefixIcon ??
+                Icon(Icons.search, color: searchTheme.searchBoxIconColor),
+            suffixIcon: widget.showClearButton && _textController.text.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.clear, color: searchTheme.searchBoxIconColor),
+                    onPressed: () {
+                      _textController.clear();
+                      widget.controller.clearSearch();
+                    },
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: searchTheme.searchBoxBorderColor ?? Colors.grey[300]!,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: searchTheme.searchBoxBorderColor ?? Colors.grey[300]!,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: searchTheme.searchBoxFocusedBorderColor ??
+                    Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+      style: widget.style ?? TextStyle(color: searchTheme.searchBoxTextColor),
+      cursorColor: searchTheme.searchBoxCursorColor,
+    );
+  }
+
+  Widget _buildLoading(BuildContext context, SmartSearchTheme searchTheme) {
+    if (widget.loadingBuilder != null) {
+      return widget.loadingBuilder!(context);
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: CircularProgressIndicator.adaptive(
+          valueColor: AlwaysStoppedAnimation<Color>(
+            searchTheme.loadingIndicatorColor ?? Theme.of(context).primaryColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(
+    BuildContext context,
+    Exception error,
+    SmartSearchTheme searchTheme,
+  ) {
+    if (widget.errorBuilder != null) {
+      return widget.errorBuilder!(context, error);
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: searchTheme.errorIconColor ?? Theme.of(context).colorScheme.error,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'An error occurred',
+              style: TextStyle(
+                color: searchTheme.errorTextColor ?? Theme.of(context).colorScheme.error,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => widget.controller.searchNow(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResults(
+    BuildContext context,
+    List<T> items,
+    SmartSearchTheme searchTheme,
+  ) {
+    if (items.isEmpty) {
+      return _buildEmpty(context, searchTheme);
+    }
+
+    return Column(
+      children: [
+        if (widget.headerBuilder != null) widget.headerBuilder!(context),
+        Expanded(
+          child: Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: true,
+            child: ListView.separated(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: items.length,
+              separatorBuilder: widget.separatorBuilder ??
+                  (context, index) => Divider(
+                        height: 1,
+                        color: searchTheme.itemDividerColor,
+                      ),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final isSelected = widget.controller.isItemSelected(item);
+
+                return _BottomSheetItem<T>(
+                  item: item,
+                  isSelected: isSelected,
+                  selectedColor: searchTheme.itemSelectedColor ??
+                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+                  hoverColor: searchTheme.itemHoverColor,
+                  checkColor: searchTheme.loadingIndicatorColor ??
+                      Theme.of(context).colorScheme.primary,
+                  onTap: () {
+                    widget.controller.toggleItemSelection(item);
+                    if (widget.maxSelections != null &&
+                        widget.controller.selectedItems.length >= widget.maxSelections! &&
+                        isSelected == false) {
+                      widget.onMaxSelectionsReached?.call();
+                    }
+                  },
+                  child: widget.itemBuilder(context, item),
+                );
+              },
+            ),
+          ),
+        ),
+        if (widget.footerBuilder != null) widget.footerBuilder!(context),
+      ],
+    );
+  }
+
+  Widget _buildEmpty(BuildContext context, SmartSearchTheme searchTheme) {
+    if (widget.emptyBuilder != null) {
+      return widget.emptyBuilder!(context);
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: searchTheme.emptyStateIconColor ?? Theme.of(context).disabledColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No results found',
+              style: TextStyle(
+                color: searchTheme.emptyStateTextColor ?? Theme.of(context).disabledColor,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(
+    BuildContext context,
+    SmartSearchBottomSheetConfig config,
+    ThemeData theme,
+  ) {
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, _) {
+        final selectedCount = widget.controller.selectedItems.length +
+            widget.controller.pendingKeys.length;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 4,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  selectedCount > 0
+                      ? '${config.confirmText} ($selectedCount)'
+                      : config.confirmText,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Item widget for bottom sheet list.
+class _BottomSheetItem<T> extends StatefulWidget {
+  const _BottomSheetItem({
+    required this.item,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.checkColor,
+    required this.onTap,
+    required this.child,
+    this.hoverColor,
+  });
+
+  final T item;
+  final bool isSelected;
+  final Color selectedColor;
+  final Color checkColor;
+  final Color? hoverColor;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  State<_BottomSheetItem<T>> createState() => _BottomSheetItemState<T>();
+}
+
+class _BottomSheetItemState<T> extends State<_BottomSheetItem<T>> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    Color? backgroundColor;
+    if (widget.isSelected) {
+      backgroundColor = widget.selectedColor;
+    } else if (_isHovering) {
+      backgroundColor = widget.hoverColor;
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          color: backgroundColor,
+          child: Row(
+            children: [
+              Expanded(child: widget.child),
+              if (widget.isSelected)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: widget.checkColor,
+                    size: 24,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
