@@ -1692,7 +1692,7 @@ class _SmartSearchBottomSheetContentState<T, K>
               if (config.showClearAllButton && selectedCount > 0)
                 TextButton(
                   onPressed: () {
-                    widget.controller.clearSelection();
+                    widget.controller.clearAllSelections();
                   },
                   child: Text(config.clearAllText),
                 ),

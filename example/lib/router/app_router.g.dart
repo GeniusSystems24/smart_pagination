@@ -7,42 +7,56 @@ part of 'app_router.dart';
 // **************************************************************************
 
 List<RouteBase> get $appRoutes => [
-  $basicRoute,
-  $streamRoute,
-  $advancedRoute,
-  $searchRoute,
-  $errorRoute,
-  $firebaseRoute,
-];
+      $basicRoute,
+      $streamRoute,
+      $advancedRoute,
+      $searchRoute,
+      $errorRoute,
+      $firebaseRoute,
+    ];
 
 RouteBase get $basicRoute => GoRouteData.$route(
-  path: '/basic',
-  factory: $BasicRoute._fromState,
-  routes: [
-    GoRouteData.$route(
-      path: 'list-view',
-      factory: $BasicListViewRoute._fromState,
-    ),
-    GoRouteData.$route(path: 'grid-view', factory: $GridViewRoute._fromState),
-    GoRouteData.$route(path: 'column', factory: $ColumnLayoutRoute._fromState),
-    GoRouteData.$route(path: 'row', factory: $RowLayoutRoute._fromState),
-    GoRouteData.$route(
-      path: 'pull-to-refresh',
-      factory: $PullToRefreshRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'filter-search',
-      factory: $FilterSearchRoute._fromState,
-    ),
-    GoRouteData.$route(path: 'retry', factory: $RetryMechanismRoute._fromState),
-  ],
-);
+      path: '/basic',
+      factory: $BasicRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'list-view',
+          factory: $BasicListViewRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'grid-view',
+          factory: $GridViewRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'column',
+          factory: $ColumnLayoutRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'row',
+          factory: $RowLayoutRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'pull-to-refresh',
+          factory: $PullToRefreshRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'filter-search',
+          factory: $FilterSearchRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'retry',
+          factory: $RetryMechanismRoute._fromState,
+        ),
+      ],
+    );
 
 mixin $BasicRoute on GoRouteData {
   static BasicRoute _fromState(GoRouterState state) => const BasicRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic');
+  String get location => GoRouteData.$location(
+        '/basic',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -63,7 +77,9 @@ mixin $BasicListViewRoute on GoRouteData {
       const BasicListViewRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic/list-view');
+  String get location => GoRouteData.$location(
+        '/basic/list-view',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -83,7 +99,9 @@ mixin $GridViewRoute on GoRouteData {
   static GridViewRoute _fromState(GoRouterState state) => const GridViewRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic/grid-view');
+  String get location => GoRouteData.$location(
+        '/basic/grid-view',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -104,7 +122,9 @@ mixin $ColumnLayoutRoute on GoRouteData {
       const ColumnLayoutRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic/column');
+  String get location => GoRouteData.$location(
+        '/basic/column',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -125,7 +145,9 @@ mixin $RowLayoutRoute on GoRouteData {
       const RowLayoutRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic/row');
+  String get location => GoRouteData.$location(
+        '/basic/row',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -146,7 +168,9 @@ mixin $PullToRefreshRoute on GoRouteData {
       const PullToRefreshRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic/pull-to-refresh');
+  String get location => GoRouteData.$location(
+        '/basic/pull-to-refresh',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -167,7 +191,9 @@ mixin $FilterSearchRoute on GoRouteData {
       const FilterSearchRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic/filter-search');
+  String get location => GoRouteData.$location(
+        '/basic/filter-search',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -188,7 +214,9 @@ mixin $RetryMechanismRoute on GoRouteData {
       const RetryMechanismRoute();
 
   @override
-  String get location => GoRouteData.$location('/basic/retry');
+  String get location => GoRouteData.$location(
+        '/basic/retry',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -205,20 +233,31 @@ mixin $RetryMechanismRoute on GoRouteData {
 }
 
 RouteBase get $streamRoute => GoRouteData.$route(
-  path: '/streams',
-  factory: $StreamRoute._fromState,
-  routes: [
-    GoRouteData.$route(path: 'single', factory: $SingleStreamRoute._fromState),
-    GoRouteData.$route(path: 'multi', factory: $MultiStreamRoute._fromState),
-    GoRouteData.$route(path: 'merged', factory: $MergedStreamsRoute._fromState),
-  ],
-);
+      path: '/streams',
+      factory: $StreamRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'single',
+          factory: $SingleStreamRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'multi',
+          factory: $MultiStreamRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'merged',
+          factory: $MergedStreamsRoute._fromState,
+        ),
+      ],
+    );
 
 mixin $StreamRoute on GoRouteData {
   static StreamRoute _fromState(GoRouterState state) => const StreamRoute();
 
   @override
-  String get location => GoRouteData.$location('/streams');
+  String get location => GoRouteData.$location(
+        '/streams',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -239,7 +278,9 @@ mixin $SingleStreamRoute on GoRouteData {
       const SingleStreamRoute();
 
   @override
-  String get location => GoRouteData.$location('/streams/single');
+  String get location => GoRouteData.$location(
+        '/streams/single',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -260,7 +301,9 @@ mixin $MultiStreamRoute on GoRouteData {
       const MultiStreamRoute();
 
   @override
-  String get location => GoRouteData.$location('/streams/multi');
+  String get location => GoRouteData.$location(
+        '/streams/multi',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -281,7 +324,9 @@ mixin $MergedStreamsRoute on GoRouteData {
       const MergedStreamsRoute();
 
   @override
-  String get location => GoRouteData.$location('/streams/merged');
+  String get location => GoRouteData.$location(
+        '/streams/merged',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -298,69 +343,83 @@ mixin $MergedStreamsRoute on GoRouteData {
 }
 
 RouteBase get $advancedRoute => GoRouteData.$route(
-  path: '/advanced',
-  factory: $AdvancedRoute._fromState,
-  routes: [
-    GoRouteData.$route(
-      path: 'cursor',
-      factory: $CursorPaginationRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'horizontal',
-      factory: $HorizontalScrollRoute._fromState,
-    ),
-    GoRouteData.$route(path: 'page-view', factory: $PageViewRoute._fromState),
-    GoRouteData.$route(
-      path: 'staggered-grid',
-      factory: $StaggeredGridRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'custom-states',
-      factory: $CustomStatesRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'scroll-control',
-      factory: $ScrollControlRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'before-build',
-      factory: $BeforeBuildHookRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'reached-end',
-      factory: $HasReachedEndRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'custom-builder',
-      factory: $CustomViewBuilderRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'reorderable',
-      factory: $ReorderableListRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'state-separation',
-      factory: $StateSeparationRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'preloading',
-      factory: $SmartPreloadingRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'data-operations',
-      factory: $DataOperationsRoute._fromState,
-    ),
-    GoRouteData.$route(path: 'data-age', factory: $DataAgeRoute._fromState),
-    GoRouteData.$route(path: 'sorting', factory: $SortingRoute._fromState),
-    GoRouteData.$route(path: 'chat', factory: $ChatRoute._fromState),
-  ],
-);
+      path: '/advanced',
+      factory: $AdvancedRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'cursor',
+          factory: $CursorPaginationRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'horizontal',
+          factory: $HorizontalScrollRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'page-view',
+          factory: $PageViewRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'staggered-grid',
+          factory: $StaggeredGridRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'custom-states',
+          factory: $CustomStatesRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'scroll-control',
+          factory: $ScrollControlRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'before-build',
+          factory: $BeforeBuildHookRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'reached-end',
+          factory: $HasReachedEndRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'custom-builder',
+          factory: $CustomViewBuilderRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'reorderable',
+          factory: $ReorderableListRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'state-separation',
+          factory: $StateSeparationRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'preloading',
+          factory: $SmartPreloadingRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'data-operations',
+          factory: $DataOperationsRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'data-age',
+          factory: $DataAgeRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'sorting',
+          factory: $SortingRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'chat',
+          factory: $ChatRoute._fromState,
+        ),
+      ],
+    );
 
 mixin $AdvancedRoute on GoRouteData {
   static AdvancedRoute _fromState(GoRouterState state) => const AdvancedRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced');
+  String get location => GoRouteData.$location(
+        '/advanced',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -381,7 +440,9 @@ mixin $CursorPaginationRoute on GoRouteData {
       const CursorPaginationRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/cursor');
+  String get location => GoRouteData.$location(
+        '/advanced/cursor',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -402,7 +463,9 @@ mixin $HorizontalScrollRoute on GoRouteData {
       const HorizontalScrollRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/horizontal');
+  String get location => GoRouteData.$location(
+        '/advanced/horizontal',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -422,7 +485,9 @@ mixin $PageViewRoute on GoRouteData {
   static PageViewRoute _fromState(GoRouterState state) => const PageViewRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/page-view');
+  String get location => GoRouteData.$location(
+        '/advanced/page-view',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -443,7 +508,9 @@ mixin $StaggeredGridRoute on GoRouteData {
       const StaggeredGridRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/staggered-grid');
+  String get location => GoRouteData.$location(
+        '/advanced/staggered-grid',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -464,7 +531,9 @@ mixin $CustomStatesRoute on GoRouteData {
       const CustomStatesRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/custom-states');
+  String get location => GoRouteData.$location(
+        '/advanced/custom-states',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -485,7 +554,9 @@ mixin $ScrollControlRoute on GoRouteData {
       const ScrollControlRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/scroll-control');
+  String get location => GoRouteData.$location(
+        '/advanced/scroll-control',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -506,7 +577,9 @@ mixin $BeforeBuildHookRoute on GoRouteData {
       const BeforeBuildHookRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/before-build');
+  String get location => GoRouteData.$location(
+        '/advanced/before-build',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -527,7 +600,9 @@ mixin $HasReachedEndRoute on GoRouteData {
       const HasReachedEndRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/reached-end');
+  String get location => GoRouteData.$location(
+        '/advanced/reached-end',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -548,7 +623,9 @@ mixin $CustomViewBuilderRoute on GoRouteData {
       const CustomViewBuilderRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/custom-builder');
+  String get location => GoRouteData.$location(
+        '/advanced/custom-builder',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -569,7 +646,9 @@ mixin $ReorderableListRoute on GoRouteData {
       const ReorderableListRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/reorderable');
+  String get location => GoRouteData.$location(
+        '/advanced/reorderable',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -590,7 +669,9 @@ mixin $StateSeparationRoute on GoRouteData {
       const StateSeparationRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/state-separation');
+  String get location => GoRouteData.$location(
+        '/advanced/state-separation',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -611,7 +692,9 @@ mixin $SmartPreloadingRoute on GoRouteData {
       const SmartPreloadingRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/preloading');
+  String get location => GoRouteData.$location(
+        '/advanced/preloading',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -632,7 +715,9 @@ mixin $DataOperationsRoute on GoRouteData {
       const DataOperationsRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/data-operations');
+  String get location => GoRouteData.$location(
+        '/advanced/data-operations',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -652,7 +737,9 @@ mixin $DataAgeRoute on GoRouteData {
   static DataAgeRoute _fromState(GoRouterState state) => const DataAgeRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/data-age');
+  String get location => GoRouteData.$location(
+        '/advanced/data-age',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -672,7 +759,9 @@ mixin $SortingRoute on GoRouteData {
   static SortingRoute _fromState(GoRouterState state) => const SortingRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/sorting');
+  String get location => GoRouteData.$location(
+        '/advanced/sorting',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -692,7 +781,9 @@ mixin $ChatRoute on GoRouteData {
   static ChatRoute _fromState(GoRouterState state) => const ChatRoute();
 
   @override
-  String get location => GoRouteData.$location('/advanced/chat');
+  String get location => GoRouteData.$location(
+        '/advanced/chat',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -709,53 +800,59 @@ mixin $ChatRoute on GoRouteData {
 }
 
 RouteBase get $searchRoute => GoRouteData.$route(
-  path: '/search',
-  factory: $SearchRoute._fromState,
-  routes: [
-    GoRouteData.$route(
-      path: 'dropdown',
-      factory: $SearchDropdownRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'multi-select',
-      factory: $MultiSelectSearchRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'form-validation',
-      factory: $FormValidationRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'keyboard',
-      factory: $KeyboardNavigationRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'theming',
-      factory: $SearchThemingRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'async-states',
-      factory: $AsyncStatesRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'overlay-animations',
-      factory: $OverlayAnimationsRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'key-based-selection',
-      factory: $KeyBasedSelectionRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'initial-selection',
-      factory: $InitialSelectionRoute._fromState,
-    ),
-  ],
-);
+      path: '/search',
+      factory: $SearchRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'dropdown',
+          factory: $SearchDropdownRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'multi-select',
+          factory: $MultiSelectSearchRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'bottom-sheet',
+          factory: $BottomSheetSearchRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'form-validation',
+          factory: $FormValidationRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'keyboard',
+          factory: $KeyboardNavigationRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'theming',
+          factory: $SearchThemingRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'async-states',
+          factory: $AsyncStatesRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'overlay-animations',
+          factory: $OverlayAnimationsRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'key-based-selection',
+          factory: $KeyBasedSelectionRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'initial-selection',
+          factory: $InitialSelectionRoute._fromState,
+        ),
+      ],
+    );
 
 mixin $SearchRoute on GoRouteData {
   static SearchRoute _fromState(GoRouterState state) => const SearchRoute();
 
   @override
-  String get location => GoRouteData.$location('/search');
+  String get location => GoRouteData.$location(
+        '/search',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -776,7 +873,9 @@ mixin $SearchDropdownRoute on GoRouteData {
       const SearchDropdownRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/dropdown');
+  String get location => GoRouteData.$location(
+        '/search/dropdown',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -797,7 +896,32 @@ mixin $MultiSelectSearchRoute on GoRouteData {
       const MultiSelectSearchRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/multi-select');
+  String get location => GoRouteData.$location(
+        '/search/multi-select',
+      );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $BottomSheetSearchRoute on GoRouteData {
+  static BottomSheetSearchRoute _fromState(GoRouterState state) =>
+      const BottomSheetSearchRoute();
+
+  @override
+  String get location => GoRouteData.$location(
+        '/search/bottom-sheet',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -818,7 +942,9 @@ mixin $FormValidationRoute on GoRouteData {
       const FormValidationRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/form-validation');
+  String get location => GoRouteData.$location(
+        '/search/form-validation',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -839,7 +965,9 @@ mixin $KeyboardNavigationRoute on GoRouteData {
       const KeyboardNavigationRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/keyboard');
+  String get location => GoRouteData.$location(
+        '/search/keyboard',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -860,7 +988,9 @@ mixin $SearchThemingRoute on GoRouteData {
       const SearchThemingRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/theming');
+  String get location => GoRouteData.$location(
+        '/search/theming',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -881,7 +1011,9 @@ mixin $AsyncStatesRoute on GoRouteData {
       const AsyncStatesRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/async-states');
+  String get location => GoRouteData.$location(
+        '/search/async-states',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -902,7 +1034,9 @@ mixin $OverlayAnimationsRoute on GoRouteData {
       const OverlayAnimationsRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/overlay-animations');
+  String get location => GoRouteData.$location(
+        '/search/overlay-animations',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -923,7 +1057,9 @@ mixin $KeyBasedSelectionRoute on GoRouteData {
       const KeyBasedSelectionRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/key-based-selection');
+  String get location => GoRouteData.$location(
+        '/search/key-based-selection',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -944,7 +1080,9 @@ mixin $InitialSelectionRoute on GoRouteData {
       const InitialSelectionRoute();
 
   @override
-  String get location => GoRouteData.$location('/search/initial-selection');
+  String get location => GoRouteData.$location(
+        '/search/initial-selection',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -961,42 +1099,47 @@ mixin $InitialSelectionRoute on GoRouteData {
 }
 
 RouteBase get $errorRoute => GoRouteData.$route(
-  path: '/errors',
-  factory: $ErrorRoute._fromState,
-  routes: [
-    GoRouteData.$route(path: 'basic', factory: $BasicErrorRoute._fromState),
-    GoRouteData.$route(
-      path: 'network',
-      factory: $NetworkErrorsRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'retry-patterns',
-      factory: $RetryPatternsRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'custom-widgets',
-      factory: $CustomErrorWidgetsRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'recovery',
-      factory: $ErrorRecoveryRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'graceful',
-      factory: $GracefulDegradationRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'load-more',
-      factory: $LoadMoreErrorsRoute._fromState,
-    ),
-  ],
-);
+      path: '/errors',
+      factory: $ErrorRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'basic',
+          factory: $BasicErrorRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'network',
+          factory: $NetworkErrorsRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'retry-patterns',
+          factory: $RetryPatternsRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'custom-widgets',
+          factory: $CustomErrorWidgetsRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'recovery',
+          factory: $ErrorRecoveryRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'graceful',
+          factory: $GracefulDegradationRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'load-more',
+          factory: $LoadMoreErrorsRoute._fromState,
+        ),
+      ],
+    );
 
 mixin $ErrorRoute on GoRouteData {
   static ErrorRoute _fromState(GoRouterState state) => const ErrorRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors');
+  String get location => GoRouteData.$location(
+        '/errors',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1017,7 +1160,9 @@ mixin $BasicErrorRoute on GoRouteData {
       const BasicErrorRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors/basic');
+  String get location => GoRouteData.$location(
+        '/errors/basic',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1038,7 +1183,9 @@ mixin $NetworkErrorsRoute on GoRouteData {
       const NetworkErrorsRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors/network');
+  String get location => GoRouteData.$location(
+        '/errors/network',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1059,7 +1206,9 @@ mixin $RetryPatternsRoute on GoRouteData {
       const RetryPatternsRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors/retry-patterns');
+  String get location => GoRouteData.$location(
+        '/errors/retry-patterns',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1080,7 +1229,9 @@ mixin $CustomErrorWidgetsRoute on GoRouteData {
       const CustomErrorWidgetsRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors/custom-widgets');
+  String get location => GoRouteData.$location(
+        '/errors/custom-widgets',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1101,7 +1252,9 @@ mixin $ErrorRecoveryRoute on GoRouteData {
       const ErrorRecoveryRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors/recovery');
+  String get location => GoRouteData.$location(
+        '/errors/recovery',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1122,7 +1275,9 @@ mixin $GracefulDegradationRoute on GoRouteData {
       const GracefulDegradationRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors/graceful');
+  String get location => GoRouteData.$location(
+        '/errors/graceful',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1143,7 +1298,9 @@ mixin $LoadMoreErrorsRoute on GoRouteData {
       const LoadMoreErrorsRoute();
 
   @override
-  String get location => GoRouteData.$location('/errors/load-more');
+  String get location => GoRouteData.$location(
+        '/errors/load-more',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1160,42 +1317,47 @@ mixin $LoadMoreErrorsRoute on GoRouteData {
 }
 
 RouteBase get $firebaseRoute => GoRouteData.$route(
-  path: '/firebase',
-  factory: $FirebaseRoute._fromState,
-  routes: [
-    GoRouteData.$route(
-      path: 'firestore-pagination',
-      factory: $FirestorePaginationRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'firestore-realtime',
-      factory: $FirestoreRealtimeRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'firestore-search',
-      factory: $FirestoreSearchRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'realtime-database',
-      factory: $RealtimeDatabaseRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'firestore-filters',
-      factory: $FirestoreFiltersRoute._fromState,
-    ),
-    GoRouteData.$route(
-      path: 'offline-support',
-      factory: $OfflineSupportRoute._fromState,
-    ),
-    GoRouteData.$route(path: 'seed-data', factory: $SeedDataRoute._fromState),
-  ],
-);
+      path: '/firebase',
+      factory: $FirebaseRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'firestore-pagination',
+          factory: $FirestorePaginationRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'firestore-realtime',
+          factory: $FirestoreRealtimeRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'firestore-search',
+          factory: $FirestoreSearchRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'realtime-database',
+          factory: $RealtimeDatabaseRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'firestore-filters',
+          factory: $FirestoreFiltersRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'offline-support',
+          factory: $OfflineSupportRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'seed-data',
+          factory: $SeedDataRoute._fromState,
+        ),
+      ],
+    );
 
 mixin $FirebaseRoute on GoRouteData {
   static FirebaseRoute _fromState(GoRouterState state) => const FirebaseRoute();
 
   @override
-  String get location => GoRouteData.$location('/firebase');
+  String get location => GoRouteData.$location(
+        '/firebase',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1216,8 +1378,9 @@ mixin $FirestorePaginationRoute on GoRouteData {
       const FirestorePaginationRoute();
 
   @override
-  String get location =>
-      GoRouteData.$location('/firebase/firestore-pagination');
+  String get location => GoRouteData.$location(
+        '/firebase/firestore-pagination',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1238,7 +1401,9 @@ mixin $FirestoreRealtimeRoute on GoRouteData {
       const FirestoreRealtimeRoute();
 
   @override
-  String get location => GoRouteData.$location('/firebase/firestore-realtime');
+  String get location => GoRouteData.$location(
+        '/firebase/firestore-realtime',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1259,7 +1424,9 @@ mixin $FirestoreSearchRoute on GoRouteData {
       const FirestoreSearchRoute();
 
   @override
-  String get location => GoRouteData.$location('/firebase/firestore-search');
+  String get location => GoRouteData.$location(
+        '/firebase/firestore-search',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1280,7 +1447,9 @@ mixin $RealtimeDatabaseRoute on GoRouteData {
       const RealtimeDatabaseRoute();
 
   @override
-  String get location => GoRouteData.$location('/firebase/realtime-database');
+  String get location => GoRouteData.$location(
+        '/firebase/realtime-database',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1301,7 +1470,9 @@ mixin $FirestoreFiltersRoute on GoRouteData {
       const FirestoreFiltersRoute();
 
   @override
-  String get location => GoRouteData.$location('/firebase/firestore-filters');
+  String get location => GoRouteData.$location(
+        '/firebase/firestore-filters',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1322,7 +1493,9 @@ mixin $OfflineSupportRoute on GoRouteData {
       const OfflineSupportRoute();
 
   @override
-  String get location => GoRouteData.$location('/firebase/offline-support');
+  String get location => GoRouteData.$location(
+        '/firebase/offline-support',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1342,7 +1515,9 @@ mixin $SeedDataRoute on GoRouteData {
   static SeedDataRoute _fromState(GoRouterState state) => const SeedDataRoute();
 
   @override
-  String get location => GoRouteData.$location('/firebase/seed-data');
+  String get location => GoRouteData.$location(
+        '/firebase/seed-data',
+      );
 
   @override
   void go(BuildContext context) => context.go(location);
