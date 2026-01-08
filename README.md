@@ -30,7 +30,7 @@ SmartPaginationListView.withProvider(
 
 ```yaml
 dependencies:
-  smart_pagination: ^3.0.1
+  smart_pagination: ^3.1.0
 ```
 
 ```dart
@@ -143,6 +143,31 @@ SmartSearchMultiDropdown<Product, int>.withProvider(
   maxSelections: 5,
 )
 ```
+
+### Bottom Sheet Mode
+
+For mobile-friendly selection, use `displayMode: SearchDisplayMode.bottomSheet`:
+
+```dart
+SmartSearchMultiDropdown<Product, int>.withProvider(
+  // ... provider config
+  displayMode: SearchDisplayMode.bottomSheet,
+  bottomSheetConfig: SmartSearchBottomSheetConfig(
+    title: 'Select Products',
+    confirmText: 'Done',
+    showSelectedCount: true,
+    showClearAllButton: true,
+    heightFactor: 0.85,
+  ),
+  hintText: 'Tap to search...',
+  onSelected: (products, ids) => setState(() => selectedIds = ids),
+)
+```
+
+| Display Mode | Description |
+|--------------|-------------|
+| `SearchDisplayMode.overlay` | Default dropdown overlay |
+| `SearchDisplayMode.bottomSheet` | Fullscreen bottom sheet |
 
 ### Components
 

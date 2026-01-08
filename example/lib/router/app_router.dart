@@ -38,6 +38,7 @@ import '../screens/smart_pagination/chat_screen.dart';
 // Search examples
 import '../screens/smart_pagination/search_dropdown_screen.dart';
 import '../screens/smart_pagination/multi_select_search_screen.dart';
+import '../screens/smart_pagination/bottom_sheet_search_screen.dart';
 import '../screens/smart_pagination/form_validation_search_screen.dart';
 import '../screens/smart_pagination/keyboard_navigation_search_screen.dart';
 import '../screens/smart_pagination/search_theming_screen.dart';
@@ -515,6 +516,7 @@ class ChatRoute extends GoRouteData with $ChatRoute {
   routes: [
     TypedGoRoute<SearchDropdownRoute>(path: 'dropdown'),
     TypedGoRoute<MultiSelectSearchRoute>(path: 'multi-select'),
+    TypedGoRoute<BottomSheetSearchRoute>(path: 'bottom-sheet'),
     TypedGoRoute<FormValidationRoute>(path: 'form-validation'),
     TypedGoRoute<KeyboardNavigationRoute>(path: 'keyboard'),
     TypedGoRoute<SearchThemingRoute>(path: 'theming'),
@@ -555,6 +557,19 @@ class MultiSelectSearchRoute extends GoRouteData with $MultiSelectSearchRoute {
       context: context,
       state: state,
       child: const MultiSelectSearchScreen(),
+    );
+  }
+}
+
+class BottomSheetSearchRoute extends GoRouteData with $BottomSheetSearchRoute {
+  const BottomSheetSearchRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const BottomSheetSearchScreen(),
     );
   }
 }

@@ -271,6 +271,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           route: const MultiSelectSearchRoute().location,
         ),
         _ExampleItem(
+          title: 'Bottom Sheet Search',
+          description: 'Fullscreen bottom sheet mode',
+          icon: Icons.vertical_align_bottom_rounded,
+          color: Color(0xFF0891B2),
+          route: const BottomSheetSearchRoute().location,
+        ),
+        _ExampleItem(
           title: 'Form Validation',
           description: 'Search with validators & formatters',
           icon: Icons.fact_check_rounded,

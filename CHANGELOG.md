@@ -5,7 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.1] - 2026-01-08
+## [3.1.0] - 2026-01-08
+
+### Added
+
+- **SmartSearchMultiDropdown**: New `displayMode` parameter to switch between `SearchDisplayMode.overlay` (default) and `SearchDisplayMode.bottomSheet`
+- **SearchDisplayMode**: New enum with `overlay` and `bottomSheet` options
+- **SmartSearchBottomSheetConfig**: New configuration class for bottom sheet appearance with options:
+  - `title` / `titleBuilder`: Bottom sheet title
+  - `confirmText` / `cancelText`: Button labels
+  - `showSelectedCount`: Show selection count in title
+  - `showClearAllButton`: Show clear all button
+  - `heightFactor`: Bottom sheet height (0.0 to 1.0)
+  - `showDragHandle`: Show drag indicator
+- **New parameters for SmartSearchMultiDropdown**:
+  - `hintText`: Custom hint text for the trigger button
+  - `onMaxSelectionsReached`: Callback when max selections limit is reached
 
 ### Fixed
 
