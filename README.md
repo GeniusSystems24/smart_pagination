@@ -30,7 +30,7 @@ SmartPaginationListView.withProvider(
 
 ```yaml
 dependencies:
-  smart_pagination: ^3.0.0+1
+  smart_pagination: ^3.0.1
 ```
 
 ```dart

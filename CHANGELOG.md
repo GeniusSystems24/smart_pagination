@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-01-08
+
+### Fixed
+
+- **SmartSearchOverlay**: Fixed `onSelected` callback not being called when item is selected. The callback now always fires with nullable key (`K?`) to support cases where `keyExtractor` is not provided.
+- **SmartSearchOverlay**: Fixed overlay positioning when appearing above the search box. The overlay now anchors from the bottom and grows upward, ensuring it always touches the input field.
+
+---
+
 ## [3.0.0] - 2026-01-07
 
 ### Breaking Changes
