@@ -61,8 +61,8 @@ class SmartSearchOverlay<T, K> extends StatefulWidget {
   final Widget Function(BuildContext context, T item) itemBuilder;
 
   /// Called when an item is selected from the results.
-  /// Provides both the selected item and its key.
-  final void Function(T item, K key)? onSelected;
+  /// Provides both the selected item and its key (key is null if no keyExtractor).
+  final void Function(T item, K? key)? onSelected;
 
   /// Decoration for the search text field.
   final InputDecoration? searchBoxDecoration;
@@ -355,9 +355,7 @@ class _SmartSearchOverlayState<T, K> extends State<SmartSearchOverlay<T, K>>
   void _onItemSelected(T item) {
     widget.controller.selectItem(item);
     final key = widget.controller.selectedKey;
-    if (key != null) {
-      widget.onSelected?.call(item, key);
-    }
+    widget.onSelected?.call(item, key);
   }
 
   @override
