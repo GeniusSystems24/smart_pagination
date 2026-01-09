@@ -46,6 +46,7 @@ import '../screens/smart_pagination/async_search_states_screen.dart';
 import '../screens/smart_pagination/overlay_animations_screen.dart';
 import '../screens/smart_pagination/key_based_selection_screen.dart';
 import '../screens/smart_pagination/initial_selection_screen.dart';
+import '../screens/smart_pagination/realistic_search_examples_screen.dart';
 
 // Error examples
 import '../screens/errors/basic_error_example.dart';
@@ -524,6 +525,7 @@ class ChatRoute extends GoRouteData with $ChatRoute {
     TypedGoRoute<OverlayAnimationsRoute>(path: 'overlay-animations'),
     TypedGoRoute<KeyBasedSelectionRoute>(path: 'key-based-selection'),
     TypedGoRoute<InitialSelectionRoute>(path: 'initial-selection'),
+    TypedGoRoute<RealisticSearchExamplesRoute>(path: 'realistic-examples'),
   ],
 )
 class SearchRoute extends GoRouteData with $SearchRoute {
@@ -662,6 +664,20 @@ class InitialSelectionRoute extends GoRouteData with $InitialSelectionRoute {
       context: context,
       state: state,
       child: const InitialSelectionScreen(),
+    );
+  }
+}
+
+class RealisticSearchExamplesRoute extends GoRouteData
+    with $RealisticSearchExamplesRoute {
+  const RealisticSearchExamplesRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const RealisticSearchExamplesScreen(),
     );
   }
 }
