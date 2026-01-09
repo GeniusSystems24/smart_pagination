@@ -127,6 +127,7 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
                 debounceDelay: Duration(seconds: 1), // Wait 1 second after typing stops
                 minSearchLength: 0, // Search on any input including empty
                 searchOnEmpty: true, // Fetch all data when search is empty
+                skipDebounceOnEmpty: true, // Skip debounce when text is cleared (instant)
                 clearOnClose: false,
                 autoFocus: false,
               ),
@@ -411,6 +412,12 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
               Icons.timer,
               'Debounced Search',
               'Waits 1 second after typing stops before searching',
+            ),
+            _buildFeatureItem(
+              context,
+              Icons.flash_on,
+              'Instant Clear',
+              'skipDebounceOnEmpty: true loads data instantly when cleared',
             ),
             _buildFeatureItem(
               context,

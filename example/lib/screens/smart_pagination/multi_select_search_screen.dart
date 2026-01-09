@@ -97,6 +97,7 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                 debounceDelay: Duration(milliseconds: 500),
                 minSearchLength: 0,
                 searchOnEmpty: true,
+                skipDebounceOnEmpty: true, // Instant search when cleared
               ),
               overlayConfig: const SmartSearchOverlayConfig(
                 maxHeight: 250,
@@ -351,6 +352,11 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                 icon: Icons.style,
                 title: 'Custom Chip Builder',
                 description: 'Customize selected item appearance',
+              ),
+              _FeatureItem(
+                icon: Icons.flash_on,
+                title: 'Instant Clear',
+                description: 'skipDebounceOnEmpty: true for instant results on clear',
               ),
             ],
           ),
