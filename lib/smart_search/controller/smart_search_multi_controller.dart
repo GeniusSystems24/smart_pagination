@@ -65,6 +65,11 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     if (_pendingKeys.isNotEmpty) {
       _cubitSubscription = _cubit.stream.listen(_onCubitStateChanged);
     }
+
+    // Fetch initial data if configured
+    if (_config.fetchOnInit && _config.searchOnEmpty) {
+      _performSearch('');
+    }
   }
 
   /// Helper to initialize selected keys from values or provided keys.

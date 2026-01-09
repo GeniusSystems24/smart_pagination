@@ -59,6 +59,7 @@ class SmartSearchConfig {
     this.minSearchLength = 0,
     this.searchOnEmpty = true,
     this.skipDebounceOnEmpty = true,
+    this.fetchOnInit = false,
     this.clearOnClose = true,
     this.autoFocus = false,
   });
@@ -78,6 +79,12 @@ class SmartSearchConfig {
   /// This is useful for showing all data immediately when the user clears the search.
   final bool skipDebounceOnEmpty;
 
+  /// Whether to fetch data immediately when the controller is created (default: false).
+  /// When true and [searchOnEmpty] is also true, the initial data will be fetched
+  /// as soon as the controller is initialized, without waiting for user interaction.
+  /// This is useful for pre-loading data before the overlay is shown.
+  final bool fetchOnInit;
+
   /// Whether to clear search text when overlay is closed.
   final bool clearOnClose;
 
@@ -89,6 +96,7 @@ class SmartSearchConfig {
     int? minSearchLength,
     bool? searchOnEmpty,
     bool? skipDebounceOnEmpty,
+    bool? fetchOnInit,
     bool? clearOnClose,
     bool? autoFocus,
   }) {
@@ -97,6 +105,7 @@ class SmartSearchConfig {
       minSearchLength: minSearchLength ?? this.minSearchLength,
       searchOnEmpty: searchOnEmpty ?? this.searchOnEmpty,
       skipDebounceOnEmpty: skipDebounceOnEmpty ?? this.skipDebounceOnEmpty,
+      fetchOnInit: fetchOnInit ?? this.fetchOnInit,
       clearOnClose: clearOnClose ?? this.clearOnClose,
       autoFocus: autoFocus ?? this.autoFocus,
     );

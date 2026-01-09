@@ -61,6 +61,11 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     if (_pendingKey != null) {
       _cubitSubscription = _cubit.stream.listen(_onCubitStateChanged);
     }
+
+    // Fetch initial data if configured
+    if (_config.fetchOnInit && _config.searchOnEmpty) {
+      _performSearch('');
+    }
   }
 
   final SmartPaginationCubit<T> _cubit;

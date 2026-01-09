@@ -421,6 +421,12 @@ class _SearchDropdownScreenState extends State<SearchDropdownScreen> {
             ),
             _buildFeatureItem(
               context,
+              Icons.download,
+              'Pre-load Data',
+              'fetchOnInit: true loads data when controller is created',
+            ),
+            _buildFeatureItem(
+              context,
               Icons.animation,
               'Smooth Animations',
               'Fade in/out animations for overlay',
