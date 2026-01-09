@@ -148,6 +148,7 @@ class _BottomSheetSearchScreenState extends State<BottomSheetSearchScreen> {
               displayMode: SearchDisplayMode.bottomSheet, // Bottom sheet mode
               searchConfig: const SmartSearchConfig(
                 debounceDelay: Duration(milliseconds: 500),
+                fetchOnInit: true, // Pre-load data when controller is created
               ),
               bottomSheetConfig: const SmartSearchBottomSheetConfig(
                 title: 'Select Products',
@@ -334,6 +335,13 @@ class _BottomSheetSearchScreenState extends State<BottomSheetSearchScreen> {
               Text('• showClearAllButton: Show clear button'),
               Text('• heightFactor: Height (0.0 to 1.0)'),
               Text('• showDragHandle: Show drag indicator'),
+              SizedBox(height: 16),
+              Text(
+                'SmartSearchConfig',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('• fetchOnInit: Pre-load data on creation'),
+              Text('• skipDebounceOnEmpty: Instant clear'),
             ],
           ),
         ),

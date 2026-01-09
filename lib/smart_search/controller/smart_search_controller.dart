@@ -48,10 +48,13 @@ class SmartSearchController<T, K> extends ChangeNotifier {
         _keyExtractor = keyExtractor,
         _selectedKeyLabelBuilder = selectedKeyLabelBuilder,
         _selectedItem = initialSelectedValue,
-        _selectedKey = selectedKey ?? (initialSelectedValue != null && keyExtractor != null
-            ? keyExtractor(initialSelectedValue)
-            : null),
-        _pendingKey = (selectedKey != null && initialSelectedValue == null ? selectedKey : null) as K? {
+        _selectedKey = selectedKey ??
+            (initialSelectedValue != null && keyExtractor != null
+                ? keyExtractor(initialSelectedValue)
+                : null),
+        _pendingKey = (selectedKey != null && initialSelectedValue == null
+            ? selectedKey
+            : null) as K? {
     _textController = TextEditingController();
     _focusNode = FocusNode();
     _textController.addListener(_onTextChanged);
@@ -60,6 +63,11 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     // Listen to cubit state changes to sync pending keys with loaded data
     if (_pendingKey != null) {
       _cubitSubscription = _cubit.stream.listen(_onCubitStateChanged);
+    }
+
+    // Fetch initial data if configured
+    if (_config.fetchOnInit && _config.searchOnEmpty) {
+      _performSearch('', force: true);
     }
   }
 
@@ -246,7 +254,14 @@ class SmartSearchController<T, K> extends ChangeNotifier {
       return;
     }
 
-    // Always use debounce timer before searching
+    // Skip debounce and search immediately when text is empty
+    if (text.isEmpty && _config.skipDebounceOnEmpty) {
+      _performSearch(text);
+      notifyListeners();
+      return;
+    }
+
+    // Use debounce timer before searching
     _debounceTimer = Timer(_config.debounceDelay, () {
       _performSearch(text);
     });
@@ -288,8 +303,8 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     }
   }
 
-  void _performSearch(String query) {
-    if (query == _lastSearchQuery) return;
+  void _performSearch(String query, {bool force = false}) {
+    if (query == _lastSearchQuery && !force) return;
 
     _lastSearchQuery = query;
     _isSearching = true;

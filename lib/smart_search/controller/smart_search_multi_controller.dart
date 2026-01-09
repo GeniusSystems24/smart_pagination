@@ -65,6 +65,11 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     if (_pendingKeys.isNotEmpty) {
       _cubitSubscription = _cubit.stream.listen(_onCubitStateChanged);
     }
+
+    // Fetch initial data if configured
+    if (_config.fetchOnInit && _config.searchOnEmpty) {
+      _performSearch('', force: true);
+    }
   }
 
   /// Helper to initialize selected keys from values or provided keys.
@@ -239,6 +244,13 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
       return;
     }
 
+    // Skip debounce and search immediately when text is empty
+    if (text.isEmpty && _config.skipDebounceOnEmpty) {
+      _performSearch(text);
+      notifyListeners();
+      return;
+    }
+
     _debounceTimer = Timer(_config.debounceDelay, () {
       _performSearch(text);
     });
@@ -282,8 +294,8 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     }
   }
 
-  void _performSearch(String query) {
-    if (query == _lastSearchQuery) return;
+  void _performSearch(String query, {bool force = false}) {
+    if (query == _lastSearchQuery && !force) return;
 
     _lastSearchQuery = query;
     _isSearching = true;

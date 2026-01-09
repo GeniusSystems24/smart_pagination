@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-01-09
+
+### Added
+
+- **SmartSearchConfig**: New `skipDebounceOnEmpty` parameter (default: `true`)
+  - When `true` and `searchOnEmpty` is also `true`, search triggers immediately when text is cleared
+  - Skips debounce delay for empty text to show all data instantly
+  - Useful for providing immediate feedback when user clears the search field
+
+- **SmartSearchConfig**: New `fetchOnInit` parameter (default: `false`)
+  - When `true` and `searchOnEmpty` is also `true`, data is fetched immediately when the controller is created
+  - Pre-loads data before the overlay is shown for instant display
+  - Useful for scenarios where you want data ready before user interaction
+
+---
+
 ## [3.1.0] - 2026-01-08
 
 ### Added
