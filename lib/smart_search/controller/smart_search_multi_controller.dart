@@ -239,6 +239,13 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
       return;
     }
 
+    // Skip debounce and search immediately when text is empty
+    if (text.isEmpty && _config.skipDebounceOnEmpty) {
+      _performSearch(text);
+      notifyListeners();
+      return;
+    }
+
     _debounceTimer = Timer(_config.debounceDelay, () {
       _performSearch(text);
     });

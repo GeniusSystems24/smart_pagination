@@ -5,7 +5,7 @@ description: >
   Column, Row, Custom), advanced error handling (6 pre-built error styles),
   smart preloading, real-time stream support, automatic retry with exponential
   backoff, SmartSearchBox with auto-positioning overlay dropdown, keyboard navigation, and production-ready UI components..
-version: 3.1.0
+version: 3.1.1
 homepage: https://github.com/GeniusSystems24/smart_pagination
 repository: https://github.com/GeniusSystems24/smart_pagination
 issue_tracker: https://github.com/GeniusSystems24/smart_pagination/issues

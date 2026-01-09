@@ -58,6 +58,7 @@ class SmartSearchConfig {
     this.debounceDelay = const Duration(seconds: 1),
     this.minSearchLength = 0,
     this.searchOnEmpty = true,
+    this.skipDebounceOnEmpty = true,
     this.clearOnClose = true,
     this.autoFocus = false,
   });
@@ -71,6 +72,12 @@ class SmartSearchConfig {
   /// Whether to trigger search when input is empty (default: true - fetch all data).
   final bool searchOnEmpty;
 
+  /// Whether to skip debounce delay when search text is empty (default: true).
+  /// When true and [searchOnEmpty] is also true, the search will be triggered
+  /// immediately when the text becomes empty, without waiting for the debounce delay.
+  /// This is useful for showing all data immediately when the user clears the search.
+  final bool skipDebounceOnEmpty;
+
   /// Whether to clear search text when overlay is closed.
   final bool clearOnClose;
 
@@ -81,6 +88,7 @@ class SmartSearchConfig {
     Duration? debounceDelay,
     int? minSearchLength,
     bool? searchOnEmpty,
+    bool? skipDebounceOnEmpty,
     bool? clearOnClose,
     bool? autoFocus,
   }) {
@@ -88,6 +96,7 @@ class SmartSearchConfig {
       debounceDelay: debounceDelay ?? this.debounceDelay,
       minSearchLength: minSearchLength ?? this.minSearchLength,
       searchOnEmpty: searchOnEmpty ?? this.searchOnEmpty,
+      skipDebounceOnEmpty: skipDebounceOnEmpty ?? this.skipDebounceOnEmpty,
       clearOnClose: clearOnClose ?? this.clearOnClose,
       autoFocus: autoFocus ?? this.autoFocus,
     );
