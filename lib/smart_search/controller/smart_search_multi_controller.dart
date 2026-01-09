@@ -68,7 +68,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
 
     // Fetch initial data if configured
     if (_config.fetchOnInit && _config.searchOnEmpty) {
-      _performSearch('');
+      _performSearch('', force: true);
     }
   }
 
@@ -294,8 +294,8 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     }
   }
 
-  void _performSearch(String query) {
-    if (query == _lastSearchQuery) return;
+  void _performSearch(String query, {bool force = false}) {
+    if (query == _lastSearchQuery && !force) return;
 
     _lastSearchQuery = query;
     _isSearching = true;

@@ -16,7 +16,8 @@ class MultiSelectSearchScreen extends StatefulWidget {
   const MultiSelectSearchScreen({super.key});
 
   @override
-  State<MultiSelectSearchScreen> createState() => _MultiSelectSearchScreenState();
+  State<MultiSelectSearchScreen> createState() =>
+      _MultiSelectSearchScreenState();
 }
 
 class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
@@ -62,7 +63,8 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
                         'Search and select multiple products. '
                         'Selected items appear below the search box.',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
@@ -106,7 +108,8 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
               showSelected: true,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
                   child: Text(product.name[0].toUpperCase()),
                 ),
                 title: Text(product.name),
@@ -156,7 +159,8 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
               maxSelections: 3,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.secondaryContainer,
                   child: Text(product.name[0].toUpperCase()),
                 ),
                 title: Text(product.name),
@@ -211,7 +215,8 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
               selectedItemsRunSpacing: 8,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.tertiaryContainer,
                   child: Text(product.name[0].toUpperCase()),
                 ),
                 title: Text(product.name),
@@ -356,7 +361,8 @@ class _MultiSelectSearchScreenState extends State<MultiSelectSearchScreen> {
               _FeatureItem(
                 icon: Icons.flash_on,
                 title: 'Instant Clear',
-                description: 'skipDebounceOnEmpty: true for instant results on clear',
+                description:
+                    'skipDebounceOnEmpty: true for instant results on clear',
               ),
             ],
           ),

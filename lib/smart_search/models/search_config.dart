@@ -59,7 +59,7 @@ class SmartSearchConfig {
     this.minSearchLength = 0,
     this.searchOnEmpty = true,
     this.skipDebounceOnEmpty = true,
-    this.fetchOnInit = false,
+    this.fetchOnInit = true,
     this.clearOnClose = true,
     this.autoFocus = false,
   });
