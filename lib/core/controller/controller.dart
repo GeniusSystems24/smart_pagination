@@ -39,31 +39,84 @@ abstract class IPaginationController<T> {
 
 /// Base interface for pagination controllers with scroll capabilities.
 abstract class IPaginationScrollController<T> extends IPaginationController<T> {
-  /// Attaches the scroll methods that will be used for scrolling operations.
-  void attachScrollMethods({
-    required PaginationScrollToItem scrollToItem,
-    required PaginationScrollToIndex scrollToIndex,
+  /// Animates to the item at the given [index] with smooth scrolling.
+  ///
+  /// Returns `true` if successful, `false` if no observer controller is attached
+  /// or the index is out of bounds.
+  Future<bool> animateToIndex(
+    int index, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
   });
 
-  /// Detaches the scroll methods when the widget is disposed.
-  void detachScrollMethods();
-
-  /// Scrolls to a specific item by Path.
-  Future<bool> scrollToItem(
-    String itemPath, {
-    Duration duration = const Duration(milliseconds: 250),
-    Curve curve = Curves.linearToEaseOut,
-    double alignment = 0,
-    double offset = 0,
+  /// Jumps immediately to the item at the given [index] without animation.
+  ///
+  /// Returns `true` if successful, `false` if no observer controller is attached
+  /// or the index is out of bounds.
+  bool jumpToIndex(
+    int index, {
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
   });
 
-  /// Scrolls to a specific index in the item list.
+  /// Scrolls to make the item at [index] visible, using animation if [animate] is true.
+  ///
+  /// This is a convenience method that calls either [animateToIndex] or [jumpToIndex].
   Future<bool> scrollToIndex(
     int index, {
-    Duration duration = const Duration(milliseconds: 250),
-    Curve curve = Curves.linearToEaseOut,
-    double alignment = 0,
-    double offset = 0,
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  });
+
+  /// Animates to the first item matching the given [test] function.
+  ///
+  /// Returns `true` if a matching item was found and scrolled to, or `false`
+  /// if no match was found or no controller is attached.
+  Future<bool> animateFirstWhere(
+    bool Function(T item) test, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  });
+
+  /// Jumps immediately to the first item matching the given [test] function.
+  ///
+  /// Returns `true` if a matching item was found and scrolled to, or `false`
+  /// if no match was found or no controller is attached.
+  bool jumpFirstWhere(
+    bool Function(T item) test, {
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  });
+
+  /// Scrolls to the first item matching [test], using animation if [animate] is true.
+  ///
+  /// This is a convenience method that calls either [animateFirstWhere] or [jumpFirstWhere].
+  Future<bool> scrollFirstWhere(
+    bool Function(T item) test, {
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
   });
 
   /// Disposes scroll resources.

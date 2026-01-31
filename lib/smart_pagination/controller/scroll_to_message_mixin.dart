@@ -1,6 +1,6 @@
 part of '../../pagination.dart';
 
-// Note: PaginationScrollToItem, PaginationScrollToIndex, and PaginationScrollToItemMixin
-// are defined in lib/core/core.dart to avoid duplication.
-// This file is kept for backward compatibility but the actual implementation
-// is in the core module.
+// Note: Scroll methods are now part of IPaginationScrollController and
+// SmartPaginationController, which delegate directly to SmartPaginationCubit's
+// built-in scroll navigation (animateToIndex, jumpToIndex, etc.).
+// This file is kept for backward compatibility.
