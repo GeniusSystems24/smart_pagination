@@ -1,14 +1,17 @@
 part of '../../pagination.dart';
 
-/// Strategy for handling automatic retry on error.
+/// Strategy for handling retry behavior after an error occurs.
 enum ErrorRetryStrategy {
-  /// Automatically retry on next fetch call (default behavior).
+  /// Automatically retry on next fetch call.
+  /// Use this when you want seamless retry behavior.
   automatic,
 
   /// Don't retry automatically. Requires explicit call to [retryAfterError].
+  /// Use this when you want user-controlled retry (e.g., retry button).
   manual,
 
-  /// Don't retry at all. The error state persists until [refreshPaginatedList] is called.
+  /// Don't retry at all until [refreshPaginatedList] is called (default behavior).
+  /// This is the safest option - errors won't cause repeated failed requests.
   none,
 }
 
@@ -25,7 +28,7 @@ class SmartPaginationCubit<T>
     RetryConfig? retryConfig,
     Duration? dataAge,
     SortOrderCollection<T>? orders,
-    this.errorRetryStrategy = ErrorRetryStrategy.automatic,
+    this.errorRetryStrategy = ErrorRetryStrategy.none,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -49,7 +52,13 @@ class SmartPaginationCubit<T>
   final Duration? _dataAge;
   SortOrderCollection<T>? _orders;
 
-  /// Strategy for handling automatic retry when an error occurs.
+  /// Strategy for handling retry behavior when an error occurs.
+  ///
+  /// Defaults to [ErrorRetryStrategy.none] which means errors persist until
+  /// [refreshPaginatedList] is called. This prevents automatic retry loops.
+  ///
+  /// Set to [ErrorRetryStrategy.automatic] to allow automatic retries, or
+  /// [ErrorRetryStrategy.manual] to require explicit [retryAfterError] calls.
   final ErrorRetryStrategy errorRetryStrategy;
 
   @override

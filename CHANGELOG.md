@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2026-02-03
+
+### Changed
+
+- **ErrorRetryStrategy**: Changed default from `automatic` to `none`
+  - Errors no longer trigger automatic retries on the next `fetchPaginatedList()` call
+  - This prevents unwanted retry loops when API calls fail
+  - Use `ErrorRetryStrategy.automatic` explicitly if you want the old behavior
+  - Use `retryAfterError()` for explicit retry control, or `refreshPaginatedList()` to reset
+
+### Notes
+
+- **hasReachedEnd**: Already correctly set to `true` when returned items < pageSize
+- **Page increment**: Page number only increments after successful fetch (existing behavior)
+
+---
+
 ## [3.1.1] - 2026-01-09
 
 ### Added
