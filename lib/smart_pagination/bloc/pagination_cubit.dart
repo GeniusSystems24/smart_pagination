@@ -29,6 +29,7 @@ class SmartPaginationCubit<T>
     Duration? dataAge,
     SortOrderCollection<T>? orders,
     this.errorRetryStrategy = ErrorRetryStrategy.none,
+    Stream<bool>? connectivityStream,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -40,7 +41,12 @@ class SmartPaginationCubit<T>
        _orders = orders,
        initialRequest = request,
        _currentRequest = request,
-       super(SmartPaginationInitial<T>());
+       super(SmartPaginationInitial<T>()) {
+    // Listen to connectivity changes for auto-retry on network errors
+    if (connectivityStream != null) {
+      _connectivitySubscription = connectivityStream.listen(_onConnectivityChanged);
+    }
+  }
 
   final PaginationProvider<T> _provider;
   final ListBuilder<T>? _listBuilder;
@@ -68,6 +74,7 @@ class SmartPaginationCubit<T>
   PaginationMeta? _currentMeta;
   final List<List<T>> _pages = <List<T>>[];
   StreamSubscription<List<T>>? _streamSubscription;
+  StreamSubscription<bool>? _connectivitySubscription;
   int _fetchToken = 0;
   DateTime? _lastFetchTime;
 
@@ -77,6 +84,10 @@ class SmartPaginationCubit<T>
   /// Flag to track if the last fetch resulted in an error.
   /// Used by [errorRetryStrategy] to prevent automatic retries.
   bool _lastFetchWasError = false;
+
+  /// Flag to track if the last error was a network-related error.
+  /// Used for auto-retry when connectivity is restored.
+  bool _lastErrorWasNetwork = false;
 
   /// The last error that occurred during fetch.
   Exception? _lastError;
@@ -92,6 +103,10 @@ class SmartPaginationCubit<T>
 
   /// Returns the last error that occurred, or null if no error.
   Exception? get lastError => _lastError;
+
+  /// Returns true if the last error was network-related.
+  /// Use this to show appropriate UI (e.g., "No internet connection").
+  bool get isNetworkError => _lastErrorWasNetwork;
 
   /// Returns the configured data age duration.
   Duration? get dataAge => _dataAge;
@@ -414,6 +429,7 @@ class SmartPaginationCubit<T>
 
     // Clear error state on refresh
     _lastFetchWasError = false;
+    _lastErrorWasNetwork = false;
     _lastError = null;
 
     final request = _buildRequest(
@@ -443,6 +459,7 @@ class SmartPaginationCubit<T>
 
     _logger.d('Retrying after error...');
     _lastFetchWasError = false;
+    _lastErrorWasNetwork = false;
     _lastError = null;
 
     // Determine if this was an initial load or load more
@@ -465,11 +482,42 @@ class SmartPaginationCubit<T>
   /// This is useful when you want to dismiss the error UI without triggering a retry.
   void clearError() {
     _lastFetchWasError = false;
+    _lastErrorWasNetwork = false;
     _lastError = null;
 
     final currentState = state;
     if (currentState is SmartPaginationLoaded<T> && currentState.loadMoreError != null) {
       emit(currentState.copyWith(loadMoreError: null));
+    }
+  }
+
+  /// Called when connectivity status changes.
+  /// Automatically retries if there was a pending network error.
+  void _onConnectivityChanged(bool isConnected) {
+    if (isConnected && _lastFetchWasError && _lastErrorWasNetwork) {
+      _logger.d('Connectivity restored, retrying after network error...');
+      retryAfterError();
+    }
+  }
+
+  /// Manually notify the cubit that connectivity has been restored.
+  ///
+  /// Call this method when you detect that internet connection is back
+  /// and want to retry the last failed network request.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Using connectivity_plus package
+  /// Connectivity().onConnectivityChanged.listen((result) {
+  ///   if (result != ConnectivityResult.none) {
+  ///     cubit.onConnectivityRestored();
+  ///   }
+  /// });
+  /// ```
+  void onConnectivityRestored() {
+    if (_lastFetchWasError && _lastErrorWasNetwork) {
+      _logger.d('Connectivity restored (manual), retrying after network error...');
+      retryAfterError();
     }
   }
 
@@ -638,6 +686,12 @@ class SmartPaginationCubit<T>
       _lastFetchWasError = true;
       _lastError = error;
 
+      // Check if this is a network-related error
+      _lastErrorWasNetwork = _isNetworkError(error);
+      if (_lastErrorWasNetwork) {
+        _logger.d('Network error detected, will auto-retry when connectivity is restored');
+      }
+
       // Handle load more errors differently
       if (!reset && state is SmartPaginationLoaded<T>) {
         final currentState = state as SmartPaginationLoaded<T>;
@@ -661,6 +715,12 @@ class SmartPaginationCubit<T>
       // Set error state
       _lastFetchWasError = true;
       _lastError = exception;
+
+      // Check if this is a network-related error (based on error message)
+      _lastErrorWasNetwork = _isNetworkErrorMessage(error.toString());
+      if (_lastErrorWasNetwork) {
+        _logger.d('Network error detected, will auto-retry when connectivity is restored');
+      }
 
       // Handle load more errors differently
       if (!reset && state is SmartPaginationLoaded<T>) {
@@ -697,6 +757,41 @@ class SmartPaginationCubit<T>
       return items.isNotEmpty;
     }
     return items.length >= pageSize;
+  }
+
+  /// Checks if the exception is a network-related error.
+  bool _isNetworkError(Exception error) {
+    // Check for pagination-specific network exceptions
+    if (error is PaginationNetworkException) return true;
+    if (error is PaginationTimeoutException) return true;
+    if (error is PaginationRetryExhaustedException) {
+      // Check if the original error was network-related
+      final original = error.originalError;
+      if (original is PaginationNetworkException) return true;
+      if (original is PaginationTimeoutException) return true;
+    }
+
+    // Check error message for common network error patterns
+    return _isNetworkErrorMessage(error.toString());
+  }
+
+  /// Checks if the error message indicates a network error.
+  bool _isNetworkErrorMessage(String message) {
+    final lowerMessage = message.toLowerCase();
+    return lowerMessage.contains('socketexception') ||
+        lowerMessage.contains('connection refused') ||
+        lowerMessage.contains('connection reset') ||
+        lowerMessage.contains('connection closed') ||
+        lowerMessage.contains('connection timed out') ||
+        lowerMessage.contains('network is unreachable') ||
+        lowerMessage.contains('no internet') ||
+        lowerMessage.contains('no address associated') ||
+        lowerMessage.contains('failed host lookup') ||
+        lowerMessage.contains('handshake') ||
+        lowerMessage.contains('certificate') ||
+        lowerMessage.contains('errno = 7') || // Android: no internet
+        lowerMessage.contains('errno = 101') || // Linux: network unreachable
+        lowerMessage.contains('clientexception'); // http package
   }
 
   void _attachStream(Stream<List<T>> stream, PaginationRequest request) {
@@ -766,6 +861,8 @@ class SmartPaginationCubit<T>
     cancelOngoingRequest();
     _streamSubscription?.cancel();
     _streamSubscription = null;
+    _connectivitySubscription?.cancel();
+    _connectivitySubscription = null;
   }
 
   @override
