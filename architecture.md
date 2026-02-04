@@ -60,6 +60,16 @@ graph TB
         PP --- MPP
     end
 
+    subgraph Connectivity["Connectivity Layer"]
+        CS["connectivityStream"]
+        NED["Network Error Detection"]
+        OCR["onConnectivityRestored()"]
+
+        CS -->|"monitors"| SPC
+        NED -->|"detects"| SPC
+        OCR -->|"manual trigger"| SPC
+    end
+
     subgraph Listeners["Change Listeners"]
         RL["RefreshedChangeListener"]
         FL["FilterChangeListener&lt;T&gt;"]
@@ -99,6 +109,7 @@ graph TB
     style Data fill:#FFF3E0,stroke:#E65100,color:#000
     style Listeners fill:#FCE4EC,stroke:#C62828,color:#000
     style ViewTypes fill:#F1F8E9,stroke:#558B2F,color:#000
+    style Connectivity fill:#E0F7FA,stroke:#00838F,color:#000
 ```
 
 ---
@@ -290,6 +301,114 @@ sequenceDiagram
     C->>C: _gridObserverController = null
 ```
 
+### 2.4 Connectivity Auto-Retry Flow
+
+```mermaid
+sequenceDiagram
+    participant CS as Connectivity Stream
+    participant C as SmartPaginationCubit
+    participant RH as RetryHandler
+    participant P as PaginationProvider
+    participant API as External API
+    participant W as SmartPagination Widget
+
+    Note over CS,W: Setup: Cubit with connectivity monitoring
+    CS-->>C: connectivityStream provided in constructor
+    C->>C: _connectivitySubscription = stream.listen()
+
+    Note over CS,W: Scenario: Network error during fetch
+    W->>C: fetchPaginatedList()
+    C->>RH: execute(fetch, retryConfig)
+    RH->>P: provider(request)
+    P->>API: HTTP GET /items?page=1
+
+    API-->>P: SocketException / Connection refused
+    P-->>RH: throw Exception
+    RH->>C: PaginationNetworkException
+
+    C->>C: _isNetworkError(error) → true
+    C->>C: _lastErrorWasNetwork = true
+    C->>C: _lastFetchWasError = true
+    C->>C: emit(SmartPaginationError)
+    C-->>W: Display error UI
+
+    Note over CS,W: Later: Internet connection restored
+    CS->>C: _onConnectivityChanged(isConnected: true)
+    C->>C: Check: _lastFetchWasError && _lastErrorWasNetwork
+
+    alt Both flags true
+        C->>C: _logger.d("Connectivity restored, retrying...")
+        C->>C: retryAfterError()
+        C->>C: _lastFetchWasError = false
+        C->>C: _lastErrorWasNetwork = false
+        C->>RH: execute(fetch, retryConfig)
+        RH->>P: provider(request)
+        P->>API: HTTP GET /items?page=1
+        API-->>P: List<T> items (Success!)
+        P-->>RH: items
+        RH-->>C: items
+        C->>C: emit(SmartPaginationLoaded)
+        C-->>W: Display items
+    else Flags not set
+        C->>C: No action (wasn't a network error)
+    end
+
+    Note over CS,W: Alternative: Manual connectivity notification
+    W->>C: onConnectivityRestored()
+    C->>C: Check: _lastFetchWasError && _lastErrorWasNetwork
+
+    alt Network error pending
+        C->>C: _logger.d("Connectivity restored (manual), retrying...")
+        C->>C: retryAfterError()
+    else No network error
+        C->>C: No action needed
+    end
+
+    Note over CS,W: Cleanup on dispose
+    C->>C: dispose()
+    C->>C: _connectivitySubscription?.cancel()
+```
+
+### 2.5 Network Error Detection
+
+The cubit detects network errors using pattern matching on exception types and error messages:
+
+```mermaid
+flowchart TD
+    A[Exception caught] --> B{Is PaginationNetworkException?}
+    B -->|Yes| Z[Return true - Network Error]
+    B -->|No| C{Is PaginationTimeoutException?}
+    C -->|Yes| Z
+    C -->|No| D{Is SocketException?}
+    D -->|Yes| Z
+    D -->|No| E{Check error message patterns}
+
+    E --> F{Contains 'SocketException'?}
+    F -->|Yes| Z
+    F -->|No| G{Contains 'Connection refused'?}
+    G -->|Yes| Z
+    G -->|No| H{Contains 'Connection reset'?}
+    H -->|Yes| Z
+    H -->|No| I{Contains 'No route to host'?}
+    I -->|Yes| Z
+    I -->|No| J{Contains 'Network is unreachable'?}
+    J -->|Yes| Z
+    J -->|No| K{Contains 'Connection timed out'?}
+    K -->|Yes| Z
+    K -->|No| L{Contains 'Failed host lookup'?}
+    L -->|Yes| Z
+    L -->|No| M{Contains 'host lookup'?}
+    M -->|Yes| Z
+    M -->|No| N{Contains 'ENETUNREACH'?}
+    N -->|Yes| Z
+    N -->|No| O{Contains 'ECONNREFUSED'?}
+    O -->|Yes| Z
+    O -->|No| P[Return false - Not Network Error]
+
+    style Z fill:#FFCDD2,stroke:#B71C1C
+    style P fill:#C8E6C9,stroke:#1B5E20
+```
+
 ---
 
 ## 3. State Diagram
@@ -434,12 +553,15 @@ stateDiagram-v2
 
 ### 3.3 Error Retry Strategy State Machine
 
+> **Note:** Default `ErrorRetryStrategy` is `none` (v3.1.2+). Errors do NOT auto-retry unless explicitly configured.
+
 ```mermaid
 stateDiagram-v2
     [*] --> Normal: Cubit initialized
 
     Normal: No errors
     Normal: _lastFetchWasError = false
+    Normal: _lastErrorWasNetwork = false
 
     Normal --> FetchAttempt: fetchPaginatedList()
 
@@ -459,24 +581,110 @@ stateDiagram-v2
     FetchAttempt --> ErrorState: All retries exhausted\n→ emit Error or Loaded(loadMoreError)
 
     state ErrorState {
-        [*] --> CheckStrategy
+        [*] --> CheckErrorType
 
-        CheckStrategy --> AutoRetry: strategy = automatic
-        CheckStrategy --> ManualRetry: strategy = manual
-        CheckStrategy --> NoRetry: strategy = none
+        CheckErrorType --> NetworkError: _isNetworkError(e) = true
+        CheckErrorType --> NonNetworkError: _isNetworkError(e) = false
 
-        AutoRetry: Next fetchPaginatedList()\nwill auto-clear error\nand retry
+        state NetworkError {
+            [*] --> SetNetworkFlags
+            SetNetworkFlags: _lastErrorWasNetwork = true
+            SetNetworkFlags: _lastFetchWasError = true
+            SetNetworkFlags --> CheckStrategy_N
+        }
 
-        ManualRetry: Blocked until\nretryAfterError() called
+        state NonNetworkError {
+            [*] --> SetErrorFlag
+            SetErrorFlag: _lastErrorWasNetwork = false
+            SetErrorFlag: _lastFetchWasError = true
+            SetErrorFlag --> CheckStrategy_NN
+        }
 
-        NoRetry: Blocked until\nrefreshPaginatedList() called
+        state CheckStrategy_N {
+            [*] --> NoRetry_N: strategy = none (DEFAULT)
+            [*] --> ManualRetry_N: strategy = manual
+            [*] --> AutoRetry_N: strategy = automatic
+
+            NoRetry_N: Blocked until\nrefreshPaginatedList()\nor connectivity restored
+            ManualRetry_N: Blocked until\nretryAfterError()
+            AutoRetry_N: Next fetchPaginatedList()\nwill auto-retry
+        }
+
+        state CheckStrategy_NN {
+            [*] --> NoRetry_NN: strategy = none (DEFAULT)
+            [*] --> ManualRetry_NN: strategy = manual
+            [*] --> AutoRetry_NN: strategy = automatic
+
+            NoRetry_NN: Blocked until\nrefreshPaginatedList()
+            ManualRetry_NN: Blocked until\nretryAfterError()
+            AutoRetry_NN: Next fetchPaginatedList()\nwill auto-retry
+        }
     }
 
     ErrorState --> Normal: retryAfterError()\n/ refreshPaginatedList()
     ErrorState --> FetchAttempt: fetchPaginatedList()\n[strategy=automatic]
+    ErrorState --> Normal: Connectivity restored\n[network error + stream]
 ```
 
-### 3.4 PaginateApiView Builder Type Decision
+### 3.4 Connectivity Auto-Retry State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Monitoring: connectivityStream provided
+
+    state Monitoring {
+        [*] --> Connected
+        Connected: Internet available
+        Connected: Listening for changes...
+
+        Connected --> Disconnected: isConnected = false
+
+        Disconnected: No internet
+        Disconnected: Waiting for connection...
+
+        Disconnected --> Connected: isConnected = true
+    }
+
+    state ErrorTracking {
+        [*] --> NoError
+
+        NoError: _lastFetchWasError = false
+        NoError: _lastErrorWasNetwork = false
+
+        NoError --> NetworkErrorPending: Network fetch failed
+
+        NetworkErrorPending: _lastFetchWasError = true
+        NetworkErrorPending: _lastErrorWasNetwork = true
+        NetworkErrorPending: Waiting for connectivity...
+
+        NoError --> OtherErrorPending: Non-network fetch failed
+
+        OtherErrorPending: _lastFetchWasError = true
+        OtherErrorPending: _lastErrorWasNetwork = false
+        OtherErrorPending: Manual retry needed
+
+        NetworkErrorPending --> NoError: retryAfterError()\n/ refreshPaginatedList()
+        OtherErrorPending --> NoError: retryAfterError()\n/ refreshPaginatedList()
+    }
+
+    state AutoRetryDecision {
+        [*] --> CheckFlags: Connectivity restored event
+
+        CheckFlags --> TriggerRetry: _lastFetchWasError\n&& _lastErrorWasNetwork
+        CheckFlags --> NoAction: flags not both true
+
+        TriggerRetry: Call retryAfterError()
+        TriggerRetry: Clear error flags
+
+        NoAction: Skip retry
+        NoAction: Wasn't a network error
+    }
+
+    note right of Monitoring: Stream-based monitoring\nvia connectivityStream parameter
+    note right of AutoRetryDecision: Also triggered by\nonConnectivityRestored()
+```
+
+### 3.5 PaginateApiView Builder Type Decision
 
 ```mermaid
 stateDiagram-v2
