@@ -167,7 +167,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
 
   /// Whether max selections has been reached.
   bool get isMaxSelectionsReached =>
-      _maxSelections != null && _selectedItems.length >= _maxSelections!;
+      _maxSelections != null && _selectedItems.length >= _maxSelections;
 
   /// Sets the selection callback.
   set onSelected(void Function(List<T> items, List<K> keys)? callback) {
@@ -192,7 +192,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
   /// Returns the display label for a specific key.
   String getKeyLabel(K key) {
     if (_selectedKeyLabelBuilder != null) {
-      return _selectedKeyLabelBuilder!(key);
+      return _selectedKeyLabelBuilder(key);
     }
     return key.toString();
   }
@@ -274,7 +274,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
 
       // Try to find items matching the pending keys
       for (final item in state.items) {
-        final key = _keyExtractor!(item);
+        final key = _keyExtractor(item);
         if (_pendingKeys.contains(key)) {
           _selectedItems.add(item);
           _pendingKeys.remove(key);
@@ -441,7 +441,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
   /// Checks if an item is selected.
   bool isItemSelected(T item) {
     if (_keyExtractor != null) {
-      final key = _keyExtractor!(item);
+      final key = _keyExtractor(item);
       return _selectedKeys.contains(key);
     }
     return _selectedItems.contains(item);
@@ -480,7 +480,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     if (isMaxSelectionsReached) return;
 
     if (_keyExtractor != null) {
-      final key = _keyExtractor!(item);
+      final key = _keyExtractor(item);
       if (_selectedKeys.contains(key)) return;
 
       _selectedItems.add(item);
@@ -513,7 +513,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     final state = _cubit.state;
     if (state is SmartPaginationLoaded<T>) {
       for (final item in state.items) {
-        if (_keyExtractor!(item) == key) {
+        if (_keyExtractor(item) == key) {
           addItem(item);
           return;
         }
@@ -536,7 +536,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     bool removed = false;
 
     if (_keyExtractor != null) {
-      final key = _keyExtractor!(item);
+      final key = _keyExtractor(item);
       if (_selectedKeys.remove(key)) {
         _pendingKeys.remove(key);
         removed = true;
@@ -565,7 +565,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     _pendingKeys.remove(key);
 
     // Also remove from items if present
-    _selectedItems.removeWhere((item) => _keyExtractor!(item) == key);
+    _selectedItems.removeWhere((item) => _keyExtractor(item) == key);
 
     _notifySelectionChanged();
     notifyListeners();
@@ -605,13 +605,13 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     _pendingKeys.clear();
 
     final itemsToAdd = _maxSelections != null
-        ? items.take(_maxSelections!)
+        ? items.take(_maxSelections)
         : items;
 
     for (final item in itemsToAdd) {
       _selectedItems.add(item);
       if (_keyExtractor != null) {
-        _selectedKeys.add(_keyExtractor!(item));
+        _selectedKeys.add(_keyExtractor(item));
       }
     }
 
@@ -631,7 +631,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     _pendingKeys.clear();
 
     final keysToAdd = _maxSelections != null
-        ? keys.take(_maxSelections!)
+        ? keys.take(_maxSelections)
         : keys;
 
     for (final key in keysToAdd) {
@@ -642,7 +642,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
       if (state is SmartPaginationLoaded<T>) {
         bool found = false;
         for (final item in state.items) {
-          if (_keyExtractor!(item) == key) {
+          if (_keyExtractor(item) == key) {
             _selectedItems.add(item);
             found = true;
             break;

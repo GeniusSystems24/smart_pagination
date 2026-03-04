@@ -96,6 +96,9 @@ class SmartPagination<T> extends StatefulWidget {
   /// Default is 3 - starts loading when user is 3 items away from the end
   final int invisibleItemsThreshold;
 
+  /// Keep the last centered item anchored when list items are inserted.
+  final bool preserveCenteredItemOnInsert;
+
   SmartPagination.withProvider({
     super.key,
     required PaginationRequest request,
@@ -140,6 +143,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreNoMoreItemsBuilder,
     // Performance Options
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
     OnInsertionCallback<T>? onInsertionCallback,
     VoidCallback? onClear,
     Logger? logger,
@@ -207,6 +211,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreNoMoreItemsBuilder,
     // Performance Options
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : internalCubit = false,
@@ -253,6 +258,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -316,6 +322,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -384,6 +391,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.gridView,
        separator = separator ?? SizedBox(height: spacing),
        staggeredAxisDirection = null,
@@ -447,6 +455,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.gridView,
        separator = separator ?? SizedBox(height: spacing),
        staggeredAxisDirection = null,
@@ -498,6 +507,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreNoMoreItemsBuilder,
     // Performance Options
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
     // Cubit params
@@ -573,6 +583,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreNoMoreItemsBuilder,
     // Performance Options
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : itemBuilderType = PaginateBuilderType.listView,
@@ -633,6 +644,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreNoMoreItemsBuilder,
     // Performance Options
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
     // Cubit params
@@ -708,6 +720,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreNoMoreItemsBuilder,
     // Performance Options
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : itemBuilderType = PaginateBuilderType.reorderableListView,
@@ -774,6 +787,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.pageView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -841,6 +855,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.pageView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -913,6 +928,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.staggeredGridView,
        gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: crossAxisCount,
@@ -986,6 +1002,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.staggeredGridView,
        gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: crossAxisCount,
@@ -1044,6 +1061,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -1107,6 +1125,7 @@ class SmartPagination<T> extends StatefulWidget {
     this.loadMoreErrorBuilder,
     this.loadMoreNoMoreItemsBuilder,
     this.invisibleItemsThreshold = 3,
+    this.preserveCenteredItemOnInsert = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -1150,7 +1169,7 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
             errorWidget = widget.firstPageErrorBuilder!(
               context,
               state.error,
-              () => widget.cubit.fetchPaginatedList(), // Retry callback
+              widget.cubit.retryAfterError, // Retry callback
             );
           } else if (widget.onError != null) {
             errorWidget = widget.onError!(state.error);
@@ -1211,7 +1230,8 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
             loadMoreNoMoreItemsBuilder: widget.loadMoreNoMoreItemsBuilder,
             // Performance
             invisibleItemsThreshold: widget.invisibleItemsThreshold,
-            retryLoadMore: widget.cubit.fetchPaginatedList,
+            retryLoadMore: widget.cubit.retryAfterError,
+            preserveCenteredItemOnInsert: widget.preserveCenteredItemOnInsert,
           );
 
           if (widget.listeners != null && widget.listeners!.isNotEmpty) {
@@ -1274,3 +1294,4 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
     super.initState();
   }
 }
+

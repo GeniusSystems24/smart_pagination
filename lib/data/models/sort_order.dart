@@ -93,12 +93,12 @@ class SortOrder<T> {
   /// Compares two items according to this sort order.
   int compare(T a, T b) {
     if (_comparator != null) {
-      return _comparator!(a, b);
+      return _comparator(a, b);
     }
 
     if (_fieldSelector != null) {
-      final valueA = _fieldSelector!(a);
-      final valueB = _fieldSelector!(b);
+      final valueA = _fieldSelector(a);
+      final valueB = _fieldSelector(b);
       final result = valueA.compareTo(valueB);
       return _direction == SortDirection.descending ? -result : result;
     }
@@ -109,7 +109,7 @@ class SortOrder<T> {
   /// Creates a reversed version of this sort order.
   SortOrder<T> get reversed {
     if (_comparator != null) {
-      final comparator = _comparator!;
+      final comparator = _comparator;
       return SortOrder<T>(
         id: id,
         label: label,
@@ -121,7 +121,7 @@ class SortOrder<T> {
       return SortOrder<T>.byField(
         id: id,
         label: label,
-        fieldSelector: _fieldSelector!,
+        fieldSelector: _fieldSelector,
         direction: _direction == SortDirection.ascending
             ? SortDirection.descending
             : SortDirection.ascending,

@@ -1,20 +1,5 @@
 part of '../../pagination.dart';
 
-/// Strategy for handling retry behavior after an error occurs.
-enum ErrorRetryStrategy {
-  /// Automatically retry on next fetch call.
-  /// Use this when you want seamless retry behavior.
-  automatic,
-
-  /// Don't retry automatically. Requires explicit call to [retryAfterError].
-  /// Use this when you want user-controlled retry (e.g., retry button).
-  manual,
-
-  /// Don't retry at all until [refreshPaginatedList] is called (default behavior).
-  /// This is the safest option - errors won't cause repeated failed requests.
-  none,
-}
-
 class SmartPaginationCubit<T>
     extends IPaginationListCubit<T, SmartPaginationState<T>> {
   SmartPaginationCubit({
@@ -28,8 +13,6 @@ class SmartPaginationCubit<T>
     RetryConfig? retryConfig,
     Duration? dataAge,
     SortOrderCollection<T>? orders,
-    this.errorRetryStrategy = ErrorRetryStrategy.none,
-    Stream<bool>? connectivityStream,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -41,12 +24,7 @@ class SmartPaginationCubit<T>
        _orders = orders,
        initialRequest = request,
        _currentRequest = request,
-       super(SmartPaginationInitial<T>()) {
-    // Listen to connectivity changes for auto-retry on network errors
-    if (connectivityStream != null) {
-      _connectivitySubscription = connectivityStream.listen(_onConnectivityChanged);
-    }
-  }
+       super(SmartPaginationInitial<T>());
 
   final PaginationProvider<T> _provider;
   final ListBuilder<T>? _listBuilder;
@@ -58,15 +36,6 @@ class SmartPaginationCubit<T>
   final Duration? _dataAge;
   SortOrderCollection<T>? _orders;
 
-  /// Strategy for handling retry behavior when an error occurs.
-  ///
-  /// Defaults to [ErrorRetryStrategy.none] which means errors persist until
-  /// [refreshPaginatedList] is called. This prevents automatic retry loops.
-  ///
-  /// Set to [ErrorRetryStrategy.automatic] to allow automatic retries, or
-  /// [ErrorRetryStrategy.manual] to require explicit [retryAfterError] calls.
-  final ErrorRetryStrategy errorRetryStrategy;
-
   @override
   final PaginationRequest initialRequest;
 
@@ -74,7 +43,6 @@ class SmartPaginationCubit<T>
   PaginationMeta? _currentMeta;
   final List<List<T>> _pages = <List<T>>[];
   StreamSubscription<List<T>>? _streamSubscription;
-  StreamSubscription<bool>? _connectivitySubscription;
   int _fetchToken = 0;
   DateTime? _lastFetchTime;
 
@@ -82,11 +50,10 @@ class SmartPaginationCubit<T>
   bool _isFetching = false;
 
   /// Flag to track if the last fetch resulted in an error.
-  /// Used by [errorRetryStrategy] to prevent automatic retries.
   bool _lastFetchWasError = false;
 
   /// Flag to track if the last error was a network-related error.
-  /// Used for auto-retry when connectivity is restored.
+  /// Used for UI hints only.
   bool _lastErrorWasNetwork = false;
 
   /// The last error that occurred during fetch.
@@ -275,7 +242,11 @@ class SmartPaginationCubit<T>
   ///
   /// Returns the index where [item] should be inserted to maintain sorted order.
   /// If no sorting is active, returns the [fallbackIndex].
-  int _findSortedInsertIndex(List<T> sortedList, T item, {int fallbackIndex = 0}) {
+  int _findSortedInsertIndex(
+    List<T> sortedList,
+    T item, {
+    int fallbackIndex = 0,
+  }) {
     final order = _orders?.activeOrder;
     if (order == null) {
       return fallbackIndex.clamp(0, sortedList.length);
@@ -348,7 +319,7 @@ class SmartPaginationCubit<T>
   /// If no data has been fetched yet, returns false.
   bool get isDataExpired {
     if (_dataAge == null || _lastFetchTime == null) return false;
-    return DateTime.now().difference(_lastFetchTime!) > _dataAge!;
+    return DateTime.now().difference(_lastFetchTime!) > _dataAge;
   }
 
   /// Checks if data has expired and resets the cubit if so.
@@ -387,7 +358,7 @@ class SmartPaginationCubit<T>
   /// Gets the current expiration DateTime based on lastFetchTime and dataAge.
   DateTime? _getDataExpiredAt() {
     if (_dataAge == null || _lastFetchTime == null) return null;
-    return _lastFetchTime!.add(_dataAge!);
+    return _lastFetchTime!.add(_dataAge);
   }
 
   bool get _hasReachedEnd => _currentMeta != null && !_currentMeta!.hasNext;
@@ -441,10 +412,6 @@ class SmartPaginationCubit<T>
   }
 
   /// Retries the last failed fetch operation.
-  ///
-  /// Use this method when [errorRetryStrategy] is set to [ErrorRetryStrategy.manual]
-  /// to explicitly retry after an error.
-  ///
   /// Example:
   /// ```dart
   /// if (cubit.hasError) {
@@ -453,11 +420,11 @@ class SmartPaginationCubit<T>
   /// ```
   void retryAfterError() {
     if (!_lastFetchWasError) {
-      _logger.d('retryAfterError called but there is no error to retry');
+      // _logger.d('retryAfterError called but there is no error to retry');
       return;
     }
 
-    _logger.d('Retrying after error...');
+    // _logger.d('Retrying after error...');
     _lastFetchWasError = false;
     _lastErrorWasNetwork = false;
     _lastError = null;
@@ -486,38 +453,9 @@ class SmartPaginationCubit<T>
     _lastError = null;
 
     final currentState = state;
-    if (currentState is SmartPaginationLoaded<T> && currentState.loadMoreError != null) {
+    if (currentState is SmartPaginationLoaded<T> &&
+        currentState.loadMoreError != null) {
       emit(currentState.copyWith(loadMoreError: null));
-    }
-  }
-
-  /// Called when connectivity status changes.
-  /// Automatically retries if there was a pending network error.
-  void _onConnectivityChanged(bool isConnected) {
-    if (isConnected && _lastFetchWasError && _lastErrorWasNetwork) {
-      _logger.d('Connectivity restored, retrying after network error...');
-      retryAfterError();
-    }
-  }
-
-  /// Manually notify the cubit that connectivity has been restored.
-  ///
-  /// Call this method when you detect that internet connection is back
-  /// and want to retry the last failed network request.
-  ///
-  /// Example:
-  /// ```dart
-  /// // Using connectivity_plus package
-  /// Connectivity().onConnectivityChanged.listen((result) {
-  ///   if (result != ConnectivityResult.none) {
-  ///     cubit.onConnectivityRestored();
-  ///   }
-  /// });
-  /// ```
-  void onConnectivityRestored() {
-    if (_lastFetchWasError && _lastErrorWasNetwork) {
-      _logger.d('Connectivity restored (manual), retrying after network error...');
-      retryAfterError();
     }
   }
 
@@ -525,27 +463,16 @@ class SmartPaginationCubit<T>
   void fetchPaginatedList({PaginationRequest? requestOverride, int? limit}) {
     // Prevent concurrent fetch operations
     if (_isFetching) {
-      _logger.d('Fetch already in progress, skipping duplicate request');
+      // _logger.d('Fetch already in progress, skipping duplicate request');
       return;
     }
 
-    // Check error retry strategy
+    // Block automatic retries after an error.
     if (_lastFetchWasError) {
-      switch (errorRetryStrategy) {
-        case ErrorRetryStrategy.automatic:
-          // Allow retry, clear the error flag
-          _lastFetchWasError = false;
-          _lastError = null;
-          break;
-        case ErrorRetryStrategy.manual:
-          // Don't retry automatically, require explicit retryAfterError() call
-          _logger.d('Error retry strategy is manual, skipping automatic retry. Call retryAfterError() to retry.');
-          return;
-        case ErrorRetryStrategy.none:
-          // Don't retry at all
-          _logger.d('Error retry strategy is none, skipping retry. Call refreshPaginatedList() to reset.');
-          return;
-      }
+      _logger.d(
+        'Last fetch failed; automatic retry is disabled. Call retryAfterError() to retry, or refreshPaginatedList() to reset.',
+      );
+      return;
     }
 
     // Check if data has expired and reset if necessary
@@ -592,16 +519,19 @@ class SmartPaginationCubit<T>
     try {
       // Fetch data based on provider type
       final pageItems = await switch (_provider) {
-        FuturePaginationProvider<T>(:final dataProvider) => _retryHandler != null
-            ? _retryHandler!.execute(
-                () => dataProvider(request),
-                onRetry: (attempt, error) {
-                  _logger.w('Retry attempt $attempt after error: $error');
-                },
-              )
-            : dataProvider(request),
-        StreamPaginationProvider<T> provider => provider.streamProvider(request).first,
-        MergedStreamPaginationProvider<T> provider => provider.getMergedStream(request).first,
+        FuturePaginationProvider<T>(:final dataProvider) =>
+          _retryHandler != null
+              ? _retryHandler.execute(
+                  () => dataProvider(request),
+                  onRetry: (attempt, error) {
+                    _logger.w('Retry attempt $attempt after error: $error');
+                  },
+                )
+              : dataProvider(request),
+        StreamPaginationProvider<T> provider =>
+          provider.streamProvider(request).first,
+        MergedStreamPaginationProvider<T> provider =>
+          provider.getMergedStream(request).first,
       };
 
       // Check if request was cancelled
@@ -659,7 +589,7 @@ class SmartPaginationCubit<T>
           loadMoreError: null, // Clear any previous error
           fetchedAt: _lastFetchTime,
           dataExpiredAt: _dataAge != null && _lastFetchTime != null
-              ? _lastFetchTime!.add(_dataAge!)
+              ? _lastFetchTime!.add(_dataAge)
               : null,
           activeOrderId: _orders?.activeOrderId,
         ),
@@ -668,10 +598,10 @@ class SmartPaginationCubit<T>
       // Attach stream if it's a stream provider and this is initial load
       if (reset) {
         if (_provider is StreamPaginationProvider<T>) {
-          final streamProvider = _provider as StreamPaginationProvider<T>;
+          final streamProvider = _provider;
           _attachStream(streamProvider.streamProvider(request), request);
         } else if (_provider is MergedStreamPaginationProvider<T>) {
-          final mergedProvider = _provider as MergedStreamPaginationProvider<T>;
+          final mergedProvider = _provider;
           _attachStream(mergedProvider.getMergedStream(request), request);
         }
       }
@@ -689,18 +619,15 @@ class SmartPaginationCubit<T>
       // Check if this is a network-related error
       _lastErrorWasNetwork = _isNetworkError(error);
       if (_lastErrorWasNetwork) {
-        _logger.d('Network error detected, will auto-retry when connectivity is restored');
+        _logger.d(
+          'Network error detected. Retry manually with retryAfterError() or refreshPaginatedList().',
+        );
       }
 
       // Handle load more errors differently
       if (!reset && state is SmartPaginationLoaded<T>) {
         final currentState = state as SmartPaginationLoaded<T>;
-        emit(
-          currentState.copyWith(
-            isLoadingMore: false,
-            loadMoreError: error,
-          ),
-        );
+        emit(currentState.copyWith(isLoadingMore: false, loadMoreError: error));
       } else {
         emit(SmartPaginationError<T>(error: error));
       }
@@ -719,17 +646,16 @@ class SmartPaginationCubit<T>
       // Check if this is a network-related error (based on error message)
       _lastErrorWasNetwork = _isNetworkErrorMessage(error.toString());
       if (_lastErrorWasNetwork) {
-        _logger.d('Network error detected, will auto-retry when connectivity is restored');
+        _logger.d(
+          'Network error detected. Retry manually with retryAfterError() or refreshPaginatedList().',
+        );
       }
 
       // Handle load more errors differently
       if (!reset && state is SmartPaginationLoaded<T>) {
         final currentState = state as SmartPaginationLoaded<T>;
         emit(
-          currentState.copyWith(
-            isLoadingMore: false,
-            loadMoreError: exception,
-          ),
+          currentState.copyWith(isLoadingMore: false, loadMoreError: exception),
         );
       } else {
         emit(SmartPaginationError<T>(error: exception));
@@ -820,15 +746,16 @@ class SmartPaginationCubit<T>
             loadMoreError: null,
             fetchedAt: _lastFetchTime,
             dataExpiredAt: _dataAge != null && _lastFetchTime != null
-                ? _lastFetchTime!.add(_dataAge!)
+                ? _lastFetchTime!.add(_dataAge)
                 : null,
             activeOrderId: _orders?.activeOrderId,
           ),
         );
       },
       onError: (error, stack) {
-        final exception =
-            error is Exception ? error : Exception(error.toString());
+        final exception = error is Exception
+            ? error
+            : Exception(error.toString());
         _logger.e(
           'Pagination stream failed',
           error: exception,
@@ -861,8 +788,6 @@ class SmartPaginationCubit<T>
     cancelOngoingRequest();
     _streamSubscription?.cancel();
     _streamSubscription = null;
-    _connectivitySubscription?.cancel();
-    _connectivitySubscription = null;
   }
 
   @override
@@ -873,7 +798,11 @@ class SmartPaginationCubit<T>
     final updated = List<T>.from(currentState.allItems);
 
     // Use sorted insertion if sorting is active, otherwise use the provided index
-    final insertIndex = _findSortedInsertIndex(updated, item, fallbackIndex: index);
+    final insertIndex = _findSortedInsertIndex(
+      updated,
+      item,
+      fallbackIndex: index,
+    );
     updated.insert(insertIndex, item);
     _onInsertionCallback?.call(updated);
 
@@ -903,7 +832,11 @@ class SmartPaginationCubit<T>
       if (order != null) {
         // Remove and re-insert at correct sorted position
         updated.removeAt(existingIndex);
-        final newIndex = _findSortedInsertIndex(updated, item, fallbackIndex: existingIndex);
+        final newIndex = _findSortedInsertIndex(
+          updated,
+          item,
+          fallbackIndex: existingIndex,
+        );
         updated.insert(newIndex, item);
       } else {
         // No sorting, just update in place
@@ -911,7 +844,11 @@ class SmartPaginationCubit<T>
       }
     } else {
       // New item - use sorted insertion if sorting is active
-      final insertIndex = _findSortedInsertIndex(updated, item, fallbackIndex: index);
+      final insertIndex = _findSortedInsertIndex(
+        updated,
+        item,
+        fallbackIndex: index,
+      );
       updated.insert(insertIndex, item);
     }
 
@@ -950,7 +887,8 @@ class SmartPaginationCubit<T>
     // Use efficient merge if sorting is active, otherwise use simple insertAll
     final updated = _orders?.activeOrder != null
         ? _insertAllSorted(currentItems, items)
-        : (List<T>.from(currentItems)..insertAll(index.clamp(0, currentItems.length), items));
+        : (List<T>.from(currentItems)
+            ..insertAll(index.clamp(0, currentItems.length), items));
 
     _onInsertionCallback?.call(updated);
 
@@ -1046,7 +984,9 @@ class SmartPaginationCubit<T>
 
   @override
   bool updateItemEmit(
-      bool Function(T item) matcher, T Function(T item) updater) {
+    bool Function(T item) matcher,
+    T Function(T item) updater,
+  ) {
     final currentState = state;
     if (currentState is! SmartPaginationLoaded<T>) return false;
 
@@ -1061,7 +1001,11 @@ class SmartPaginationCubit<T>
     final order = _orders?.activeOrder;
     if (order != null) {
       updated.removeAt(index);
-      final newIndex = _findSortedInsertIndex(updated, updatedItem, fallbackIndex: index);
+      final newIndex = _findSortedInsertIndex(
+        updated,
+        updatedItem,
+        fallbackIndex: index,
+      );
       updated.insert(newIndex, updatedItem);
     } else {
       updated[index] = updatedItem;
@@ -1084,7 +1028,9 @@ class SmartPaginationCubit<T>
 
   @override
   int updateWhereEmit(
-      bool Function(T item) matcher, T Function(T item) updater) {
+    bool Function(T item) matcher,
+    T Function(T item) updater,
+  ) {
     final currentState = state;
     if (currentState is! SmartPaginationLoaded<T>) return 0;
 
@@ -1185,7 +1131,9 @@ class SmartPaginationCubit<T>
           hasReachedEnd: true,
           lastUpdate: DateTime.now(),
           fetchedAt: _lastFetchTime,
-          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
+          dataExpiredAt: _dataAge != null
+              ? _lastFetchTime!.add(_dataAge)
+              : null,
         ),
       );
     } else {
@@ -1207,7 +1155,9 @@ class SmartPaginationCubit<T>
           isLoadingMore: false,
           loadMoreError: null,
           fetchedAt: _lastFetchTime,
-          dataExpiredAt: _dataAge != null ? _lastFetchTime!.add(_dataAge!) : null,
+          dataExpiredAt: _dataAge != null
+              ? _lastFetchTime!.add(_dataAge)
+              : null,
         ),
       );
     }
@@ -1220,6 +1170,12 @@ class SmartPaginationCubit<T>
 
   /// The attached grid observer controller for scroll navigation.
   GridObserverController? _gridObserverController;
+
+  /// Returns the attached list observer controller, if available.
+  ListObserverController? get listObserverController => _listObserverController;
+
+  /// Returns the attached grid observer controller, if available.
+  GridObserverController? get gridObserverController => _gridObserverController;
 
   /// Returns true if a list observer controller is attached.
   bool get hasListObserverController => _listObserverController != null;
@@ -1243,7 +1199,6 @@ class SmartPaginationCubit<T>
   /// ```
   void attachListObserverController(ListObserverController controller) {
     _listObserverController = controller;
-    _logger.d('ListObserverController attached');
   }
 
   /// Attaches a [GridObserverController] for scroll navigation.
@@ -1270,14 +1225,14 @@ class SmartPaginationCubit<T>
   /// Detaches the grid observer controller.
   void detachGridObserverController() {
     _gridObserverController = null;
-    _logger.d('GridObserverController detached');
+    // _logger.d('GridObserverController detached');
   }
 
   /// Detaches all observer controllers.
   void detachAllObserverControllers() {
     _listObserverController = null;
     _gridObserverController = null;
-    _logger.d('All observer controllers detached');
+    // _logger.d('All observer controllers detached');
   }
 
   /// Animates to the item at the given [index] with smooth scrolling.
@@ -1307,7 +1262,9 @@ class SmartPaginationCubit<T>
     // Validate index
     final items = currentItems;
     if (index < 0 || index >= items.length) {
-      _logger.w('animateToIndex: index $index out of bounds (0-${items.length - 1})');
+      _logger.w(
+        'animateToIndex: index $index out of bounds (0-${items.length - 1})',
+      );
       return false;
     }
 
@@ -1371,7 +1328,9 @@ class SmartPaginationCubit<T>
     // Validate index
     final items = currentItems;
     if (index < 0 || index >= items.length) {
-      _logger.w('jumpToIndex: index $index out of bounds (0-${items.length - 1})');
+      _logger.w(
+        'jumpToIndex: index $index out of bounds (0-${items.length - 1})',
+      );
       return false;
     }
 

@@ -183,7 +183,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
   /// Returns the display label for a specific key.
   String getKeyLabel(K key) {
     if (_selectedKeyLabelBuilder != null) {
-      return _selectedKeyLabelBuilder!(key);
+      return _selectedKeyLabelBuilder(key);
     }
     return key.toString();
   }
@@ -283,10 +283,10 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     if (state is SmartPaginationLoaded<T>) {
       // Try to find the item matching the pending key
       for (final item in state.items) {
-        if (_keyExtractor!(item) == _pendingKey) {
+        if (_keyExtractor(item) == _pendingKey) {
           _selectedItem = item;
           _selectedKey = _pendingKey;
-          final resolvedKey = _pendingKey!;
+          final resolvedKey = _pendingKey as K;
           _pendingKey = null;
 
           // Cancel subscription since we found the item
@@ -516,7 +516,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
 
     // Extract and store the key if keyExtractor is provided
     if (_keyExtractor != null) {
-      _selectedKey = _keyExtractor!(item);
+      _selectedKey = _keyExtractor(item);
       _onSelected?.call(item, _selectedKey as K);
     }
 
@@ -537,7 +537,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     final state = _cubit.state;
     if (state is SmartPaginationLoaded<T>) {
       for (final item in state.items) {
-        if (_keyExtractor!(item) == key) {
+        if (_keyExtractor(item) == key) {
           selectItem(item);
           return;
         }
@@ -561,7 +561,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     _pendingKey = null;
 
     if (item != null && _keyExtractor != null) {
-      _selectedKey = _keyExtractor!(item);
+      _selectedKey = _keyExtractor(item);
     } else if (item == null) {
       _selectedKey = null;
     }
