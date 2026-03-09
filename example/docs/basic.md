@@ -234,52 +234,30 @@ class RowExampleScreen extends StatelessWidget {
 Swipe down to refresh content:
 
 ```dart
-class PullToRefreshScreen extends StatefulWidget {
-  @override
-  State<PullToRefreshScreen> createState() => _PullToRefreshScreenState();
-}
-
-class _PullToRefreshScreenState extends State<PullToRefreshScreen> {
-  final refreshListener = SmartPaginationRefreshedChangeListener();
-
+class PullToRefreshScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pull to Refresh'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => refreshListener.refreshed = true,
-          ),
-        ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          refreshListener.refreshed = true;
-          await Future.delayed(const Duration(milliseconds: 500));
+      body: SmartPagination.listViewWithProvider<Product>(
+        request: const PaginationRequest(page: 1, pageSize: 20),
+        provider: PaginationProvider.future(fetchProducts),
+        canRefresh: true,
+        onRefresh: (cubit) async {
+          cubit.reload();
         },
-        child: SmartPagination.listViewWithProvider<Product>(
-          request: const PaginationRequest(page: 1, pageSize: 20),
-          provider: PaginationProvider.future(fetchProducts),
-          refreshListener: refreshListener,
-          itemBuilder: (context, items, index) {
-            final product = items[index];
-            return ListTile(
-              leading: CircleAvatar(child: Text('${index + 1}')),
-              title: Text(product.name),
-              subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-            );
-          },
-        ),
+        itemBuilder: (context, items, index) {
+          final product = items[index];
+          return ListTile(
+            leading: CircleAvatar(child: Text('${index + 1}')),
+            title: Text(product.name),
+            subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+          );
+        },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    refreshListener.dispose();
-    super.dispose();
   }
 }
 ```

@@ -65,6 +65,8 @@ class SmartPaginationStaggeredGridView<T> extends SmartPagination<T> {
     super.loadMoreErrorBuilder,
     super.loadMoreNoMoreItemsBuilder,
     super.invisibleItemsThreshold,
+    super.canRefresh,
+    super.onRefresh,
     super.refreshListener,
     super.filterListeners,
     super.onInsertionCallback,
@@ -116,6 +118,8 @@ class SmartPaginationStaggeredGridView<T> extends SmartPagination<T> {
     super.loadMoreErrorBuilder,
     super.loadMoreNoMoreItemsBuilder,
     super.invisibleItemsThreshold,
+    super.canRefresh,
+    super.onRefresh,
     super.refreshListener,
     super.filterListeners,
   }) : super.staggeredGridViewWithCubit();
