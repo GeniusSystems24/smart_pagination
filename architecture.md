@@ -60,9 +60,14 @@ graph TB
         PP --- MPP
     end
 
-    subgraph Connectivity["Connectivity Layer (v4+)"]
-        NED["Network Error Detection (UI hint only)"]
-        NED -->|"flags isNetworkError"| SPC
+    subgraph Connectivity["Connectivity Layer"]
+        CS["connectivityStream"]
+        NED["Network Error Detection"]
+        OCR["onConnectivityRestored()"]
+
+        CS -->|"monitors"| SPC
+        NED -->|"detects"| SPC
+        OCR -->|"manual trigger"| SPC
     end
 
     subgraph Listeners["Change Listeners"]
@@ -296,13 +301,73 @@ sequenceDiagram
     C->>C: _gridObserverController = null
 ```
 
-### 2.4 Connectivity & Retry (v4+)
+### 2.4 Connectivity Auto-Retry Flow
 
-In v4+, connectivity-based auto-retry has been removed. Network failures are
-still detected and exposed through `isNetworkError`, but retry is explicit:
+```mermaid
+sequenceDiagram
+    participant CS as Connectivity Stream
+    participant C as SmartPaginationCubit
+    participant RH as RetryHandler
+    participant P as PaginationProvider
+    participant API as External API
+    participant W as SmartPagination Widget
 
-- `retryAfterError()` to retry the last failed request.
-- `refreshPaginatedList()` to reset pagination and fetch from page 1.
+    Note over CS,W: Setup: Cubit with connectivity monitoring
+    CS-->>C: connectivityStream provided in constructor
+    C->>C: _connectivitySubscription = stream.listen()
+
+    Note over CS,W: Scenario: Network error during fetch
+    W->>C: fetchPaginatedList()
+    C->>RH: execute(fetch, retryConfig)
+    RH->>P: provider(request)
+    P->>API: HTTP GET /items?page=1
+
+    API-->>P: SocketException / Connection refused
+    P-->>RH: throw Exception
+    RH->>C: PaginationNetworkException
+
+    C->>C: _isNetworkError(error) → true
+    C->>C: _lastErrorWasNetwork = true
+    C->>C: _lastFetchWasError = true
+    C->>C: emit(SmartPaginationError)
+    C-->>W: Display error UI
+
+    Note over CS,W: Later: Internet connection restored
+    CS->>C: _onConnectivityChanged(isConnected: true)
+    C->>C: Check: _lastFetchWasError && _lastErrorWasNetwork
+
+    alt Both flags true
+        C->>C: _logger.d("Connectivity restored, retrying...")
+        C->>C: retryAfterError()
+        C->>C: _lastFetchWasError = false
+        C->>C: _lastErrorWasNetwork = false
+        C->>RH: execute(fetch, retryConfig)
+        RH->>P: provider(request)
+        P->>API: HTTP GET /items?page=1
+        API-->>P: List<T> items (Success!)
+        P-->>RH: items
+        RH-->>C: items
+        C->>C: emit(SmartPaginationLoaded)
+        C-->>W: Display items
+    else Flags not set
+        C->>C: No action (wasn't a network error)
+    end
+
+    Note over CS,W: Alternative: Manual connectivity notification
+    W->>C: onConnectivityRestored()
+    C->>C: Check: _lastFetchWasError && _lastErrorWasNetwork
+
+    alt Network error pending
+        C->>C: _logger.d("Connectivity restored (manual), retrying...")
+        C->>C: retryAfterError()
+    else No network error
+        C->>C: No action needed
+    end
+
+    Note over CS,W: Cleanup on dispose
+    C->>C: dispose()
+    C->>C: _connectivitySubscription?.cancel()
+```
 
 ### 2.5 Network Error Detection
 
@@ -488,7 +553,7 @@ stateDiagram-v2
 
 ### 3.3 Error Retry Strategy State Machine
 
-> **Note (v4+):** `ErrorRetryStrategy`, `connectivityStream`, and `onConnectivityRestored()` were removed. Retry is now explicit.
+> **Note:** Default `ErrorRetryStrategy` is `none` (v3.1.2+). Errors do NOT auto-retry unless explicitly configured.
 
 ```mermaid
 stateDiagram-v2
@@ -561,21 +626,62 @@ stateDiagram-v2
     ErrorState --> Normal: Connectivity restored\n[network error + stream]
 ```
 
-### 3.4 Retry State Machine (v4+)
+### 3.4 Connectivity Auto-Retry State Machine
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Idle
+    [*] --> Monitoring: connectivityStream provided
 
-    Idle --> FetchAttempt: fetchPaginatedList()
-    FetchAttempt --> Loaded: success
-    FetchAttempt --> ErrorState: failure
+    state Monitoring {
+        [*] --> Connected
+        Connected: Internet available
+        Connected: Listening for changes...
 
-    ErrorState --> Retrying: retryAfterError()
-    Retrying --> Loaded: success
-    Retrying --> ErrorState: failure
+        Connected --> Disconnected: isConnected = false
 
-    ErrorState --> Idle: refreshPaginatedList()
+        Disconnected: No internet
+        Disconnected: Waiting for connection...
+
+        Disconnected --> Connected: isConnected = true
+    }
+
+    state ErrorTracking {
+        [*] --> NoError
+
+        NoError: _lastFetchWasError = false
+        NoError: _lastErrorWasNetwork = false
+
+        NoError --> NetworkErrorPending: Network fetch failed
+
+        NetworkErrorPending: _lastFetchWasError = true
+        NetworkErrorPending: _lastErrorWasNetwork = true
+        NetworkErrorPending: Waiting for connectivity...
+
+        NoError --> OtherErrorPending: Non-network fetch failed
+
+        OtherErrorPending: _lastFetchWasError = true
+        OtherErrorPending: _lastErrorWasNetwork = false
+        OtherErrorPending: Manual retry needed
+
+        NetworkErrorPending --> NoError: retryAfterError()\n/ refreshPaginatedList()
+        OtherErrorPending --> NoError: retryAfterError()\n/ refreshPaginatedList()
+    }
+
+    state AutoRetryDecision {
+        [*] --> CheckFlags: Connectivity restored event
+
+        CheckFlags --> TriggerRetry: _lastFetchWasError\n&& _lastErrorWasNetwork
+        CheckFlags --> NoAction: flags not both true
+
+        TriggerRetry: Call retryAfterError()
+        TriggerRetry: Clear error flags
+
+        NoAction: Skip retry
+        NoAction: Wasn't a network error
+    }
+
+    note right of Monitoring: Stream-based monitoring\nvia connectivityStream parameter
+    note right of AutoRetryDecision: Also triggered by\nonConnectivityRestored()
 ```
 
 ### 3.5 PaginateApiView Builder Type Decision
@@ -652,4 +758,3 @@ stateDiagram-v2
     StaggeredGridView --> BottomWidget
     ReorderableListView --> BottomWidget
 ```
-

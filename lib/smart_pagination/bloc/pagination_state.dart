@@ -33,8 +33,6 @@ class SmartPaginationError<T> extends SmartPaginationState<T>
   int get hashCode => error.hashCode;
 }
 
-const Object _loadMoreErrorNotSet = Object();
-
 class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     implements IPaginationLoadedState<T> {
   SmartPaginationLoaded({
@@ -82,7 +80,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     PaginationMeta? meta,
     DateTime? lastUpdate,
     bool? isLoadingMore,
-    Object? loadMoreError = _loadMoreErrorNotSet,
+    Exception? loadMoreError,
     DateTime? fetchedAt,
     DateTime? dataExpiredAt,
     String? activeOrderId,
@@ -97,9 +95,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
       meta: meta ?? this.meta,
       lastUpdate: lastUpdate ?? this.lastUpdate,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      loadMoreError: identical(loadMoreError, _loadMoreErrorNotSet)
-          ? this.loadMoreError
-          : loadMoreError as Exception?,
+      loadMoreError: loadMoreError ?? this.loadMoreError,
       fetchedAt: fetchedAt ?? this.fetchedAt,
       dataExpiredAt: dataExpiredAt ?? this.dataExpiredAt,
       activeOrderId: activeOrderId ?? this.activeOrderId,
@@ -112,8 +108,6 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
 
     return other is SmartPaginationLoaded<T> &&
         other.hasReachedEnd == hasReachedEnd &&
-        other.isLoadingMore == isLoadingMore &&
-        other.loadMoreError == loadMoreError &&
         listEquals(other.items, items) &&
         listEquals(other.allItems, allItems) &&
         other.meta == meta;
@@ -122,8 +116,6 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
   @override
   int get hashCode => Object.hash(
     hasReachedEnd,
-    isLoadingMore,
-    loadMoreError,
     Object.hashAll(items),
     Object.hashAll(allItems),
     meta,

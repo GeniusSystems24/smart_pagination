@@ -30,46 +30,11 @@ SmartPaginationListView.withProvider(
 
 ```yaml
 dependencies:
-  smart_pagination: ^4.0.0
+  smart_pagination: ^3.1.0
 ```
 
 ```dart
 import 'package:smart_pagination/pagination.dart';
-```
-
-## Breaking Changes (v4.0.0)
-
-- Removed auto-retry API from `SmartPaginationCubit`:
-  - `ErrorRetryStrategy`
-  - `errorRetryStrategy` constructor parameter
-  - `connectivityStream` constructor parameter
-  - `onConnectivityRestored()`
-- Retry after failures is now explicit via:
-  - `cubit.retryAfterError()` (retry last failed request)
-  - `cubit.refreshPaginatedList()` (reset and fetch from page 1)
-- Added `preserveCenteredItemOnInsert` (default: `true`) to pagination widgets.
-  - Keeps the last centered item anchored when items are inserted.
-  - Uses best-effort behavior and falls back to no-op for unsupported layouts.
-
-### Migration
-
-```dart
-// Before (v3)
-// final cubit = SmartPaginationCubit<Product>(
-//   request: request,
-//   provider: provider,
-//   connectivityStream: connectivityStream,
-//   errorRetryStrategy: ErrorRetryStrategy.manual,
-// );
-
-// After (v4)
-final cubit = SmartPaginationCubit<Product>(
-  request: request,
-  provider: provider,
-);
-
-// Explicit retry
-cubit.retryAfterError();
 ```
 
 ## Quick Start
@@ -570,7 +535,6 @@ PaginationProvider.mergeStreams((request) => [
 | `provider` | `PaginationProvider<T>` | Data source |
 | `itemBuilder` | `Widget Function(context, items, index)` | Item widget builder |
 | `invisibleItemsThreshold` | `int` | Preload trigger (default: 3) |
-| `preserveCenteredItemOnInsert` | `bool` | Keep last centered item anchored on insert (default: true) |
 | `separator` | `Widget?` | Divider between items |
 | `scrollController` | `ScrollController?` | Custom scroll controller |
 | `shrinkWrap` | `bool` | Fit content size |
@@ -609,7 +573,6 @@ cubit.activeOrder;       // SortOrder<T>?
 
 // Methods
 cubit.fetchPaginatedList();
-cubit.retryAfterError();
 cubit.reload();
 cubit.insertEmit(item);
 cubit.removeItemEmit(item);

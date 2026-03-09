@@ -62,7 +62,6 @@ class PaginateApiView<T> extends StatefulWidget {
     // Performance
     this.invisibleItemsThreshold = 3,
     this.retryLoadMore,
-    this.preserveCenteredItemOnInsert = true,
     // Observer options
     this.enableObserver = true,
     this.onObserverCreated,
@@ -92,7 +91,7 @@ class PaginateApiView<T> extends StatefulWidget {
   final Widget? header;
   final Widget? footer;
   final Widget Function(BuildContext context, List<T> documents, int index)
-  itemBuilder;
+      itemBuilder;
   final void Function(int)? onPageChanged;
   final double? cacheExtent;
 
@@ -110,8 +109,7 @@ class PaginateApiView<T> extends StatefulWidget {
     List<T> items,
     bool hasReachedEnd,
     VoidCallback? fetchMore,
-  )?
-  customViewBuilder;
+  )? customViewBuilder;
 
   /// Callback for reordering items in ReorderableListView
   /// Called with the old index and new index when an item is moved
@@ -123,12 +121,8 @@ class PaginateApiView<T> extends StatefulWidget {
   final Widget Function(BuildContext context)? loadMoreLoadingBuilder;
 
   /// Builder for load more error state with retry capability
-  final Widget Function(
-    BuildContext context,
-    Exception error,
-    VoidCallback retry,
-  )?
-  loadMoreErrorBuilder;
+  final Widget Function(BuildContext context, Exception error, VoidCallback retry)?
+      loadMoreErrorBuilder;
 
   /// Builder for end of list indicator (no more items to load)
   final Widget Function(BuildContext context)? loadMoreNoMoreItemsBuilder;
@@ -140,9 +134,6 @@ class PaginateApiView<T> extends StatefulWidget {
 
   /// Retry callback for load more errors
   final VoidCallback? retryLoadMore;
-
-  /// Keep the currently centered item anchored when items are inserted.
-  final bool preserveCenteredItemOnInsert;
 
   // ========== Observer Options ==========
 
@@ -160,20 +151,11 @@ class PaginateApiView<T> extends StatefulWidget {
 
 class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
   ScrollController? _internalScrollController;
-  PageController? _internalPageController;
   ListObserverController? _listObserverController;
   GridObserverController? _gridObserverController;
-  T? _lastCenteredItem;
-  int? _lastCenteredIndex;
-  bool _isApplyingAnchorJump = false;
-  bool _listObserverUsesDirectItemIndex = true;
 
   ScrollController get _effectiveScrollController =>
-      widget.scrollController ??
-      (_internalScrollController ??= ScrollController());
-
-  PageController get _effectivePageController =>
-      widget.pageController ?? (_internalPageController ??= PageController());
+      widget.scrollController ?? (_internalScrollController ??= ScrollController());
 
   List<T> get _items => widget.loadedState.items;
 
@@ -181,16 +163,6 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
   void initState() {
     super.initState();
     _initializeObserver();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (widget.itemBuilderType == PaginateBuilderType.pageView) {
-        final controller = _effectivePageController;
-        final rawPage = controller.hasClients
-            ? (controller.page ?? controller.initialPage.toDouble())
-            : controller.initialPage.toDouble();
-        _captureCenteredByIndex(rawPage.round());
-      }
-    });
   }
 
   void _initializeObserver() {
@@ -238,16 +210,6 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
         widget.cubit?.attachGridObserverController(_gridObserverController!);
       }
     }
-
-    if (widget.preserveCenteredItemOnInsert &&
-        !listEquals(oldWidget.loadedState.items, widget.loadedState.items)) {
-      unawaited(
-        _tryPreserveCenteredItem(
-          oldItems: oldWidget.loadedState.items,
-          newItems: widget.loadedState.items,
-        ),
-      );
-    }
   }
 
   @override
@@ -255,7 +217,6 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
     // Detach observer controllers
     widget.cubit?.detachAllObserverControllers();
     _internalScrollController?.dispose();
-    _internalPageController?.dispose();
     super.dispose();
   }
 
@@ -299,305 +260,6 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
     return currentIndex >= _items.length - widget.invisibleItemsThreshold;
   }
 
-  void _captureCenteredByIndex(int index) {
-    if (index < 0 || index >= _items.length) return;
-    _lastCenteredIndex = index;
-    _lastCenteredItem = _items[index];
-  }
-
-  int? _observerListIndexToItemIndex(
-    int observerIndex, {
-    required bool usesDirectIndex,
-  }) {
-    if (widget.itemBuilderType == PaginateBuilderType.listView) {
-      if (usesDirectIndex) return observerIndex;
-      if (observerIndex.isOdd) return null;
-      return observerIndex ~/ 2;
-    }
-    return observerIndex;
-  }
-
-  int _itemIndexToObserverListIndex(int itemIndex) {
-    if (widget.itemBuilderType == PaginateBuilderType.listView) {
-      if (_listObserverUsesDirectItemIndex) return itemIndex;
-      return itemIndex * 2;
-    }
-    return itemIndex;
-  }
-
-  bool _hasZeroSizedSeparator() {
-    if (widget.itemBuilderType != PaginateBuilderType.listView) {
-      return true;
-    }
-
-    final separator = widget.separator;
-    if (separator is EmptySeparator) return true;
-    if (separator is SizedBox) {
-      final mainAxisExtent = widget.scrollDirection == Axis.vertical
-          ? (separator.height ?? 0)
-          : (separator.width ?? 0);
-      return mainAxisExtent == 0;
-    }
-    return false;
-  }
-
-  bool _shouldUseDirectListIndex(ListViewObserveModel result) {
-    if (widget.itemBuilderType != PaginateBuilderType.listView) {
-      return true;
-    }
-    if (_hasZeroSizedSeparator()) {
-      return true;
-    }
-    if (result.displayingChildModelList.isEmpty) {
-      return true;
-    }
-
-    final firstSize = result.displayingChildModelList.first.mainAxisSize;
-    final hasDifferentSizes = result.displayingChildModelList.any(
-      (child) => (child.mainAxisSize - firstSize).abs() > 0.01,
-    );
-
-    // If observed children all have the same main-axis size, they are usually
-    // only item children (separators are not represented with distinct extents).
-    return !hasDifferentSizes;
-  }
-
-  int? _findCenteredListItemIndex(ListViewObserveModel result) {
-    if (result.displayingChildModelList.isEmpty) return null;
-
-    final usesDirectIndex = _shouldUseDirectListIndex(result);
-    _listObserverUsesDirectItemIndex = usesDirectIndex;
-
-    final viewportCenter =
-        result.displayingChildModelList.first.viewportMainAxisExtent / 2;
-
-    int? centeredIndex;
-    var minDistance = double.infinity;
-
-    for (final child in result.displayingChildModelList) {
-      final itemIndex = _observerListIndexToItemIndex(
-        child.index,
-        usesDirectIndex: usesDirectIndex,
-      );
-      if (itemIndex == null) continue;
-
-      final childCenter =
-          child.leadingMarginToViewport + (child.mainAxisSize / 2);
-      final distance = (childCenter - viewportCenter).abs();
-      if (distance < minDistance) {
-        minDistance = distance;
-        centeredIndex = itemIndex;
-      }
-    }
-
-    return centeredIndex;
-  }
-
-  int? _findCenteredGridItemIndex(GridViewObserveModel result) {
-    if (result.displayingChildModelList.isEmpty) return null;
-
-    final viewportCenter =
-        result.displayingChildModelList.first.viewportMainAxisExtent / 2;
-
-    int? centeredIndex;
-    var minDistance = double.infinity;
-
-    for (final child in result.displayingChildModelList) {
-      final childCenter =
-          child.leadingMarginToViewport + (child.mainAxisSize / 2);
-      final distance = (childCenter - viewportCenter).abs();
-      if (distance < minDistance) {
-        minDistance = distance;
-        centeredIndex = child.index;
-      }
-    }
-
-    return centeredIndex;
-  }
-
-  void _captureCenteredFromListObserve(ListViewObserveModel result) {
-    if (!widget.preserveCenteredItemOnInsert) return;
-    final centeredIndex = _findCenteredListItemIndex(result);
-    if (centeredIndex != null) {
-      _captureCenteredByIndex(centeredIndex);
-    }
-  }
-
-  void _captureCenteredFromGridObserve(GridViewObserveModel result) {
-    if (!widget.preserveCenteredItemOnInsert) return;
-    final centeredIndex = _findCenteredGridItemIndex(result);
-    if (centeredIndex != null) {
-      _captureCenteredByIndex(centeredIndex);
-    }
-  }
-
-  Future<int?> _captureCenteredIndexOnce() async {
-    try {
-      switch (widget.itemBuilderType) {
-        case PaginateBuilderType.listView:
-        case PaginateBuilderType.reorderableListView:
-          if (_listObserverController == null) return null;
-          final result = await _listObserverController!.dispatchOnceObserve(
-            isForce: true,
-            isDependObserveCallback: false,
-          );
-          return result.observeResult != null
-              ? _findCenteredListItemIndex(result.observeResult!)
-              : null;
-        case PaginateBuilderType.gridView:
-          if (_gridObserverController == null) return null;
-          final result = await _gridObserverController!.dispatchOnceObserve(
-            isForce: true,
-            isDependObserveCallback: false,
-          );
-          return result.observeResult != null
-              ? _findCenteredGridItemIndex(result.observeResult!)
-              : null;
-        case PaginateBuilderType.pageView:
-          final controller = _effectivePageController;
-          final rawPage = controller.hasClients
-              ? (controller.page ?? controller.initialPage.toDouble())
-              : controller.initialPage.toDouble();
-          return rawPage.round();
-        case PaginateBuilderType.staggeredGridView:
-        case PaginateBuilderType.custom:
-          return null;
-      }
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<void> _centerListObserverIndexInViewport(int observerIndex) async {
-    if (_listObserverController == null ||
-        !_effectiveScrollController.hasClients) {
-      return;
-    }
-
-    await WidgetsBinding.instance.endOfFrame;
-    if (!_effectiveScrollController.hasClients) return;
-
-    final model = _listObserverController!.observeItem(index: observerIndex);
-    if (model == null) return;
-
-    final viewportCenter = model.viewportMainAxisExtent / 2;
-    final itemCenter = model.leadingMarginToViewport + (model.mainAxisSize / 2);
-    final delta = itemCenter - viewportCenter;
-    if (delta.abs() < 0.5) return;
-
-    final position = _effectiveScrollController.position;
-    final target = (position.pixels + delta).clamp(
-      position.minScrollExtent,
-      position.maxScrollExtent,
-    );
-    _effectiveScrollController.jumpTo(target);
-  }
-
-  Future<void> _centerGridObserverIndexInViewport(int observerIndex) async {
-    if (_gridObserverController == null ||
-        !_effectiveScrollController.hasClients) {
-      return;
-    }
-
-    await WidgetsBinding.instance.endOfFrame;
-    if (!_effectiveScrollController.hasClients) return;
-
-    final model = _gridObserverController!.observeItem(index: observerIndex);
-    if (model == null) return;
-
-    final viewportCenter = model.viewportMainAxisExtent / 2;
-    final itemCenter = model.leadingMarginToViewport + (model.mainAxisSize / 2);
-    final delta = itemCenter - viewportCenter;
-    if (delta.abs() < 0.5) return;
-
-    final position = _effectiveScrollController.position;
-    final target = (position.pixels + delta).clamp(
-      position.minScrollExtent,
-      position.maxScrollExtent,
-    );
-    _effectiveScrollController.jumpTo(target);
-  }
-
-  Future<void> _jumpToAnchoredIndex(int index) async {
-    switch (widget.itemBuilderType) {
-      case PaginateBuilderType.listView:
-      case PaginateBuilderType.reorderableListView:
-        if (_listObserverController != null) {
-          final observerIndex = _itemIndexToObserverListIndex(index);
-          await _listObserverController!.jumpTo(
-            index: observerIndex,
-            alignment: 0.5,
-          );
-          await _centerListObserverIndexInViewport(observerIndex);
-        }
-        break;
-      case PaginateBuilderType.gridView:
-        if (_gridObserverController != null) {
-          await _gridObserverController!.jumpTo(index: index, alignment: 0.5);
-          await _centerGridObserverIndexInViewport(index);
-        }
-        break;
-      case PaginateBuilderType.pageView:
-        final controller = _effectivePageController;
-        if (controller.hasClients) {
-          controller.jumpToPage(index);
-        }
-        break;
-      case PaginateBuilderType.staggeredGridView:
-      case PaginateBuilderType.custom:
-        break;
-    }
-  }
-
-  Future<void> _tryPreserveCenteredItem({
-    required List<T> oldItems,
-    required List<T> newItems,
-  }) async {
-    if (!widget.preserveCenteredItemOnInsert) return;
-    if (_isApplyingAnchorJump) return;
-    if (oldItems.isEmpty || newItems.isEmpty) return;
-
-    T? anchorItem = _lastCenteredItem;
-    var fallbackIndex = _lastCenteredIndex;
-
-    if (anchorItem == null || fallbackIndex == null) {
-      final observedIndex = await _captureCenteredIndexOnce();
-      if (observedIndex != null) {
-        fallbackIndex ??= observedIndex;
-        if (anchorItem == null &&
-            observedIndex >= 0 &&
-            observedIndex < oldItems.length) {
-          anchorItem = oldItems[observedIndex];
-        }
-      }
-    }
-
-    if (anchorItem == null &&
-        fallbackIndex != null &&
-        fallbackIndex >= 0 &&
-        fallbackIndex < oldItems.length) {
-      anchorItem = oldItems[fallbackIndex];
-    }
-    if (anchorItem == null) return;
-
-    final oldIndex = oldItems.indexOf(anchorItem);
-    final newIndex = newItems.indexOf(anchorItem);
-    if (oldIndex < 0 || newIndex < 0 || oldIndex == newIndex) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      _isApplyingAnchorJump = true;
-      try {
-        await _jumpToAnchoredIndex(newIndex);
-      } finally {
-        _isApplyingAnchorJump = false;
-      }
-      if (mounted) {
-        _captureCenteredByIndex(newIndex);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return switch (widget.itemBuilderType) {
@@ -605,9 +267,7 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
       PaginateBuilderType.gridView => _buildGridView(context),
       PaginateBuilderType.pageView => _buildPageView(context),
       PaginateBuilderType.staggeredGridView => _buildStaggeredGridView(context),
-      PaginateBuilderType.reorderableListView => _buildReorderableListView(
-        context,
-      ),
+      PaginateBuilderType.reorderableListView => _buildReorderableListView(context),
       PaginateBuilderType.custom => _buildCustomView(context),
     };
   }
@@ -669,7 +329,6 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
     if (widget.enableObserver && _gridObserverController != null) {
       return GridViewObserver(
         controller: _gridObserverController!,
-        onObserve: _captureCenteredFromGridObserve,
         child: scrollView,
       );
     }
@@ -735,7 +394,6 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
     if (widget.enableObserver && _listObserverController != null) {
       return ListViewObserver(
         controller: _listObserverController!,
-        onObserve: _captureCenteredFromListObserve,
         child: scrollView,
       );
     }
@@ -751,9 +409,7 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
     }
 
     final listView = ReorderableListView.builder(
-      padding: widget.padding is EdgeInsets
-          ? widget.padding as EdgeInsets
-          : null,
+      padding: widget.padding is EdgeInsets ? widget.padding as EdgeInsets : null,
       reverse: widget.reverse,
       scrollController: _effectiveScrollController,
       shrinkWrap: widget.shrinkWrap,
@@ -773,14 +429,15 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
         return AnimatedBuilder(
           animation: animation,
           builder: (BuildContext context, Widget? child) {
-            final double animValue = Curves.easeInOut.transform(
-              animation.value,
-            );
+            final double animValue = Curves.easeInOut.transform(animation.value);
             final double elevation = lerpDouble(0, 6, animValue) ?? 0;
             final double scale = lerpDouble(1, 1.02, animValue) ?? 1;
             return Transform.scale(
               scale: scale,
-              child: Card(elevation: elevation, child: child),
+              child: Card(
+                elevation: elevation,
+                child: child,
+              ),
             );
           },
           child: child,
@@ -792,7 +449,6 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
     if (widget.enableObserver && _listObserverController != null) {
       return ListViewObserver(
         controller: _listObserverController!,
-        onObserve: _captureCenteredFromListObserve,
         child: listView,
       );
     }
@@ -806,13 +462,10 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
       child: PageView.custom(
         reverse: widget.reverse,
         allowImplicitScrolling: widget.allowImplicitScrolling,
-        controller: _effectivePageController,
+        controller: widget.pageController,
         scrollDirection: widget.scrollDirection,
         physics: widget.physics,
-        onPageChanged: (index) {
-          _captureCenteredByIndex(index);
-          widget.onPageChanged?.call(index);
-        },
+        onPageChanged: widget.onPageChanged,
         childrenDelegate: SliverChildBuilderDelegate(
           (context, index) {
             if (index >= _items.length) {
@@ -830,8 +483,7 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
   }
 
   Widget _buildStaggeredGridView(BuildContext context) {
-    final delegate =
-        widget.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+    final delegate = widget.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
     final crossAxisCount = delegate.crossAxisCount;
     final mainAxisSpacing = delegate.mainAxisSpacing;
     final crossAxisSpacing = delegate.crossAxisSpacing;

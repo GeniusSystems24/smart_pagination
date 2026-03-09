@@ -5,32 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.0.0] - 2026-03-04
-
-### Breaking Changes
-
-- Removed connectivity-based auto retry APIs from `SmartPaginationCubit`:
-  - `ErrorRetryStrategy`
-  - `errorRetryStrategy` constructor parameter
-  - `connectivityStream` constructor parameter
-  - `onConnectivityRestored()`
-- `fetchPaginatedList()` no longer retries automatically after an error.
-  - Use `retryAfterError()` for explicit retry.
-  - Use `refreshPaginatedList()` to reset and fetch from page 1.
-
-### Added
-
-- `preserveCenteredItemOnInsert` (default: `true`) on pagination widgets.
-  - Keeps the last centered item anchored when items are inserted.
-  - Applies best-effort behavior for supported views (List/Grid/Reorderable/PageView).
-  - Falls back to no-op for unsupported layouts.
-
-### Changed
-
-- First-page and load-more retry callbacks now use `retryAfterError()`.
-
----
-
 ## [3.1.3] - 2026-02-04
 
 ### Added

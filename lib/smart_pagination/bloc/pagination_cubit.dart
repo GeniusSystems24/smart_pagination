@@ -1,5 +1,20 @@
 part of '../../pagination.dart';
 
+/// Strategy for handling retry behavior after an error occurs.
+enum ErrorRetryStrategy {
+  /// Automatically retry on next fetch call.
+  /// Use this when you want seamless retry behavior.
+  automatic,
+
+  /// Don't retry automatically. Requires explicit call to [retryAfterError].
+  /// Use this when you want user-controlled retry (e.g., retry button).
+  manual,
+
+  /// Don't retry at all until [refreshPaginatedList] is called (default behavior).
+  /// This is the safest option - errors won't cause repeated failed requests.
+  none,
+}
+
 class SmartPaginationCubit<T>
     extends IPaginationListCubit<T, SmartPaginationState<T>> {
   SmartPaginationCubit({
@@ -13,6 +28,8 @@ class SmartPaginationCubit<T>
     RetryConfig? retryConfig,
     Duration? dataAge,
     SortOrderCollection<T>? orders,
+    this.errorRetryStrategy = ErrorRetryStrategy.none,
+    Stream<bool>? connectivityStream,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -24,7 +41,14 @@ class SmartPaginationCubit<T>
        _orders = orders,
        initialRequest = request,
        _currentRequest = request,
-       super(SmartPaginationInitial<T>());
+       super(SmartPaginationInitial<T>()) {
+    // Listen to connectivity changes for auto-retry on network errors
+    if (connectivityStream != null) {
+      _connectivitySubscription = connectivityStream.listen(
+        _onConnectivityChanged,
+      );
+    }
+  }
 
   final PaginationProvider<T> _provider;
   final ListBuilder<T>? _listBuilder;
@@ -36,6 +60,15 @@ class SmartPaginationCubit<T>
   final Duration? _dataAge;
   SortOrderCollection<T>? _orders;
 
+  /// Strategy for handling retry behavior when an error occurs.
+  ///
+  /// Defaults to [ErrorRetryStrategy.none] which means errors persist until
+  /// [refreshPaginatedList] is called. This prevents automatic retry loops.
+  ///
+  /// Set to [ErrorRetryStrategy.automatic] to allow automatic retries, or
+  /// [ErrorRetryStrategy.manual] to require explicit [retryAfterError] calls.
+  final ErrorRetryStrategy errorRetryStrategy;
+
   @override
   final PaginationRequest initialRequest;
 
@@ -43,6 +76,7 @@ class SmartPaginationCubit<T>
   PaginationMeta? _currentMeta;
   final List<List<T>> _pages = <List<T>>[];
   StreamSubscription<List<T>>? _streamSubscription;
+  StreamSubscription<bool>? _connectivitySubscription;
   int _fetchToken = 0;
   DateTime? _lastFetchTime;
 
@@ -50,10 +84,11 @@ class SmartPaginationCubit<T>
   bool _isFetching = false;
 
   /// Flag to track if the last fetch resulted in an error.
+  /// Used by [errorRetryStrategy] to prevent automatic retries.
   bool _lastFetchWasError = false;
 
   /// Flag to track if the last error was a network-related error.
-  /// Used for UI hints only.
+  /// Used for auto-retry when connectivity is restored.
   bool _lastErrorWasNetwork = false;
 
   /// The last error that occurred during fetch.
@@ -412,6 +447,10 @@ class SmartPaginationCubit<T>
   }
 
   /// Retries the last failed fetch operation.
+  ///
+  /// Use this method when [errorRetryStrategy] is set to [ErrorRetryStrategy.manual]
+  /// to explicitly retry after an error.
+  ///
   /// Example:
   /// ```dart
   /// if (cubit.hasError) {
@@ -420,11 +459,11 @@ class SmartPaginationCubit<T>
   /// ```
   void retryAfterError() {
     if (!_lastFetchWasError) {
-      // _logger.d('retryAfterError called but there is no error to retry');
+      _logger.d('retryAfterError called but there is no error to retry');
       return;
     }
 
-    // _logger.d('Retrying after error...');
+    _logger.d('Retrying after error...');
     _lastFetchWasError = false;
     _lastErrorWasNetwork = false;
     _lastError = null;
@@ -459,20 +498,67 @@ class SmartPaginationCubit<T>
     }
   }
 
+  /// Called when connectivity status changes.
+  /// Automatically retries if there was a pending network error.
+  void _onConnectivityChanged(bool isConnected) {
+    if (isConnected && _lastFetchWasError && _lastErrorWasNetwork) {
+      _logger.d('Connectivity restored, retrying after network error...');
+      retryAfterError();
+    }
+  }
+
+  /// Manually notify the cubit that connectivity has been restored.
+  ///
+  /// Call this method when you detect that internet connection is back
+  /// and want to retry the last failed network request.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Using connectivity_plus package
+  /// Connectivity().onConnectivityChanged.listen((result) {
+  ///   if (result != ConnectivityResult.none) {
+  ///     cubit.onConnectivityRestored();
+  ///   }
+  /// });
+  /// ```
+  void onConnectivityRestored() {
+    if (_lastFetchWasError && _lastErrorWasNetwork) {
+      _logger.d(
+        'Connectivity restored (manual), retrying after network error...',
+      );
+      retryAfterError();
+    }
+  }
+
   @override
   void fetchPaginatedList({PaginationRequest? requestOverride, int? limit}) {
     // Prevent concurrent fetch operations
     if (_isFetching) {
-      // _logger.d('Fetch already in progress, skipping duplicate request');
+      _logger.d('Fetch already in progress, skipping duplicate request');
       return;
     }
 
-    // Block automatic retries after an error.
+    // Check error retry strategy
     if (_lastFetchWasError) {
-      _logger.d(
-        'Last fetch failed; automatic retry is disabled. Call retryAfterError() to retry, or refreshPaginatedList() to reset.',
-      );
-      return;
+      switch (errorRetryStrategy) {
+        case ErrorRetryStrategy.automatic:
+          // Allow retry, clear the error flag
+          _lastFetchWasError = false;
+          _lastError = null;
+          break;
+        case ErrorRetryStrategy.manual:
+          // Don't retry automatically, require explicit retryAfterError() call
+          _logger.d(
+            'Error retry strategy is manual, skipping automatic retry. Call retryAfterError() to retry.',
+          );
+          return;
+        case ErrorRetryStrategy.none:
+          // Don't retry at all
+          _logger.d(
+            'Error retry strategy is none, skipping retry. Call refreshPaginatedList() to reset.',
+          );
+          return;
+      }
     }
 
     // Check if data has expired and reset if necessary
@@ -620,7 +706,7 @@ class SmartPaginationCubit<T>
       _lastErrorWasNetwork = _isNetworkError(error);
       if (_lastErrorWasNetwork) {
         _logger.d(
-          'Network error detected. Retry manually with retryAfterError() or refreshPaginatedList().',
+          'Network error detected, will auto-retry when connectivity is restored',
         );
       }
 
@@ -647,7 +733,7 @@ class SmartPaginationCubit<T>
       _lastErrorWasNetwork = _isNetworkErrorMessage(error.toString());
       if (_lastErrorWasNetwork) {
         _logger.d(
-          'Network error detected. Retry manually with retryAfterError() or refreshPaginatedList().',
+          'Network error detected, will auto-retry when connectivity is restored',
         );
       }
 
@@ -788,6 +874,8 @@ class SmartPaginationCubit<T>
     cancelOngoingRequest();
     _streamSubscription?.cancel();
     _streamSubscription = null;
+    _connectivitySubscription?.cancel();
+    _connectivitySubscription = null;
   }
 
   @override
