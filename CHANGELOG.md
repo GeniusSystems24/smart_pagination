@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-03-16
+
+### Breaking Changes
+
+- **All item operations now return `Future<bool>`**: `insertEmit`, `insertAllEmit`, `addOrUpdateEmit`, `removeItemEmit`, `removeAtEmit`, `removeWhereEmit`, `updateItemEmit`, `updateWhereEmit`, `clearItems`, `setItems` — all now return `Future<bool>` indicating success/failure instead of `void`/`bool`/`T?`/`int`
+
+### Added
+
+- **Partial view updates with animations**: Item add/update/remove operations now trigger targeted UI updates instead of full list rebuilds
+  - `SliverAnimatedList` for ListView with insert/remove animations
+  - `KeyedSubtree` + `findChildIndexCallback` for GridView, PageView, StaggeredGridView, and ReorderableListView
+  - `PaginationOperation` sealed class for tracking operation metadata
+- **`refreshItem` method**: Refresh a specific item from the server
+  ```dart
+  await cubit.refreshItem(
+    (item) => item.id == productId,
+    (currentItem) => api.fetchProduct(currentItem.id),
+  );
+  ```
+- **New widget parameters**:
+  - `itemKeyBuilder` — unique key per item for efficient partial updates and animations
+  - `buildWhen` — control when `BlocBuilder` rebuilds
+  - `insertItemAnimationBuilder` — custom insert animation
+  - `removeItemAnimationBuilder` — custom remove animation
+  - `animationDuration` — animation duration (default: 300ms)
+
+### Usage
+
+```dart
+// All operations now return Future<bool>
+final success = await cubit.insertEmit(newProduct);
+final removed = await cubit.removeItemEmit(product);
+final updated = await cubit.updateItemEmit(
+  (item) => item.id == id,
+  (item) => item.copyWith(price: newPrice),
+);
+
+// Refresh item from server
+await cubit.refreshItem(
+  (item) => item.id == productId,
+  (currentItem) => api.fetchProduct(currentItem.id),
+);
+
+// Enable animations with itemKeyBuilder
+SmartPaginationListView.withCubit(
+  cubit: cubit,
+  itemKeyBuilder: (item, index) => item.id,
+  itemBuilder: (context, items, index) => ProductTile(product: items[index]),
+);
+```
+
+---
+
 ## [3.1.3] - 2026-02-04
 
 ### Added

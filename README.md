@@ -455,26 +455,59 @@ SmartPaginationCubit<Product>(
 Programmatically manipulate items through the cubit.
 
 ```dart
-// Insert
-cubit.insertEmit(newProduct);
-cubit.insertAllEmit([product1, product2], index: 0);
+// Insert — returns Future<bool>
+final success = await cubit.insertEmit(newProduct);
+await cubit.insertAllEmit([product1, product2], index: 0);
 
-// Remove
-cubit.removeItemEmit(product);
-cubit.removeAtEmit(index);
-cubit.removeWhereEmit((item) => item.stock == 0);
+// Remove — returns Future<bool>
+await cubit.removeItemEmit(product);
+await cubit.removeAtEmit(index);
+await cubit.removeWhereEmit((item) => item.stock == 0);
 
-// Update
-cubit.updateItemEmit(
+// Update — returns Future<bool>
+await cubit.updateItemEmit(
   (item) => item.id == productId,
   (item) => item.copyWith(price: newPrice),
 );
 
+// Refresh from server
+await cubit.refreshItem(
+  (item) => item.id == productId,
+  (currentItem) => api.fetchProduct(currentItem.id),
+);
+
 // Other
-cubit.clearItems();
+await cubit.clearItems();
 cubit.reload();
-cubit.setItems(customList);
+await cubit.setItems(customList);
 ```
+
+---
+
+## Partial Updates & Animations
+
+Enable targeted UI updates instead of full list rebuilds by providing `itemKeyBuilder`:
+
+```dart
+SmartPaginationListView.withCubit(
+  cubit: cubit,
+  itemKeyBuilder: (item, index) => item.id,
+  insertItemAnimationBuilder: (context, index, animation, child) {
+    return SlideTransition(
+      position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+          .animate(animation),
+      child: child,
+    );
+  },
+  removeItemAnimationBuilder: (context, index, animation, child) {
+    return FadeTransition(opacity: animation, child: child);
+  },
+  animationDuration: const Duration(milliseconds: 400),
+  itemBuilder: (context, items, index) => ProductTile(product: items[index]),
+);
+```
+
+ListView uses `SliverAnimatedList` for insert/remove animations. Other view types (GridView, PageView, etc.) use key-based widget reconciliation for efficient partial updates without animations.
 
 ---
 
@@ -590,9 +623,10 @@ cubit.activeOrder;       // SortOrder<T>?
 // Methods
 cubit.fetchPaginatedList();
 cubit.reload();
-cubit.insertEmit(item);
-cubit.removeItemEmit(item);
-cubit.updateItemEmit(matcher, updater);
+await cubit.insertEmit(item);           // Future<bool>
+await cubit.removeItemEmit(item);       // Future<bool>
+await cubit.updateItemEmit(matcher, updater); // Future<bool>
+await cubit.refreshItem(matcher, refresher);  // Future<bool>
 cubit.setActiveOrder(orderId);
 ```
 

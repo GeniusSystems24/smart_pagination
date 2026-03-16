@@ -69,38 +69,36 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
   }
 
   // Insert single item at the beginning
-  void _insertItem() {
+  Future<void> _insertItem() async {
     final product = _generateProduct();
-    _cubit.insertEmit(product, index: 0);
-    _showSnackBar('Inserted: ${product.name}');
+    final success = await _cubit.insertEmit(product, index: 0);
+    _showSnackBar(success ? 'Inserted: ${product.name}' : 'Failed to insert');
   }
 
   // Insert multiple items
-  void _insertMultiple() {
+  Future<void> _insertMultiple() async {
     final products = List.generate(3, (_) => _generateProduct());
-    _cubit.insertAllEmit(products, index: 0);
-    _showSnackBar('Inserted ${products.length} products');
+    final success = await _cubit.insertAllEmit(products, index: 0);
+    _showSnackBar(
+        success ? 'Inserted ${products.length} products' : 'Failed to insert');
   }
 
   // Remove first item
-  void _removeFirst() {
-    final removed = _cubit.removeAtEmit(0);
-    if (removed != null) {
-      _showSnackBar('Removed: ${removed.name}');
-    } else {
-      _showSnackBar('No items to remove');
-    }
+  Future<void> _removeFirst() async {
+    final success = await _cubit.removeAtEmit(0);
+    _showSnackBar(success ? 'Removed first item' : 'No items to remove');
   }
 
   // Remove item by condition (price > 50)
-  void _removeExpensive() {
-    final count = _cubit.removeWhereEmit((item) => item.price > 50);
-    _showSnackBar('Removed $count expensive products');
+  Future<void> _removeExpensive() async {
+    final success = await _cubit.removeWhereEmit((item) => item.price > 50);
+    _showSnackBar(
+        success ? 'Removed expensive products' : 'No expensive products');
   }
 
   // Update first item
-  void _updateFirst() {
-    final updated = _cubit.updateItemEmit(
+  Future<void> _updateFirst() async {
+    final success = await _cubit.updateItemEmit(
       (item) =>
           _cubit.currentItems.isNotEmpty && item == _cubit.currentItems[0],
       (item) => Product(
@@ -113,12 +111,12 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
         category: '',
       ),
     );
-    _showSnackBar(updated ? 'Updated first item' : 'No items to update');
+    _showSnackBar(success ? 'Updated first item' : 'No items to update');
   }
 
   // Update all items (apply discount)
-  void _applyDiscount() {
-    final count = _cubit.updateWhereEmit(
+  Future<void> _applyDiscount() async {
+    final success = await _cubit.updateWhereEmit(
       (item) => true, // All items
       (item) => Product(
         id: item.id,
@@ -130,12 +128,35 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
         createdAt: DateTime.now(),
       ),
     );
-    _showSnackBar('Applied 10% discount to $count products');
+    _showSnackBar(
+        success ? 'Applied 10% discount' : 'No items to discount');
+  }
+
+  // Refresh first item from server
+  Future<void> _refreshFirst() async {
+    final success = await _cubit.refreshItem(
+      (item) =>
+          _cubit.currentItems.isNotEmpty && item == _cubit.currentItems[0],
+      (currentItem) async {
+        // Simulate server refresh
+        await Future.delayed(const Duration(milliseconds: 500));
+        return Product(
+          id: currentItem.id,
+          name: '${currentItem.name} (Refreshed)',
+          description: 'Refreshed from server',
+          price: currentItem.price,
+          imageUrl: currentItem.imageUrl,
+          category: currentItem.category,
+          createdAt: DateTime.now(),
+        );
+      },
+    );
+    _showSnackBar(success ? 'Refreshed first item' : 'No items to refresh');
   }
 
   // Clear all items
-  void _clearAll() {
-    _cubit.clearItems();
+  Future<void> _clearAll() async {
+    await _cubit.clearItems();
     _showSnackBar('Cleared all items');
   }
 
@@ -146,7 +167,7 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
   }
 
   // Set custom items
-  void _setCustomItems() {
+  Future<void> _setCustomItems() async {
     final products = List.generate(
       5,
       (index) => Product(
@@ -159,7 +180,7 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
         createdAt: DateTime.now(),
       ),
     );
-    _cubit.setItems(products);
+    await _cubit.setItems(products);
     _showSnackBar('Set ${products.length} custom items');
   }
 
@@ -227,6 +248,12 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
                     onPressed: _applyDiscount,
                   ),
                   _OperationButton(
+                    label: 'Refresh 1st',
+                    icon: Icons.sync,
+                    color: Colors.cyan,
+                    onPressed: _refreshFirst,
+                  ),
+                  _OperationButton(
                     label: 'Clear',
                     icon: Icons.clear_all,
                     color: Colors.grey,
@@ -259,6 +286,7 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
           Expanded(
             child: SmartPagination.listViewWithCubit(
               cubit: _cubit,
+              itemKeyBuilder: (item, index) => item.id,
               itemBuilder: (context, items, index) {
                 final product = items[index];
                 return Card(
@@ -285,10 +313,10 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
                         color: product.price > 50 ? Colors.red : Colors.green,
                       ),
                     ),
-                    onLongPress: () {
+                    onLongPress: () async {
                       // Remove item on long press
-                      _cubit.removeItemEmit(product);
-                      _showSnackBar('Removed: ${product.name}');
+                      final success = await _cubit.removeItemEmit(product);
+                      if (success) _showSnackBar('Removed: ${product.name}');
                     },
                   ),
                 );
@@ -327,7 +355,7 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Available operations:',
+                'Available operations (all return Future<bool>):',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
@@ -338,6 +366,7 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
               Text('• removeWhereEmit() - Remove by condition'),
               Text('• updateItemEmit() - Update single item'),
               Text('• updateWhereEmit() - Update multiple items'),
+              Text('• refreshItem() - Refresh item from server'),
               Text('• clearItems() - Clear all items'),
               Text('• reload() - Reload from server'),
               Text('• setItems() - Set custom items'),
