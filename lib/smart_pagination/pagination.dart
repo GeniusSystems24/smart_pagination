@@ -102,6 +102,41 @@ class SmartPagination<T> extends StatefulWidget {
   /// Custom refresh callback. If not provided, [cubit.reload] is used.
   final Future<void> Function(SmartPaginationCubit<T> cubit)? onRefresh;
 
+  // ========== Partial Update & Animation Options ==========
+
+  /// Provides a unique key for each item, enabling efficient partial updates
+  /// and animations when items are added, updated, or removed.
+  ///
+  /// When provided for ListView, [SliverAnimatedList] is used for smooth
+  /// insert/remove animations. For other view types, items are wrapped
+  /// in [KeyedSubtree] for efficient Flutter reconciliation.
+  final Object Function(T item, int index)? itemKeyBuilder;
+
+  /// Controls when the widget rebuilds in response to state changes.
+  /// If not provided, the widget rebuilds on every state change.
+  final BlocBuilderCondition<SmartPaginationState<T>>? buildWhen;
+
+  /// Custom animation builder for item insertion.
+  /// If not provided, a default fade + size animation is used.
+  final Widget Function(
+    BuildContext context,
+    int index,
+    Animation<double> animation,
+    Widget child,
+  )? insertItemAnimationBuilder;
+
+  /// Custom animation builder for item removal.
+  /// If not provided, a default fade + size animation is used.
+  final Widget Function(
+    BuildContext context,
+    int index,
+    Animation<double> animation,
+    Widget child,
+  )? removeItemAnimationBuilder;
+
+  /// Duration of insert/remove animations. Defaults to 300ms.
+  final Duration animationDuration;
+
   SmartPagination.withProvider({
     super.key,
     required PaginationRequest request,
@@ -148,6 +183,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
     OnInsertionCallback<T>? onInsertionCallback,
     VoidCallback? onClear,
     Logger? logger,
@@ -217,6 +257,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : internalCubit = false,
@@ -265,6 +310,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -330,6 +380,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -400,6 +455,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.gridView,
        separator = separator ?? SizedBox(height: spacing),
        staggeredAxisDirection = null,
@@ -465,6 +525,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.gridView,
        separator = separator ?? SizedBox(height: spacing),
        staggeredAxisDirection = null,
@@ -518,6 +583,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
     // Cubit params
@@ -595,6 +665,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : itemBuilderType = PaginateBuilderType.listView,
@@ -657,6 +732,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
     // Cubit params
@@ -734,6 +814,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : itemBuilderType = PaginateBuilderType.reorderableListView,
@@ -802,6 +887,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.pageView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -871,6 +961,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.pageView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -945,6 +1040,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.staggeredGridView,
        gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: crossAxisCount,
@@ -1020,6 +1120,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.staggeredGridView,
        gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: crossAxisCount,
@@ -1080,6 +1185,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -1145,6 +1255,11 @@ class SmartPagination<T> extends StatefulWidget {
     this.invisibleItemsThreshold = 3,
     this.canRefresh = false,
     this.onRefresh,
+    this.itemKeyBuilder,
+    this.buildWhen,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -1207,6 +1322,7 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
   Widget build(BuildContext context) {
     return BlocBuilder<SmartPaginationCubit<T>, SmartPaginationState<T>>(
       bloc: widget.cubit,
+      buildWhen: widget.buildWhen,
       builder: (context, state) {
         if (!widget.cubit.didFetch) widget.cubit.fetchPaginatedList();
         if (state is SmartPaginationInitial<T>) {
@@ -1286,6 +1402,11 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
             // Performance
             invisibleItemsThreshold: widget.invisibleItemsThreshold,
             retryLoadMore: widget.cubit.fetchPaginatedList,
+            // Partial Update & Animation
+            itemKeyBuilder: widget.itemKeyBuilder,
+            insertItemAnimationBuilder: widget.insertItemAnimationBuilder,
+            removeItemAnimationBuilder: widget.removeItemAnimationBuilder,
+            animationDuration: widget.animationDuration,
           );
 
           Widget content = view;

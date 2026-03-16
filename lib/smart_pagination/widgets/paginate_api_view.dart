@@ -65,6 +65,11 @@ class PaginateApiView<T> extends StatefulWidget {
     // Observer options
     this.enableObserver = true,
     this.onObserverCreated,
+    // Partial Update & Animation
+    this.itemKeyBuilder,
+    this.insertItemAnimationBuilder,
+    this.removeItemAnimationBuilder,
+    this.animationDuration = const Duration(milliseconds: 300),
   });
 
   final SmartPaginationLoaded<T> loadedState;
@@ -145,6 +150,31 @@ class PaginateApiView<T> extends StatefulWidget {
   /// Useful for accessing the observer controller externally.
   final void Function(dynamic controller)? onObserverCreated;
 
+  // ========== Partial Update & Animation Options ==========
+
+  /// Provides a unique key for each item, enabling efficient partial updates
+  /// and animated insert/remove for ListView.
+  final Object Function(T item, int index)? itemKeyBuilder;
+
+  /// Custom animation builder for item insertion.
+  final Widget Function(
+    BuildContext context,
+    int index,
+    Animation<double> animation,
+    Widget child,
+  )? insertItemAnimationBuilder;
+
+  /// Custom animation builder for item removal.
+  final Widget Function(
+    BuildContext context,
+    int index,
+    Animation<double> animation,
+    Widget child,
+  )? removeItemAnimationBuilder;
+
+  /// Duration of insert/remove animations. Defaults to 300ms.
+  final Duration animationDuration;
+
   @override
   State<PaginateApiView<T>> createState() => _PaginateApiViewState<T>();
 }
@@ -154,14 +184,26 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
   ListObserverController? _listObserverController;
   GridObserverController? _gridObserverController;
 
+  /// Key for SliverAnimatedList when itemKeyBuilder is provided.
+  final GlobalKey<SliverAnimatedListState> _animatedListKey =
+      GlobalKey<SliverAnimatedListState>();
+
+  /// Stores previous items for building remove animations.
+  List<T> _previousItems = [];
+
   ScrollController get _effectiveScrollController =>
       widget.scrollController ?? (_internalScrollController ??= ScrollController());
 
   List<T> get _items => widget.loadedState.items;
 
+  bool get _useAnimatedList =>
+      widget.itemKeyBuilder != null &&
+      widget.itemBuilderType == PaginateBuilderType.listView;
+
   @override
   void initState() {
     super.initState();
+    _previousItems = List<T>.from(_items);
     _initializeObserver();
   }
 
@@ -210,6 +252,33 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
         widget.cubit?.attachGridObserverController(_gridObserverController!);
       }
     }
+
+    // Handle animated list operations
+    if (_useAnimatedList) {
+      final op = widget.loadedState.lastOperation;
+      if (op is PaginationOperationInsert && op.index >= 0) {
+        for (var i = 0; i < op.count; i++) {
+          _animatedListKey.currentState?.insertItem(
+            op.index + i,
+            duration: widget.animationDuration,
+          );
+        }
+      } else if (op is PaginationOperationRemove && op.index >= 0) {
+        for (var i = op.count - 1; i >= 0; i--) {
+          final removeIndex = op.index + i;
+          if (removeIndex < _previousItems.length) {
+            final removedItem = _previousItems[removeIndex];
+            _animatedListKey.currentState?.removeItem(
+              removeIndex,
+              (context, animation) =>
+                  _buildRemovedItem(context, removedItem, removeIndex, animation),
+              duration: widget.animationDuration,
+            );
+          }
+        }
+      }
+    }
+    _previousItems = List<T>.from(_items);
   }
 
   @override
@@ -313,8 +382,21 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
                   widget.fetchPaginatedList?.call();
                 }
 
-                return widget.itemBuilder(context, _items, index);
+                final child = widget.itemBuilder(context, _items, index);
+                return _wrapWithKey(child, index);
               },
+              findChildIndexCallback: widget.itemKeyBuilder != null
+                  ? (Key key) {
+                      if (key is ValueKey) {
+                        for (var i = 0; i < _items.length; i++) {
+                          if (widget.itemKeyBuilder!(_items[i], i) == key.value) {
+                            return i;
+                          }
+                        }
+                      }
+                      return null;
+                    }
+                  : null,
               childCount: widget.loadedState.hasReachedEnd
                   ? _items.length
                   : _items.length + 1,
@@ -336,7 +418,126 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
     return scrollView;
   }
 
+  /// Default insert animation: fade + size transition.
+  Widget _defaultInsertAnimation(Animation<double> animation, Widget child) {
+    return FadeTransition(
+      opacity: animation,
+      child: SizeTransition(sizeFactor: animation, child: child),
+    );
+  }
+
+  /// Builds the widget shown during a remove animation.
+  Widget _buildRemovedItem(
+    BuildContext context,
+    T item,
+    int index,
+    Animation<double> animation,
+  ) {
+    final child = widget.itemBuilder(context, [item], 0);
+    if (widget.removeItemAnimationBuilder != null) {
+      return widget.removeItemAnimationBuilder!(context, index, animation, child);
+    }
+    return FadeTransition(
+      opacity: animation,
+      child: SizeTransition(sizeFactor: animation, child: child),
+    );
+  }
+
+  /// Wraps an item with [KeyedSubtree] if [itemKeyBuilder] is provided.
+  Widget _wrapWithKey(Widget child, int index) {
+    if (widget.itemKeyBuilder != null && index < _items.length) {
+      return KeyedSubtree(
+        key: ValueKey(widget.itemKeyBuilder!(_items[index], index)),
+        child: child,
+      );
+    }
+    return child;
+  }
+
   Widget _buildListView(BuildContext context) {
+    final Widget sliver;
+
+    if (_useAnimatedList) {
+      // Use SliverAnimatedList for animated insert/remove
+      sliver = SliverAnimatedList(
+        key: _animatedListKey,
+        initialItemCount: _items.length,
+        itemBuilder: (context, index, animation) {
+          if (_shouldLoadMore(index)) {
+            widget.fetchPaginatedList?.call();
+          }
+
+          if (index >= _items.length) {
+            return _buildBottomWidget(context);
+          }
+
+          final child = widget.itemBuilder(context, _items, index);
+          final keyed = _wrapWithKey(child, index);
+
+          if (widget.insertItemAnimationBuilder != null) {
+            return widget.insertItemAnimationBuilder!(
+              context,
+              index,
+              animation,
+              keyed,
+            );
+          }
+          return _defaultInsertAnimation(animation, keyed);
+        },
+      );
+    } else {
+      // Standard SliverList with optional keys
+      sliver = SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final itemIndex = index ~/ 2;
+            if (index.isEven) {
+              if (itemIndex >= _items.length) {
+                // Show bottom widget (loading/error/end indicator)
+                return _buildBottomWidget(context);
+              }
+
+              // Check if we should trigger loading more
+              if (_shouldLoadMore(itemIndex)) {
+                widget.fetchPaginatedList?.call();
+              }
+
+              final child = widget.itemBuilder(context, _items, itemIndex);
+              return _wrapWithKey(child, itemIndex);
+            }
+            return widget.separator;
+          },
+          semanticIndexCallback: (widget, localIndex) {
+            if (localIndex.isEven) {
+              return localIndex ~/ 2;
+            }
+            // ignore: avoid_returning_null
+            return null;
+          },
+          findChildIndexCallback: widget.itemKeyBuilder != null
+              ? (Key key) {
+                  if (key is ValueKey) {
+                    for (var i = 0; i < _items.length; i++) {
+                      if (widget.itemKeyBuilder!(_items[i], i) == key.value) {
+                        return i * 2; // Account for separators
+                      }
+                    }
+                  }
+                  return null;
+                }
+              : null,
+          childCount: math.max(
+            0,
+            (widget.loadedState.hasReachedEnd
+                        ? _items.length
+                        : _items.length + 1) *
+                    2 -
+                1,
+          ),
+        ),
+      );
+    }
+
     final scrollView = CustomScrollView(
       reverse: widget.reverse,
       controller: _effectiveScrollController,
@@ -349,42 +550,7 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
         if (widget.header != null) widget.header!,
         SliverPadding(
           padding: widget.padding,
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final itemIndex = index ~/ 2;
-                if (index.isEven) {
-                  if (itemIndex >= _items.length) {
-                    // Show bottom widget (loading/error/end indicator)
-                    return _buildBottomWidget(context);
-                  }
-
-                  // Check if we should trigger loading more
-                  if (_shouldLoadMore(itemIndex)) {
-                    widget.fetchPaginatedList?.call();
-                  }
-
-                  return widget.itemBuilder(context, _items, itemIndex);
-                }
-                return widget.separator;
-              },
-              semanticIndexCallback: (widget, localIndex) {
-                if (localIndex.isEven) {
-                  return localIndex ~/ 2;
-                }
-                // ignore: avoid_returning_null
-                return null;
-              },
-              childCount: math.max(
-                0,
-                (widget.loadedState.hasReachedEnd
-                            ? _items.length
-                            : _items.length + 1) *
-                        2 -
-                    1,
-              ),
-            ),
-          ),
+          sliver: sliver,
         ),
         if (widget.footer != null) widget.footer!,
       ],
@@ -420,10 +586,10 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
       itemBuilder: (context, index) {
         final item = widget.itemBuilder(context, _items, index);
         // Wrap with a key - ReorderableListView requires each child to have a unique key
-        return KeyedSubtree(
-          key: ValueKey('reorderable_item_$index'),
-          child: item,
-        );
+        final key = widget.itemKeyBuilder != null
+            ? ValueKey(widget.itemKeyBuilder!(_items[index], index))
+            : ValueKey('reorderable_item_$index');
+        return KeyedSubtree(key: key, child: item);
       },
       proxyDecorator: (child, index, animation) {
         return AnimatedBuilder(
@@ -472,7 +638,8 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
               widget.fetchPaginatedList?.call();
               return widget.bottomLoader ?? const SizedBox.shrink();
             }
-            return widget.itemBuilder(context, _items, index);
+            final child = widget.itemBuilder(context, _items, index);
+            return _wrapWithKey(child, index);
           },
           childCount: widget.loadedState.hasReachedEnd
               ? _items.length
@@ -518,7 +685,10 @@ class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
             for (var index = 0; index < _items.length; index++)
               StaggeredGridTile.fit(
                 crossAxisCellCount: 1,
-                child: widget.itemBuilder(context, _items, index),
+                child: _wrapWithKey(
+                  widget.itemBuilder(context, _items, index),
+                  index,
+                ),
               ),
             // Add bottom widget for loading/error/end states
             if (!widget.loadedState.hasReachedEnd ||

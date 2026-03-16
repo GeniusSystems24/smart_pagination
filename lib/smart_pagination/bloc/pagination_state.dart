@@ -33,6 +33,48 @@ class SmartPaginationError<T> extends SmartPaginationState<T>
   int get hashCode => error.hashCode;
 }
 
+/// Describes the last item-level operation that triggered a state emission.
+sealed class PaginationOperation {
+  const PaginationOperation();
+}
+
+/// No operation — default state.
+class PaginationOperationNone extends PaginationOperation {
+  const PaginationOperationNone();
+}
+
+/// An item was inserted at [index]. [count] items were inserted.
+class PaginationOperationInsert extends PaginationOperation {
+  final int index;
+  final int count;
+  const PaginationOperationInsert({required this.index, this.count = 1});
+}
+
+/// An item was removed at [index]. [count] items were removed.
+/// If [index] is -1, the exact indices are unknown (e.g., removeWhere).
+class PaginationOperationRemove extends PaginationOperation {
+  final int index;
+  final int count;
+  const PaginationOperationRemove({required this.index, this.count = 1});
+}
+
+/// Items at [indices] were updated in place.
+class PaginationOperationUpdate extends PaginationOperation {
+  final List<int> indices;
+  const PaginationOperationUpdate({required this.indices});
+}
+
+/// A single item at [index] was refreshed from the server.
+class PaginationOperationRefresh extends PaginationOperation {
+  final int index;
+  const PaginationOperationRefresh({required this.index});
+}
+
+/// A full reload occurred (clear, setItems, fetch).
+class PaginationOperationReload extends PaginationOperation {
+  const PaginationOperationReload();
+}
+
 class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     implements IPaginationLoadedState<T> {
   SmartPaginationLoaded({
@@ -46,6 +88,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     this.fetchedAt,
     this.dataExpiredAt,
     this.activeOrderId,
+    this.lastOperation = const PaginationOperationNone(),
   }) : lastUpdate = lastUpdate ?? DateTime.now();
 
   final List<T> items;
@@ -73,6 +116,11 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
   /// The ID of the currently active sort order (null if no sorting applied)
   final String? activeOrderId;
 
+  /// The last item-level operation that triggered this state emission.
+  /// This is metadata for the UI to optimize rebuilds and trigger animations.
+  /// Not included in equality checks.
+  final PaginationOperation lastOperation;
+
   SmartPaginationLoaded<T> copyWith({
     List<T>? items,
     List<T>? allItems,
@@ -84,6 +132,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     DateTime? fetchedAt,
     DateTime? dataExpiredAt,
     String? activeOrderId,
+    PaginationOperation lastOperation = const PaginationOperationNone(),
   }) {
     final updatedAllItems = allItems ?? this.allItems;
     final updatedItems = items ?? this.items;
@@ -99,6 +148,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
       fetchedAt: fetchedAt ?? this.fetchedAt,
       dataExpiredAt: dataExpiredAt ?? this.dataExpiredAt,
       activeOrderId: activeOrderId ?? this.activeOrderId,
+      lastOperation: lastOperation,
     );
   }
 
