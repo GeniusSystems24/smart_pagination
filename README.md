@@ -539,6 +539,22 @@ PaginationProvider.mergeStreams((request) => [
 | `scrollController` | `ScrollController?` | Custom scroll controller |
 | `shrinkWrap` | `bool` | Fit content size |
 | `reverse` | `bool` | Reverse scroll direction |
+| `canRefresh` | `bool` | Enable built-in pull-to-refresh (default: `false`) |
+| `onRefresh` | `Future<void> Function(cubit)?` | Custom refresh callback (default: `cubit.reload()`) |
+
+### Built-in Pull to Refresh
+
+```dart
+SmartPaginationListView.withProvider<Product>(
+  request: const PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(fetchProducts),
+  canRefresh: true,
+  onRefresh: (cubit) async {
+    cubit.reload();
+  },
+  itemBuilder: (context, items, index) => ProductTile(product: items[index]),
+)
+```
 
 ### State Builders
 

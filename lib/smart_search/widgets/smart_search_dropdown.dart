@@ -452,7 +452,7 @@ class _SmartSearchDropdownState<T, K> extends State<SmartSearchDropdown<T, K>> {
   }
 
   Widget _buildSelectedItemDisplay(BuildContext context) {
-    final selectedItem = _searchController!.selectedItem!;
+    final selectedItem = _searchController!.selectedItem as T;
     final searchTheme = SmartSearchTheme.of(context);
 
     // Use custom selectedItemBuilder if provided

@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.3] - 2026-02-04
+
+### Added
+
+- **Auto-retry on connectivity restored**: Network errors are now automatically retried when internet connection is restored
+  - New `connectivityStream` parameter in `SmartPaginationCubit` constructor for automatic monitoring
+  - New `onConnectivityRestored()` method for manual notification
+  - New `isNetworkError` getter to check if last error was network-related
+  - Detects common network errors: SocketException, connection refused/reset/timeout, failed host lookup, etc.
+
+### Usage
+
+```dart
+// Option 1: Using connectivity_plus package with stream
+final cubit = SmartPaginationCubit<Product>(
+  request: request,
+  provider: provider,
+  connectivityStream: Connectivity().onConnectivityChanged
+      .map((result) => result != ConnectivityResult.none),
+);
+
+// Option 2: Manual notification
+Connectivity().onConnectivityChanged.listen((result) {
+  if (result != ConnectivityResult.none) {
+    cubit.onConnectivityRestored();
+  }
+});
+```
+
+---
+
+## [3.1.2] - 2026-02-03
+
+### Changed
+
+- **ErrorRetryStrategy**: Changed default from `automatic` to `none`
+  - Errors no longer trigger automatic retries on the next `fetchPaginatedList()` call
+  - This prevents unwanted retry loops when API calls fail
+  - Use `ErrorRetryStrategy.automatic` explicitly if you want the old behavior
+  - Use `retryAfterError()` for explicit retry control, or `refreshPaginatedList()` to reset
+
+### Notes
+
+- **hasReachedEnd**: Already correctly set to `true` when returned items < pageSize
+- **Page increment**: Page number only increments after successful fetch (existing behavior)
+
+---
+
 ## [3.1.1] - 2026-01-09
 
 ### Added

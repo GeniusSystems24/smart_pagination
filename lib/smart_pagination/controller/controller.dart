@@ -1,7 +1,6 @@
 part of '../../pagination.dart';
 
 class SmartPaginationController<T>
-    with PaginationScrollToItemMixin
     implements IPaginationScrollController<T> {
   SmartPaginationController({
     required SmartPaginationCubit<T> cubit,
@@ -82,12 +81,143 @@ class SmartPaginationController<T>
   @override
   final bool isPublic;
 
-  /// dispose the controller
+  // ==================== SCROLL NAVIGATION ====================
+
+  @override
+  Future<bool> animateToIndex(
+    int index, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    return _cubit.animateToIndex(
+      index,
+      duration: duration,
+      curve: curve,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  @override
+  bool jumpToIndex(
+    int index, {
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    return _cubit.jumpToIndex(
+      index,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  @override
+  Future<bool> scrollToIndex(
+    int index, {
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    return _cubit.scrollToIndex(
+      index,
+      animate: animate,
+      duration: duration,
+      curve: curve,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  @override
+  Future<bool> animateFirstWhere(
+    bool Function(T item) test, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    return _cubit.animateFirstWhere(
+      test,
+      duration: duration,
+      curve: curve,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  @override
+  bool jumpFirstWhere(
+    bool Function(T item) test, {
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    return _cubit.jumpFirstWhere(
+      test,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  @override
+  Future<bool> scrollFirstWhere(
+    bool Function(T item) test, {
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+    double alignment = 0.0,
+    EdgeInsets padding = EdgeInsets.zero,
+    BuildContext? sliverContext,
+    bool isFixedHeight = false,
+  }) {
+    return _cubit.scrollFirstWhere(
+      test,
+      animate: animate,
+      duration: duration,
+      curve: curve,
+      alignment: alignment,
+      padding: padding,
+      sliverContext: sliverContext,
+      isFixedHeight: isFixedHeight,
+    );
+  }
+
+  @override
+  void disposeScrollMethods() {
+    // No-op: scroll methods delegate directly to cubit,
+    // which manages its own observer controller lifecycle.
+  }
+
+  // ==================== END SCROLL NAVIGATION ====================
+
+  /// Dispose the controller.
   @override
   void dispose() {
     if (!isPublic) {
       _cubit.dispose();
     }
-    disposeScrollMethods();
   }
 }

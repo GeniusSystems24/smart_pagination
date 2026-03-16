@@ -843,6 +843,10 @@ RouteBase get $searchRoute => GoRouteData.$route(
           path: 'initial-selection',
           factory: $InitialSelectionRoute._fromState,
         ),
+        GoRouteData.$route(
+          path: 'realistic-examples',
+          factory: $RealisticSearchExamplesRoute._fromState,
+        ),
       ],
     );
 
@@ -1082,6 +1086,29 @@ mixin $InitialSelectionRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
         '/search/initial-selection',
+      );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $RealisticSearchExamplesRoute on GoRouteData {
+  static RealisticSearchExamplesRoute _fromState(GoRouterState state) =>
+      const RealisticSearchExamplesRoute();
+
+  @override
+  String get location => GoRouteData.$location(
+        '/search/realistic-examples',
       );
 
   @override

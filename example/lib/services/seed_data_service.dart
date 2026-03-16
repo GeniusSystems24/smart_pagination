@@ -143,7 +143,7 @@ class SeedDataService {
     }
 
     await batch.commit();
-    onProgress?.call('✅ Added ${index} products');
+    onProgress?.call('✅ Added $index products');
   }
 
   /// Seeds the users collection for search example

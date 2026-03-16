@@ -326,6 +326,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           color: Color(0xFFEA580C),
           route: const InitialSelectionRoute().location,
         ),
+        _ExampleItem(
+          title: 'Realistic Examples',
+          description: 'E-commerce, team, country, tags',
+          icon: Icons.auto_awesome_rounded,
+          color: Color(0xFF6366F1),
+          route: const RealisticSearchExamplesRoute().location,
+        ),
       ],
     ),
     _ExampleCategory(
