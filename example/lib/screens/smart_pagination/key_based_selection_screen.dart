@@ -15,7 +15,8 @@ class KeyBasedSelectionScreen extends StatefulWidget {
   const KeyBasedSelectionScreen({super.key});
 
   @override
-  State<KeyBasedSelectionScreen> createState() => _KeyBasedSelectionScreenState();
+  State<KeyBasedSelectionScreen> createState() =>
+      _KeyBasedSelectionScreenState();
 }
 
 class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
@@ -23,9 +24,7 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
   String? _selectedProductId;
   Product? _selectedProduct;
 
-  String? _selectedMultiKey;
   List<String> _selectedMultiKeys = [];
-  List<Product> _selectedMultiProducts = [];
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +55,8 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                       children: [
                         Icon(
                           Icons.key_rounded,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -64,7 +64,9 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                             'Key-Based Selection',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                           ),
                         ),
@@ -122,7 +124,8 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
               showSelected: true,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
                   child: Text(
                     product.name[0].toUpperCase(),
                     style: TextStyle(
@@ -203,7 +206,8 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
               showSelected: true,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.secondaryContainer,
                   child: Text(product.name[0].toUpperCase()),
                 ),
                 title: Text(product.name),
@@ -277,7 +281,8 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
               maxSelections: 5,
               itemBuilder: (context, product) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.tertiaryContainer,
                   child: Text(product.name[0].toUpperCase()),
                 ),
                 title: Text(product.name),
@@ -299,7 +304,6 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
               onSelected: (products, keys) {
                 setState(() {
                   _selectedMultiKeys = keys;
-                  _selectedMultiProducts = products;
                 });
               },
             ),
@@ -326,13 +330,17 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
                               key,
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -388,7 +396,10 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -413,7 +424,9 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
                           Text(
                             'ID: $key',
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -562,7 +575,8 @@ class _KeyBasedSelectionScreenState extends State<KeyBasedSelectionScreen> {
               _FeatureItem(
                 icon: Icons.vpn_key,
                 title: 'Unique Identification',
-                description: 'Use IDs, SKUs, or any unique key to identify items',
+                description:
+                    'Use IDs, SKUs, or any unique key to identify items',
               ),
               _FeatureItem(
                 icon: Icons.flash_on,

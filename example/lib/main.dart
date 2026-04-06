@@ -15,8 +15,8 @@ class PaginationExampleApp extends StatefulWidget {
   const PaginationExampleApp({super.key});
 
   /// Global key to access app state for theme switching
-  static final GlobalKey<_PaginationExampleAppState> appKey =
-      GlobalKey<_PaginationExampleAppState>();
+  static final GlobalKey<PaginationExampleAppState> appKey =
+      GlobalKey<PaginationExampleAppState>();
 
   /// Toggle between light and dark theme
   static void toggleTheme() {
@@ -28,10 +28,10 @@ class PaginationExampleApp extends StatefulWidget {
       appKey.currentState?._themeMode ?? ThemeMode.light;
 
   @override
-  State<PaginationExampleApp> createState() => _PaginationExampleAppState();
+  State<PaginationExampleApp> createState() => PaginationExampleAppState();
 }
 
-class _PaginationExampleAppState extends State<PaginationExampleApp> {
+class PaginationExampleAppState extends State<PaginationExampleApp> {
   ThemeMode _themeMode = ThemeMode.light;
 
   void toggleTheme() {

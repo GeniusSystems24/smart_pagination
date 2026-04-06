@@ -17,6 +17,7 @@ enum ErrorRetryStrategy {
 
 class SmartPaginationCubit<T>
     extends IPaginationListCubit<T, SmartPaginationState<T>> {
+  static bool enableLogging = false;
   SmartPaginationCubit({
     required PaginationRequest request,
     required PaginationProvider<T> provider,
@@ -150,17 +151,23 @@ class SmartPaginationCubit<T>
   /// ```
   bool setActiveOrder(String orderId) {
     if (_orders == null) {
-      _logger.w('Cannot set active order: no orders collection configured');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.w('Cannot set active order: no orders collection configured');
+      }
       return false;
     }
 
     if (_orders!.setActiveOrder(orderId)) {
-      _logger.d('Active sort order changed to: $orderId');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('Active sort order changed to: $orderId');
+      }
       _applySortingToCurrentState();
       return true;
     }
 
-    _logger.w('Sort order not found: $orderId');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.w('Sort order not found: $orderId');
+    }
     return false;
   }
 
@@ -174,7 +181,9 @@ class SmartPaginationCubit<T>
     if (_orders == null) return;
 
     _orders!.resetToDefault();
-    _logger.d('Sort order reset to default: ${_orders!.defaultOrderId}');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('Sort order reset to default: ${_orders!.defaultOrderId}');
+    }
     _applySortingToCurrentState();
   }
 
@@ -188,7 +197,9 @@ class SmartPaginationCubit<T>
     if (_orders == null) return;
 
     _orders!.clearActiveOrder();
-    _logger.d('Sort order cleared');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('Sort order cleared');
+    }
     _applySortingToCurrentState();
   }
 
@@ -206,7 +217,9 @@ class SmartPaginationCubit<T>
   void addSortOrder(SortOrder<T> order) {
     _orders ??= SortOrderCollection<T>(orders: []);
     _orders!.addOrder(order);
-    _logger.d('Sort order added: ${order.id}');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('Sort order added: ${order.id}');
+    }
   }
 
   /// Removes a sort order from the collection.
@@ -216,7 +229,9 @@ class SmartPaginationCubit<T>
     if (_orders == null) return false;
 
     if (_orders!.removeOrder(orderId)) {
-      _logger.d('Sort order removed: $orderId');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('Sort order removed: $orderId');
+      }
       _applySortingToCurrentState();
       return true;
     }
@@ -363,7 +378,9 @@ class SmartPaginationCubit<T>
   /// re-entering a screen after some time.
   bool checkAndResetIfExpired() {
     if (isDataExpired) {
-      _logger.d('Data expired after $_dataAge, resetting pagination');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('Data expired after $_dataAge, resetting pagination');
+      }
       _resetToInitial();
       return true;
     }
@@ -417,9 +434,11 @@ class SmartPaginationCubit<T>
     }
 
     final filtered = currentState.allItems.where(searchTerm).toList();
-    _logger.d(
-      'Applied pagination filter ${currentState.allItems.length} -> ${filtered.length}',
-    );
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d(
+        'Applied pagination filter ${currentState.allItems.length} -> ${filtered.length}',
+      );
+    }
     emit(currentState.copyWith(items: filtered, lastUpdate: DateTime.now()));
   }
 
@@ -459,11 +478,15 @@ class SmartPaginationCubit<T>
   /// ```
   void retryAfterError() {
     if (!_lastFetchWasError) {
-      _logger.d('retryAfterError called but there is no error to retry');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('retryAfterError called but there is no error to retry');
+      }
       return;
     }
 
-    _logger.d('Retrying after error...');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('Retrying after error...');
+    }
     _lastFetchWasError = false;
     _lastErrorWasNetwork = false;
     _lastError = null;
@@ -502,7 +525,9 @@ class SmartPaginationCubit<T>
   /// Automatically retries if there was a pending network error.
   void _onConnectivityChanged(bool isConnected) {
     if (isConnected && _lastFetchWasError && _lastErrorWasNetwork) {
-      _logger.d('Connectivity restored, retrying after network error...');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('Connectivity restored, retrying after network error...');
+      }
       retryAfterError();
     }
   }
@@ -523,9 +548,11 @@ class SmartPaginationCubit<T>
   /// ```
   void onConnectivityRestored() {
     if (_lastFetchWasError && _lastErrorWasNetwork) {
-      _logger.d(
-        'Connectivity restored (manual), retrying after network error...',
-      );
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d(
+          'Connectivity restored (manual), retrying after network error...',
+        );
+      }
       retryAfterError();
     }
   }
@@ -534,7 +561,9 @@ class SmartPaginationCubit<T>
   void fetchPaginatedList({PaginationRequest? requestOverride, int? limit}) {
     // Prevent concurrent fetch operations
     if (_isFetching) {
-      _logger.d('Fetch already in progress, skipping duplicate request');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('Fetch already in progress, skipping duplicate request');
+      }
       return;
     }
 
@@ -548,15 +577,19 @@ class SmartPaginationCubit<T>
           break;
         case ErrorRetryStrategy.manual:
           // Don't retry automatically, require explicit retryAfterError() call
-          _logger.d(
-            'Error retry strategy is manual, skipping automatic retry. Call retryAfterError() to retry.',
-          );
+          if (SmartPaginationCubit.enableLogging) {
+            _logger.d(
+              'Error retry strategy is manual, skipping automatic retry. Call retryAfterError() to retry.',
+            );
+          }
           return;
         case ErrorRetryStrategy.none:
           // Don't retry at all
-          _logger.d(
-            'Error retry strategy is none, skipping retry. Call refreshPaginatedList() to reset.',
-          );
+          if (SmartPaginationCubit.enableLogging) {
+            _logger.d(
+              'Error retry strategy is none, skipping retry. Call refreshPaginatedList() to reset.',
+            );
+          }
           return;
       }
     }
@@ -610,7 +643,9 @@ class SmartPaginationCubit<T>
               ? _retryHandler.execute(
                   () => dataProvider(request),
                   onRetry: (attempt, error) {
-                    _logger.w('Retry attempt $attempt after error: $error');
+                    if (SmartPaginationCubit.enableLogging) {
+                      _logger.w('Retry attempt $attempt after error: $error');
+                    }
                   },
                 )
               : dataProvider(request),
@@ -692,11 +727,13 @@ class SmartPaginationCubit<T>
         }
       }
     } on Exception catch (error, stackTrace) {
-      _logger.e(
-        'Pagination request failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e(
+          'Pagination request failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
 
       // Set error state
       _lastFetchWasError = true;
@@ -705,9 +742,11 @@ class SmartPaginationCubit<T>
       // Check if this is a network-related error
       _lastErrorWasNetwork = _isNetworkError(error);
       if (_lastErrorWasNetwork) {
-        _logger.d(
-          'Network error detected, will auto-retry when connectivity is restored',
-        );
+        if (SmartPaginationCubit.enableLogging) {
+          _logger.d(
+            'Network error detected, will auto-retry when connectivity is restored',
+          );
+        }
       }
 
       // Handle load more errors differently
@@ -719,11 +758,13 @@ class SmartPaginationCubit<T>
       }
     } catch (error, stackTrace) {
       final exception = Exception(error.toString());
-      _logger.e(
-        'Pagination request failed',
-        error: exception,
-        stackTrace: stackTrace,
-      );
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e(
+          'Pagination request failed',
+          error: exception,
+          stackTrace: stackTrace,
+        );
+      }
 
       // Set error state
       _lastFetchWasError = true;
@@ -732,9 +773,11 @@ class SmartPaginationCubit<T>
       // Check if this is a network-related error (based on error message)
       _lastErrorWasNetwork = _isNetworkErrorMessage(error.toString());
       if (_lastErrorWasNetwork) {
-        _logger.d(
-          'Network error detected, will auto-retry when connectivity is restored',
-        );
+        if (SmartPaginationCubit.enableLogging) {
+          _logger.d(
+            'Network error detected, will auto-retry when connectivity is restored',
+          );
+        }
       }
 
       // Handle load more errors differently
@@ -842,11 +885,13 @@ class SmartPaginationCubit<T>
         final exception = error is Exception
             ? error
             : Exception(error.toString());
-        _logger.e(
-          'Pagination stream failed',
-          error: exception,
-          stackTrace: stack,
-        );
+        if (SmartPaginationCubit.enableLogging) {
+          _logger.e(
+            'Pagination stream failed',
+            error: exception,
+            stackTrace: stack,
+          );
+        }
         emit(SmartPaginationError<T>(error: exception));
       },
     );
@@ -984,8 +1029,7 @@ class SmartPaginationCubit<T>
     // Use efficient merge if sorting is active, otherwise use simple insertAll
     final updated = _orders?.activeOrder != null
         ? _insertAllSorted(currentItems, items)
-        : (List<T>.from(currentItems)
-            ..insertAll(insertIndex, items));
+        : (List<T>.from(currentItems)..insertAll(insertIndex, items));
 
     _onInsertionCallback?.call(updated);
 
@@ -1332,7 +1376,9 @@ class SmartPaginationCubit<T>
       );
       return true;
     } on Exception catch (e) {
-      _logger.e('Failed to refresh item', error: e);
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e('Failed to refresh item', error: e);
+      }
       return false;
     }
   }
@@ -1387,26 +1433,34 @@ class SmartPaginationCubit<T>
   /// ```
   void attachGridObserverController(GridObserverController controller) {
     _gridObserverController = controller;
-    _logger.d('GridObserverController attached');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('GridObserverController attached');
+    }
   }
 
   /// Detaches the list observer controller.
   void detachListObserverController() {
     _listObserverController = null;
-    _logger.d('ListObserverController detached');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('ListObserverController detached');
+    }
   }
 
   /// Detaches the grid observer controller.
   void detachGridObserverController() {
     _gridObserverController = null;
-    // _logger.d('GridObserverController detached');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('GridObserverController detached');
+    }
   }
 
   /// Detaches all observer controllers.
   void detachAllObserverControllers() {
     _listObserverController = null;
     _gridObserverController = null;
-    // _logger.d('All observer controllers detached');
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.d('All observer controllers detached');
+    }
   }
 
   /// Animates to the item at the given [index] with smooth scrolling.
@@ -1436,9 +1490,11 @@ class SmartPaginationCubit<T>
     // Validate index
     final items = currentItems;
     if (index < 0 || index >= items.length) {
-      _logger.w(
-        'animateToIndex: index $index out of bounds (0-${items.length - 1})',
-      );
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.w(
+          'animateToIndex: index $index out of bounds (0-${items.length - 1})',
+        );
+      }
       return false;
     }
 
@@ -1453,7 +1509,9 @@ class SmartPaginationCubit<T>
           sliverContext: sliverContext,
           isFixedHeight: isFixedHeight,
         );
-        _logger.d('Animated to index $index');
+        if (SmartPaginationCubit.enableLogging) {
+          _logger.d('Animated to index $index');
+        }
         return true;
       }
 
@@ -1467,14 +1525,20 @@ class SmartPaginationCubit<T>
           sliverContext: sliverContext,
           isFixedHeight: isFixedHeight,
         );
-        _logger.d('Animated to index $index (grid)');
+        if (SmartPaginationCubit.enableLogging) {
+          _logger.d('Animated to index $index (grid)');
+        }
         return true;
       }
 
-      _logger.w('animateToIndex: no observer controller attached');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.w('animateToIndex: no observer controller attached');
+      }
       return false;
     } catch (e, stackTrace) {
-      _logger.e('animateToIndex failed', error: e, stackTrace: stackTrace);
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e('animateToIndex failed', error: e, stackTrace: stackTrace);
+      }
       return false;
     }
   }
@@ -1502,9 +1566,11 @@ class SmartPaginationCubit<T>
     // Validate index
     final items = currentItems;
     if (index < 0 || index >= items.length) {
-      _logger.w(
-        'jumpToIndex: index $index out of bounds (0-${items.length - 1})',
-      );
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.w(
+          'jumpToIndex: index $index out of bounds (0-${items.length - 1})',
+        );
+      }
       return false;
     }
 
@@ -1517,7 +1583,9 @@ class SmartPaginationCubit<T>
           sliverContext: sliverContext,
           isFixedHeight: isFixedHeight,
         );
-        _logger.d('Jumped to index $index');
+        if (SmartPaginationCubit.enableLogging) {
+          _logger.d('Jumped to index $index');
+        }
         return true;
       }
 
@@ -1529,14 +1597,20 @@ class SmartPaginationCubit<T>
           sliverContext: sliverContext,
           isFixedHeight: isFixedHeight,
         );
-        _logger.d('Jumped to index $index (grid)');
+        if (SmartPaginationCubit.enableLogging) {
+          _logger.d('Jumped to index $index (grid)');
+        }
         return true;
       }
 
-      _logger.w('jumpToIndex: no observer controller attached');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.w('jumpToIndex: no observer controller attached');
+      }
       return false;
     } catch (e, stackTrace) {
-      _logger.e('jumpToIndex failed', error: e, stackTrace: stackTrace);
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e('jumpToIndex failed', error: e, stackTrace: stackTrace);
+      }
       return false;
     }
   }
@@ -1571,7 +1645,9 @@ class SmartPaginationCubit<T>
     final index = items.indexWhere(test);
 
     if (index == -1) {
-      _logger.d('animateFirstWhere: no matching item found');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('animateFirstWhere: no matching item found');
+      }
       return false;
     }
 
@@ -1610,7 +1686,9 @@ class SmartPaginationCubit<T>
     final index = items.indexWhere(test);
 
     if (index == -1) {
-      _logger.d('jumpFirstWhere: no matching item found');
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d('jumpFirstWhere: no matching item found');
+      }
       return false;
     }
 

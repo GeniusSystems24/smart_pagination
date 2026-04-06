@@ -32,7 +32,6 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
     createdAt: DateTime.now(),
   );
 
-  Product? _selectedProduct;
   List<Product> _selectedProducts = [];
 
   @override
@@ -199,7 +198,6 @@ class _InitialSelectionScreenState extends State<InitialSelectionScreen> {
                 ),
               ),
               onSelected: (product, _) {
-                setState(() => _selectedProduct = product);
               },
             ),
             const SizedBox(height: 32),
