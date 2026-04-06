@@ -123,7 +123,8 @@ class SmartPagination<T> extends StatefulWidget {
     int index,
     Animation<double> animation,
     Widget child,
-  )? insertItemAnimationBuilder;
+  )?
+  insertItemAnimationBuilder;
 
   /// Custom animation builder for item removal.
   /// If not provided, a default fade + size animation is used.
@@ -132,7 +133,8 @@ class SmartPagination<T> extends StatefulWidget {
     int index,
     Animation<double> animation,
     Widget child,
-  )? removeItemAnimationBuilder;
+  )?
+  removeItemAnimationBuilder;
 
   /// Duration of insert/remove animations. Defaults to 300ms.
   final Duration animationDuration;
@@ -1284,24 +1286,15 @@ class SmartPagination<T> extends StatefulWidget {
 }
 
 class _SmartPaginationState<T> extends State<SmartPagination<T>> {
-  bool get _isRefreshEnabledForLayout {
-    if (!widget.canRefresh) return false;
-
-    final isSupportedBuilderType = switch (widget.itemBuilderType) {
-      PaginateBuilderType.listView => true,
-      PaginateBuilderType.gridView => true,
-      PaginateBuilderType.staggeredGridView => true,
-      PaginateBuilderType.reorderableListView => true,
-      PaginateBuilderType.pageView => false,
-      PaginateBuilderType.custom => false,
-    };
-
-    if (!isSupportedBuilderType) return false;
-    return widget.scrollDirection == Axis.vertical;
-  }
+  bool get _isRefreshEnabled => widget.canRefresh;
 
   ScrollPhysics _buildRefreshPhysics() {
     return AlwaysScrollableScrollPhysics(parent: widget.physics);
+  }
+
+  ScrollPhysics? _effectivePhysics() {
+    if (!_isRefreshEnabled) return widget.physics;
+    return _buildRefreshPhysics();
   }
 
   Future<void> _handleRefresh() async {
@@ -1310,12 +1303,61 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
       await onRefresh(widget.cubit);
       return;
     }
+
     widget.cubit.reload();
+    await _waitForFetchCompletion();
   }
 
-  Widget _wrapWithRefreshIndicator(Widget child) {
-    if (!_isRefreshEnabledForLayout) return child;
-    return RefreshIndicator(onRefresh: _handleRefresh, child: child);
+  Future<void> _waitForFetchCompletion() async {
+    while (!widget.cubit.isClosed && !widget.cubit._isFetching) {
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+    }
+
+    while (widget.cubit._isFetching) {
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+    }
+  }
+
+  Widget _wrapWithRefreshBehavior(Widget child) {
+    if (!_isRefreshEnabled) return child;
+
+    if (widget.scrollDirection == Axis.vertical) {
+      return RefreshIndicator(onRefresh: _handleRefresh, child: child);
+    }
+
+    return _HorizontalPullToRefresh(
+      reverse: widget.reverse,
+      onRefresh: _handleRefresh,
+      child: child,
+    );
+  }
+
+  Widget _buildFirstPageLoadingWidget(BuildContext context) {
+    return widget.firstPageLoadingBuilder?.call(context) ??
+        widget.loadingWidget;
+  }
+
+  Widget _buildFirstPageErrorWidget(
+    BuildContext context,
+    SmartPaginationError<T> state,
+  ) {
+    if (widget.firstPageErrorBuilder != null) {
+      return widget.firstPageErrorBuilder!(
+        context,
+        state.error,
+        () => widget.cubit.fetchPaginatedList(),
+      );
+    }
+
+    if (widget.onError != null) {
+      return widget.onError!(state.error);
+    }
+
+    return ErrorDisplay(exception: state.error);
+  }
+
+  Widget _buildFirstPageEmptyWidget(BuildContext context) {
+    return widget.firstPageEmptyBuilder?.call(context) ?? widget.emptyWidget;
   }
 
   @override
@@ -1325,121 +1367,139 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
       buildWhen: widget.buildWhen,
       builder: (context, state) {
         if (!widget.cubit.didFetch) widget.cubit.fetchPaginatedList();
+
         if (state is SmartPaginationInitial<T>) {
-          // Use firstPageLoadingBuilder if provided, otherwise fallback to loadingWidget
-          final loadingWidget =
-              widget.firstPageLoadingBuilder?.call(context) ??
-              widget.loadingWidget;
-          return _buildWithScrollView(context, loadingWidget);
-        } else if (state is SmartPaginationError<T>) {
-          // Use firstPageErrorBuilder if provided with retry callback
-          Widget errorWidget;
-          if (widget.firstPageErrorBuilder != null) {
-            errorWidget = widget.firstPageErrorBuilder!(
-              context,
-              state.error,
-              () => widget.cubit.fetchPaginatedList(), // Retry callback
-            );
-          } else if (widget.onError != null) {
-            errorWidget = widget.onError!(state.error);
-          } else {
-            errorWidget = ErrorDisplay(exception: state.error);
-          }
-          return _buildWithScrollView(context, errorWidget);
-        } else {
-          final loadedState = state as SmartPaginationLoaded<T>;
-          if (widget.onLoaded != null) {
-            widget.onLoaded!(loadedState);
-          }
-          if (loadedState.hasReachedEnd && widget.onReachedEnd != null) {
-            widget.onReachedEnd!(loadedState);
-          }
-
-          final beforeBuildState =
-              widget.beforeBuild?.call(loadedState) ?? loadedState;
-
-          if (beforeBuildState.items.isEmpty) {
-            // Use firstPageEmptyBuilder if provided, otherwise fallback to emptyWidget
-            final emptyWidget =
-                widget.firstPageEmptyBuilder?.call(context) ??
-                widget.emptyWidget;
-            return _buildWithScrollView(context, emptyWidget);
-          }
-
-          final view = PaginateApiView(
-            loadedState: beforeBuildState,
-            itemBuilderType: widget.itemBuilderType,
-            itemBuilder: widget.itemBuilder,
-            cubit: widget.cubit, // Pass cubit for built-in observer
-            heightOfInitialLoadingAndEmptyWidget:
-                widget.heightOfInitialLoadingAndEmptyWidget,
-            gridDelegate: widget.gridDelegate,
-            separator: widget.separator,
-            shrinkWrap: widget.shrinkWrap,
-            reverse: widget.reverse,
-            scrollDirection: widget.scrollDirection,
-            staggeredAxisDirection: widget.staggeredAxisDirection,
-            padding: widget.padding,
-            physics: _isRefreshEnabledForLayout
-                ? _buildRefreshPhysics()
-                : widget.physics,
-            scrollController: widget.scrollController,
-            allowImplicitScrolling: widget.allowImplicitScrolling,
-            keyboardDismissBehavior: widget.keyboardDismissBehavior,
-            pageController: widget.pageController,
-            onPageChanged: widget.onPageChanged,
-            header: widget.header,
-            footer: widget.footer,
-            bottomLoader: widget.bottomLoader,
-            fetchPaginatedList: widget.cubit.fetchPaginatedList,
-            cacheExtent: widget.cacheExtent,
-            customViewBuilder: widget.customViewBuilder,
-            onReorder: widget.onReorder,
-            // State Separation Builders
-            loadMoreLoadingBuilder: widget.loadMoreLoadingBuilder,
-            loadMoreErrorBuilder: widget.loadMoreErrorBuilder,
-            loadMoreNoMoreItemsBuilder: widget.loadMoreNoMoreItemsBuilder,
-            // Performance
-            invisibleItemsThreshold: widget.invisibleItemsThreshold,
-            retryLoadMore: widget.cubit.fetchPaginatedList,
-            // Partial Update & Animation
-            itemKeyBuilder: widget.itemKeyBuilder,
-            insertItemAnimationBuilder: widget.insertItemAnimationBuilder,
-            removeItemAnimationBuilder: widget.removeItemAnimationBuilder,
-            animationDuration: widget.animationDuration,
+          return _buildWithScrollView(
+            context,
+            _buildFirstPageLoadingWidget(context),
           );
-
-          Widget content = view;
-          if (widget.listeners != null && widget.listeners!.isNotEmpty) {
-            content = MultiProvider(
-              providers: widget.listeners!
-                  .map(
-                    (listener) =>
-                        ChangeNotifierProvider(create: (context) => listener),
-                  )
-                  .toList(),
-              child: content,
-            );
-          }
-
-          return _wrapWithRefreshIndicator(content);
         }
+
+        if (state is SmartPaginationError<T>) {
+          return _buildWithScrollView(
+            context,
+            _buildFirstPageErrorWidget(context, state),
+          );
+        }
+
+        final loadedState = state as SmartPaginationLoaded<T>;
+        if (widget.onLoaded != null) {
+          widget.onLoaded!(loadedState);
+        }
+        if (loadedState.hasReachedEnd && widget.onReachedEnd != null) {
+          widget.onReachedEnd!(loadedState);
+        }
+
+        final beforeBuildState =
+            widget.beforeBuild?.call(loadedState) ?? loadedState;
+
+        if (beforeBuildState.items.isEmpty) {
+          return _buildWithScrollView(
+            context,
+            _buildFirstPageEmptyWidget(context),
+          );
+        }
+
+        final view = PaginateApiView(
+          loadedState: beforeBuildState,
+          itemBuilderType: widget.itemBuilderType,
+          itemBuilder: widget.itemBuilder,
+          cubit: widget.cubit,
+          heightOfInitialLoadingAndEmptyWidget:
+              widget.heightOfInitialLoadingAndEmptyWidget,
+          gridDelegate: widget.gridDelegate,
+          separator: widget.separator,
+          shrinkWrap: widget.shrinkWrap,
+          reverse: widget.reverse,
+          scrollDirection: widget.scrollDirection,
+          staggeredAxisDirection: widget.staggeredAxisDirection,
+          padding: widget.padding,
+          physics: _effectivePhysics(),
+          scrollController: widget.scrollController,
+          allowImplicitScrolling: widget.allowImplicitScrolling,
+          keyboardDismissBehavior: widget.keyboardDismissBehavior,
+          pageController: widget.pageController,
+          onPageChanged: widget.onPageChanged,
+          header: widget.header,
+          footer: widget.footer,
+          bottomLoader: widget.bottomLoader,
+          fetchPaginatedList: widget.cubit.fetchPaginatedList,
+          cacheExtent: widget.cacheExtent,
+          customViewBuilder: widget.customViewBuilder,
+          onReorder: widget.onReorder,
+          loadMoreLoadingBuilder: widget.loadMoreLoadingBuilder,
+          loadMoreErrorBuilder: widget.loadMoreErrorBuilder,
+          loadMoreNoMoreItemsBuilder: widget.loadMoreNoMoreItemsBuilder,
+          invisibleItemsThreshold: widget.invisibleItemsThreshold,
+          retryLoadMore: widget.cubit.fetchPaginatedList,
+          itemKeyBuilder: widget.itemKeyBuilder,
+          insertItemAnimationBuilder: widget.insertItemAnimationBuilder,
+          removeItemAnimationBuilder: widget.removeItemAnimationBuilder,
+          animationDuration: widget.animationDuration,
+        );
+
+        Widget content = view;
+        if (widget.listeners != null && widget.listeners!.isNotEmpty) {
+          content = MultiProvider(
+            providers: widget.listeners!
+                .map(
+                  (listener) =>
+                      ChangeNotifierProvider(create: (context) => listener),
+                )
+                .toList(),
+            child: content,
+          );
+        }
+
+        return _wrapWithRefreshBehavior(content);
       },
     );
   }
 
   Widget _buildWithScrollView(BuildContext context, Widget child) {
-    final scrollView = SingleChildScrollView(
-      physics: _isRefreshEnabledForLayout ? _buildRefreshPhysics() : null,
-      child: Container(
-        alignment: Alignment.center,
-        height:
-            widget.heightOfInitialLoadingAndEmptyWidget ??
-            MediaQuery.of(context).size.height,
-        child: child,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuerySize = MediaQuery.sizeOf(context);
+        final viewportWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : mediaQuerySize.width;
+        final viewportHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : mediaQuerySize.height;
+
+        final contentHeight = widget.scrollDirection == Axis.vertical
+            ? widget.heightOfInitialLoadingAndEmptyWidget ?? viewportHeight
+            : viewportHeight;
+
+        final content = SizedBox(
+          width: viewportWidth,
+          height: contentHeight,
+          child: Align(alignment: Alignment.center, child: child),
+        );
+
+        final scrollView = SingleChildScrollView(
+          scrollDirection: widget.scrollDirection,
+          physics: _effectivePhysics(),
+          child: widget.scrollDirection == Axis.vertical
+              ? ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: viewportWidth,
+                    minHeight: contentHeight,
+                  ),
+                  child: content,
+                )
+              : ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: viewportWidth,
+                    minHeight: viewportHeight,
+                  ),
+                  child: content,
+                ),
+        );
+
+        return _wrapWithRefreshBehavior(scrollView);
+      },
     );
-    return _wrapWithRefreshIndicator(scrollView);
   }
 
   @override
@@ -1470,5 +1530,181 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
 
     if (!widget.cubit.didFetch) widget.cubit.fetchPaginatedList();
     super.initState();
+  }
+}
+
+class _HorizontalPullToRefresh extends StatefulWidget {
+  const _HorizontalPullToRefresh({
+    required this.child,
+    required this.onRefresh,
+    required this.reverse,
+  });
+
+  final Widget child;
+  final Future<void> Function() onRefresh;
+  final bool reverse;
+
+  @override
+  State<_HorizontalPullToRefresh> createState() =>
+      _HorizontalPullToRefreshState();
+}
+
+class _HorizontalPullToRefreshState extends State<_HorizontalPullToRefresh> {
+  static const double _triggerDistance = 96;
+  static const double _indicatorSize = 28;
+
+  double _dragOffset = 0;
+  bool _isArmed = false;
+  bool _isRefreshing = false;
+
+  bool _handleNotification(ScrollNotification notification) {
+    if (notification.depth != 0 ||
+        notification.metrics.axis != Axis.horizontal) {
+      return false;
+    }
+
+    if (_isRefreshing) {
+      return false;
+    }
+
+    if (notification is ScrollStartNotification) {
+      if (!_isAtLeadingEdge(notification.metrics)) {
+        _reset();
+      }
+      return false;
+    }
+
+    if (notification is OverscrollNotification) {
+      _handleOverscroll(notification);
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification) {
+      _handleScrollUpdate(notification);
+      return false;
+    }
+
+    if (notification is ScrollEndNotification) {
+      if (_isArmed) {
+        _beginRefresh();
+      } else {
+        _reset();
+      }
+    }
+
+    return false;
+  }
+
+  bool _isAtLeadingEdge(ScrollMetrics metrics) {
+    if (widget.reverse) {
+      return (metrics.pixels - metrics.maxScrollExtent).abs() <= 0.5;
+    }
+
+    return (metrics.pixels - metrics.minScrollExtent).abs() <= 0.5;
+  }
+
+  bool _isLeadingDrag(DragUpdateDetails? details) {
+    final delta = details?.delta.dx ?? 0;
+    return widget.reverse ? delta < 0 : delta > 0;
+  }
+
+  void _handleOverscroll(OverscrollNotification notification) {
+    if (!_isAtLeadingEdge(notification.metrics) ||
+        !_isLeadingDrag(notification.dragDetails)) {
+      return;
+    }
+
+    final delta =
+        notification.dragDetails?.delta.dx.abs() ??
+        notification.overscroll.abs();
+    _updateDragOffset(_dragOffset + delta);
+  }
+
+  void _handleScrollUpdate(ScrollUpdateNotification notification) {
+    if (_dragOffset == 0) return;
+
+    if (!_isAtLeadingEdge(notification.metrics) ||
+        !_isLeadingDrag(notification.dragDetails)) {
+      _reset();
+    }
+  }
+
+  void _updateDragOffset(double value) {
+    final clampedValue = value.clamp(0.0, _triggerDistance * 1.5).toDouble();
+    if (clampedValue == _dragOffset) return;
+
+    setState(() {
+      _dragOffset = clampedValue;
+      _isArmed = _dragOffset >= _triggerDistance;
+    });
+  }
+
+  void _beginRefresh() {
+    if (_isRefreshing) return;
+
+    setState(() {
+      _isRefreshing = true;
+      _isArmed = false;
+      _dragOffset = _triggerDistance;
+    });
+
+    unawaited(
+      widget.onRefresh().whenComplete(() {
+        if (!mounted) return;
+
+        setState(() {
+          _isRefreshing = false;
+          _dragOffset = 0;
+          _isArmed = false;
+        });
+      }),
+    );
+  }
+
+  void _reset() {
+    if (_dragOffset == 0 && !_isArmed) return;
+
+    setState(() {
+      _dragOffset = 0;
+      _isArmed = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = _isRefreshing
+        ? null
+        : (_dragOffset / _triggerDistance).clamp(0.0, 1.0).toDouble();
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: _handleNotification,
+      child: Stack(
+        fit: StackFit.passthrough,
+        children: [
+          widget.child,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: (_dragOffset > 0 || _isRefreshing) ? 1 : 0,
+                duration: const Duration(milliseconds: 150),
+                child: Align(
+                  alignment: widget.reverse
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      width: _indicatorSize,
+                      height: _indicatorSize,
+                      child: RefreshProgressIndicator(value: progress),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
