@@ -22,12 +22,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
 
       - name: Get dependencies
         working-directory: example
@@ -35,14 +40,20 @@ jobs:
 
       - name: Build web
         working-directory: example
-        # run: flutter build web --release --base-href "/smart_pagination/"
-        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+        run: |
+          BASE_PATH="${{ steps.pages.outputs.base_path }}"
+          if [ -z "$BASE_PATH" ]; then
+            BASE_HREF="/"
+          else
+            BASE_HREF="$BASE_PATH/"
+          fi
+          flutter build web --release --base-href "$BASE_HREF"
 
       - name: Disable Jekyll
         run: touch example/build/web/.nojekyll
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: example/build/web
 
@@ -55,5 +66,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
-        # deploy-pages ينشر الـ artifact إلى Pages :contentReference[oaicite:5]{index=5}
+        uses: actions/deploy-pages@v5
