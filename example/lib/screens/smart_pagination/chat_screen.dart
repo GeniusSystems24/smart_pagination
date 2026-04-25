@@ -6,6 +6,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:smart_pagination/pagination.dart';
 // import 'package:intl/intl.dart';
 import 'package:tooltip_card/tooltip_card.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/message.dart';
 
@@ -28,6 +29,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   static const String _currentUser = 'أنت';
   static const String _otherUser = 'أحمد محمد';
+
+  final Map<String, _MessageAttachment> _messageAttachments =
+      <String, _MessageAttachment>{};
 
   int? _highlightedIndex;
   bool _isSearching = false;
@@ -86,7 +90,14 @@ class _ChatScreenState extends State<ChatScreen> {
       if (index >= sampleConversation.length * 3) break;
 
       final messageData = sampleConversation[index % sampleConversation.length];
-      final isCurrentUser = messageData['isMe'] as bool;
+      final isCurrentUser = messageData.isMe;
+      final messageId = 'msg_${request.page}_$index';
+
+      if (messageData.attachment != null) {
+        _messageAttachments[messageId] = messageData.attachment!;
+      } else {
+        _messageAttachments.remove(messageId);
+      }
 
       // Create timestamps going backwards in time
       final timestamp = now.subtract(Duration(
@@ -94,8 +105,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ));
 
       messages.add(Message(
-        id: 'msg_${request.page}_$index',
-        content: messageData['text'] as String,
+        id: messageId,
+        content: messageData.text,
         author: isCurrentUser ? _currentUser : _otherUser,
         timestamp: timestamp,
         isRead: index > 5, // Recent messages are unread
@@ -108,28 +119,176 @@ class _ChatScreenState extends State<ChatScreen> {
     return messages;
   }
 
-  List<Map<String, dynamic>> _getSampleConversation() {
-    return [
-      {'text': 'مرحباً! كيف حالك اليوم؟ 👋', 'isMe': false},
-      {'text': 'أهلاً أحمد! الحمد لله بخير، وأنت؟', 'isMe': true},
-      {'text': 'الحمد لله، هل انتهيت من المشروع؟', 'isMe': false},
-      {'text': 'نعم، أنهيته البارحة وأرسلته للمراجعة ✅', 'isMe': true},
-      {'text': 'ممتاز! عمل رائع 👏', 'isMe': false},
-      {'text': 'شكراً لك! هل لديك أي ملاحظات؟', 'isMe': true},
-      {'text': 'سأراجعه اليوم وأخبرك', 'isMe': false},
-      {'text': 'تمام، في انتظارك', 'isMe': true},
-      {'text': 'بالمناسبة، الاجتماع تأجل للساعة 3 مساءً', 'isMe': false},
-      {'text': 'حسناً، سأكون جاهزاً 📅', 'isMe': true},
-      {'text': 'هل تحتاج مساعدة في التحضير؟', 'isMe': false},
-      {'text': 'نعم، أرسل لي العرض التقديمي من فضلك', 'isMe': true},
-      {'text': 'تم الإرسال على البريد 📧', 'isMe': false},
-      {'text': 'وصل، شكراً جزيلاً!', 'isMe': true},
-      {'text': 'عفواً! نتواصل لاحقاً', 'isMe': false},
-      {'text': 'إن شاء الله، أراك في الاجتماع', 'isMe': true},
-      {'text': 'هل رأيت التحديثات الجديدة في النظام؟', 'isMe': false},
-      {'text': 'لا بعد، ما الجديد؟', 'isMe': true},
-      {'text': 'أضافوا ميزة البحث المتقدم 🔍', 'isMe': false},
-      {'text': 'رائع! سأجربها الآن', 'isMe': true},
+  List<_SampleConversationMessage> _getSampleConversation() {
+    return const [
+      _SampleConversationMessage(
+        text: 'مرحباً! كيف حالك اليوم؟ 👋',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'أهلاً أحمد! الحمد لله بخير، وأنت؟',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'media image: أرسلت لك صورة حقيقية للمعاينة',
+        isMe: false,
+        attachment: _MessageAttachment(
+          type: _MessageAttachmentType.image,
+          title: 'صورة حقيقية',
+          subtitle: 'JPEG • 18 KB',
+          caption: 'هذه رسالة media تحتوي صورة حقيقية.',
+          mediaUrl:
+              'https://interactive-examples.mdn.mozilla.net/media/cc0-images/grapefruit-slice-332-332.jpg',
+          icon: Icons.image,
+          color: Color(0xFF0B8F8A),
+        ),
+      ),
+      _SampleConversationMessage(
+        text: 'media video: هذا فيديو حقيقي قابل للتشغيل',
+        isMe: true,
+        attachment: _MessageAttachment(
+          type: _MessageAttachmentType.video,
+          title: 'فيديو الزهرة',
+          subtitle: 'MP4 • 1.1 MB',
+          caption: 'هذه رسالة media تحتوي ملف فيديو حقيقي.',
+          mediaUrl:
+              'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+          icon: Icons.play_arrow_rounded,
+          color: Color(0xFF3A86FF),
+          actionLabel: 'تشغيل الفيديو',
+          duration: '0:05',
+        ),
+      ),
+      _SampleConversationMessage(
+        text: 'media audio: هذا مقطع صوتي حقيقي',
+        isMe: false,
+        attachment: _MessageAttachment(
+          type: _MessageAttachmentType.audio,
+          title: 'مقطع صوتي',
+          subtitle: 'MP3 • 39 KB',
+          caption: 'هذه رسالة media تحتوي ملف صوت حقيقي.',
+          mediaUrl:
+              'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
+          icon: Icons.graphic_eq,
+          color: Color(0xFF118AB2),
+          actionLabel: 'تشغيل الصوت',
+          duration: '0:01',
+        ),
+      ),
+      _SampleConversationMessage(
+        text: 'الحمد لله، هل انتهيت من المشروع؟',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'نعم، أنهيته البارحة وأرسلته للمراجعة ✅',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'location: هذا موقع الاجتماع الرئيسي',
+        isMe: true,
+        attachment: _MessageAttachment(
+          type: _MessageAttachmentType.location,
+          title: 'موقع الاجتماع',
+          subtitle: 'الرياض - حي الملقا',
+          caption: '24.7743, 46.7386',
+          icon: Icons.location_on,
+          color: Color(0xFFE76F51),
+          actionLabel: 'عرض الموقع',
+        ),
+      ),
+      _SampleConversationMessage(
+        text: 'ممتاز! عمل رائع 👏',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'contact: أرسل لك جهة اتصال خالد من فريق الدعم',
+        isMe: false,
+        attachment: _MessageAttachment(
+          type: _MessageAttachmentType.contact,
+          title: 'خالد الدعم الفني',
+          subtitle: '+966 55 123 4567',
+          caption: 'فريق تجربة العملاء',
+          icon: Icons.person,
+          color: Color(0xFF2A9D8F),
+        ),
+      ),
+      _SampleConversationMessage(
+        text: 'شكراً لك! هل لديك أي ملاحظات؟',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'سأراجعه اليوم وأخبرك',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'تمام، في انتظارك',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'poll: ما الوقت الأنسب للاجتماع القادم؟',
+        isMe: false,
+        attachment: _MessageAttachment(
+          type: _MessageAttachmentType.poll,
+          title: 'ما الوقت الأنسب للاجتماع القادم؟',
+          subtitle: '12 صوتاً',
+          caption: 'استطلاع تجريبي لرسائل poll.',
+          icon: Icons.poll,
+          color: Color(0xFF6A4C93),
+          pollOptions: [
+            _PollOption(label: '10:00 صباحاً', votes: 5),
+            _PollOption(label: '1:00 ظهراً', votes: 3),
+            _PollOption(label: '3:00 مساءً', votes: 4),
+          ],
+        ),
+      ),
+      _SampleConversationMessage(
+        text: 'بالمناسبة، الاجتماع تأجل للساعة 3 مساءً',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'حسناً، سأكون جاهزاً 📅',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'هل تحتاج مساعدة في التحضير؟',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'نعم، أرسل لي العرض التقديمي من فضلك',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'تم الإرسال على البريد 📧',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'وصل، شكراً جزيلاً!',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'عفواً! نتواصل لاحقاً',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'إن شاء الله، أراك في الاجتماع',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'هل رأيت التحديثات الجديدة في النظام؟',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'لا بعد، ما الجديد؟',
+        isMe: true,
+      ),
+      _SampleConversationMessage(
+        text: 'أضافوا ميزة البحث المتقدم 🔍',
+        isMe: false,
+      ),
+      _SampleConversationMessage(
+        text: 'رائع! سأجربها الآن',
+        isMe: true,
+      ),
     ];
   }
 
@@ -346,6 +505,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           _DateSeparator(date: message.timestamp),
                         _MessageBubble(
                           message: message,
+                          attachment: _messageAttachments[message.id],
                           isCurrentUser: message.author == _currentUser,
                           isHighlighted: isHighlighted,
                           index: index,
@@ -685,6 +845,30 @@ class _ChatScreenState extends State<ChatScreen> {
               icon: Icons.event,
               onTap: () => _searchAndScroll('الاجتماع'),
               color: Colors.pink,
+            ),
+            _NavigationChip(
+              label: 'وسائط',
+              icon: Icons.perm_media,
+              onTap: () => _searchAndScroll('media'),
+              color: Colors.indigo,
+            ),
+            _NavigationChip(
+              label: 'موقع',
+              icon: Icons.location_on,
+              onTap: () => _searchAndScroll('location'),
+              color: Colors.deepOrange,
+            ),
+            _NavigationChip(
+              label: 'جهة اتصال',
+              icon: Icons.person_add_alt,
+              onTap: () => _searchAndScroll('contact'),
+              color: Colors.green,
+            ),
+            _NavigationChip(
+              label: 'استطلاع',
+              icon: Icons.poll,
+              onTap: () => _searchAndScroll('poll'),
+              color: Colors.deepPurple,
             ),
           ],
         ),
@@ -1100,9 +1284,827 @@ class _MessageActionChip extends StatelessWidget {
   }
 }
 
+Future<void> _launchAttachmentUrl(BuildContext context, String? url) async {
+  final uri = url == null ? null : Uri.tryParse(url);
+  final messenger = ScaffoldMessenger.maybeOf(context);
+
+  if (uri == null) {
+    messenger?.showSnackBar(
+      const SnackBar(content: Text('رابط الوسائط غير صالح')),
+    );
+    return;
+  }
+
+  final didLaunch = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!didLaunch) {
+    messenger?.showSnackBar(
+      const SnackBar(content: Text('تعذر فتح ملف الوسائط')),
+    );
+  }
+}
+
+class _SampleConversationMessage {
+  const _SampleConversationMessage({
+    required this.text,
+    required this.isMe,
+    this.attachment,
+  });
+
+  final String text;
+  final bool isMe;
+  final _MessageAttachment? attachment;
+}
+
+enum _MessageAttachmentType { image, video, audio, location, contact, poll }
+
+class _MessageAttachment {
+  const _MessageAttachment({
+    required this.type,
+    required this.title,
+    this.subtitle,
+    this.caption,
+    this.mediaUrl,
+    this.icon = Icons.insert_drive_file,
+    this.color = Colors.teal,
+    this.actionLabel,
+    this.duration,
+    this.pollOptions = const [],
+  });
+
+  final _MessageAttachmentType type;
+  final String title;
+  final String? subtitle;
+  final String? caption;
+  final String? mediaUrl;
+  final IconData icon;
+  final Color color;
+  final String? actionLabel;
+  final String? duration;
+  final List<_PollOption> pollOptions;
+}
+
+class _PollOption {
+  const _PollOption({
+    required this.label,
+    required this.votes,
+  });
+
+  final String label;
+  final int votes;
+}
+
+class _MessageAttachmentView extends StatelessWidget {
+  const _MessageAttachmentView({
+    required this.attachment,
+    required this.textColor,
+    required this.isDark,
+  });
+
+  final _MessageAttachment attachment;
+  final Color textColor;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width * 0.75;
+        final width = maxWidth < 180
+            ? maxWidth
+            : maxWidth > 260
+                ? 260.0
+                : maxWidth;
+
+        return SizedBox(
+          width: width,
+          child: switch (attachment.type) {
+            _MessageAttachmentType.image => _buildImageContent(),
+            _MessageAttachmentType.video => _buildVideoContent(context),
+            _MessageAttachmentType.audio => _buildAudioContent(context),
+            _MessageAttachmentType.location => _buildLocationContent(context),
+            _MessageAttachmentType.contact => _buildContactContent(context),
+            _MessageAttachmentType.poll => _buildPollContent(),
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildImageContent() {
+    final mutedColor = isDark ? Colors.white70 : Colors.black54;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Stack(
+            children: [
+              Image.network(
+                attachment.mediaUrl!,
+                height: 170,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildMediaFallback(
+                    height: 170,
+                    icon: Icons.broken_image_outlined,
+                    label: 'تعذر تحميل الصورة',
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+
+                  return _buildMediaFallback(
+                    height: 170,
+                    icon: Icons.image_outlined,
+                    label: 'جاري تحميل الصورة',
+                    showProgress: true,
+                  );
+                },
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0),
+                        Colors.black.withValues(alpha: 0.48),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: _AttachmentBadge(
+                  icon: Icons.image_outlined,
+                  label: attachment.subtitle ?? 'image',
+                  isDark: isDark,
+                ),
+              ),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 12,
+                child: Text(
+                  attachment.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (attachment.caption != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            attachment.caption!,
+            style: TextStyle(color: mutedColor, fontSize: 13),
+            textDirection: TextDirection.rtl,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildVideoContent(BuildContext context) {
+    final mutedColor = isDark ? Colors.white70 : Colors.black54;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => _launchAttachmentUrl(context, attachment.mediaUrl),
+          child: Container(
+            height: 150,
+            decoration: BoxDecoration(
+              color: attachment.color.withValues(alpha: isDark ? 0.24 : 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(
+                        4,
+                        (index) => Row(
+                          children: List.generate(
+                            5,
+                            (dotIndex) => Expanded(
+                              child: Container(
+                                height: 18,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 2),
+                                decoration: BoxDecoration(
+                                  color: attachment.color.withValues(
+                                    alpha: index.isEven ? 0.18 : 0.11,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: attachment.color,
+                    child: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 38,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _AttachmentBadge(
+                    icon: Icons.videocam_outlined,
+                    label: attachment.duration ?? 'video',
+                    isDark: isDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          attachment.title,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          textDirection: TextDirection.rtl,
+        ),
+        if (attachment.subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            attachment.subtitle!,
+            style: TextStyle(color: mutedColor, fontSize: 12),
+            textDirection: TextDirection.rtl,
+          ),
+        ],
+        if (attachment.caption != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            attachment.caption!,
+            style: TextStyle(color: mutedColor, fontSize: 12),
+            textDirection: TextDirection.rtl,
+          ),
+        ],
+        if (attachment.actionLabel != null) ...[
+          const SizedBox(height: 8),
+          _InlineAction(
+            icon: Icons.open_in_new,
+            label: attachment.actionLabel!,
+            color: attachment.color,
+            onTap: () => _launchAttachmentUrl(context, attachment.mediaUrl),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAudioContent(BuildContext context) {
+    final mutedColor = isDark ? Colors.white70 : Colors.black54;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => _launchAttachmentUrl(context, attachment.mediaUrl),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: attachment.color,
+                  child: const Icon(Icons.play_arrow, color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      attachment.title,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textDirection: TextDirection.rtl,
+                    ),
+                    const SizedBox(height: 6),
+                    _AudioWaveform(color: attachment.color, isDark: isDark),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                attachment.duration ?? '0:00',
+                style: TextStyle(color: mutedColor, fontSize: 11),
+              ),
+            ],
+          ),
+          if (attachment.subtitle != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              attachment.subtitle!,
+              style: TextStyle(color: mutedColor, fontSize: 12),
+              textDirection: TextDirection.rtl,
+            ),
+          ],
+          if (attachment.caption != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              attachment.caption!,
+              style: TextStyle(color: mutedColor, fontSize: 12),
+              textDirection: TextDirection.rtl,
+            ),
+          ],
+          if (attachment.actionLabel != null) ...[
+            const SizedBox(height: 8),
+            _InlineAction(
+              icon: Icons.open_in_new,
+              label: attachment.actionLabel!,
+              color: attachment.color,
+              onTap: () => _launchAttachmentUrl(context, attachment.mediaUrl),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMediaFallback({
+    required double height,
+    required IconData icon,
+    required String label,
+    bool showProgress = false,
+  }) {
+    return Container(
+      height: height,
+      width: double.infinity,
+      color: attachment.color.withValues(alpha: isDark ? 0.28 : 0.16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: attachment.color, size: 42),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(color: textColor, fontSize: 12),
+            textDirection: TextDirection.rtl,
+          ),
+          if (showProgress) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: 80,
+              child: LinearProgressIndicator(
+                minHeight: 3,
+                color: attachment.color,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationContent(BuildContext context) {
+    final mutedColor = isDark ? Colors.white70 : Colors.black54;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: attachment.color.withValues(alpha: isDark ? 0.24 : 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: attachment.color.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(
+                      4,
+                      (index) => Container(
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: attachment.color.withValues(alpha: 0.24),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Center(
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: attachment.color,
+                  child: const Icon(Icons.location_on, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          attachment.title,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          textDirection: TextDirection.rtl,
+        ),
+        if (attachment.subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            attachment.subtitle!,
+            style: TextStyle(color: mutedColor, fontSize: 12),
+            textDirection: TextDirection.rtl,
+          ),
+        ],
+        if (attachment.caption != null) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.my_location, size: 14, color: mutedColor),
+              const SizedBox(width: 4),
+              Text(
+                attachment.caption!,
+                style: TextStyle(color: mutedColor, fontSize: 11),
+              ),
+            ],
+          ),
+        ],
+        if (attachment.actionLabel != null) ...[
+          const SizedBox(height: 8),
+          _InlineAction(
+            icon: Icons.map_outlined,
+            label: attachment.actionLabel!,
+            color: attachment.color,
+            onTap: attachment.mediaUrl == null
+                ? null
+                : () => _launchAttachmentUrl(context, attachment.mediaUrl),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildContactContent(BuildContext context) {
+    final mutedColor = isDark ? Colors.white70 : Colors.black54;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: attachment.color,
+                child: Icon(attachment.icon, color: Colors.white),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      attachment.title,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textDirection: TextDirection.rtl,
+                    ),
+                    if (attachment.subtitle != null)
+                      Text(
+                        attachment.subtitle!,
+                        style: TextStyle(color: mutedColor, fontSize: 12),
+                      ),
+                    if (attachment.caption != null)
+                      Text(
+                        attachment.caption!,
+                        style: TextStyle(color: mutedColor, fontSize: 11),
+                        textDirection: TextDirection.rtl,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _InlineAction(
+                  icon: Icons.chat_bubble_outline,
+                  label: 'رسالة',
+                  color: attachment.color,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _InlineAction(
+                  icon: Icons.call,
+                  label: 'اتصال',
+                  color: attachment.color,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPollContent() {
+    final totalVotes = attachment.pollOptions.fold<int>(
+      0,
+      (total, option) => total + option.votes,
+    );
+    final mutedColor = isDark ? Colors.white70 : Colors.black54;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(attachment.icon, color: attachment.color, size: 20),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                attachment.title,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                ),
+                textDirection: TextDirection.rtl,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ...attachment.pollOptions.map(
+          (option) => _PollOptionTile(
+            option: option,
+            totalVotes: totalVotes,
+            color: attachment.color,
+            textColor: textColor,
+            mutedColor: mutedColor,
+            isDark: isDark,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          attachment.subtitle ?? '$totalVotes صوتاً',
+          style: TextStyle(color: mutedColor, fontSize: 11),
+          textDirection: TextDirection.rtl,
+        ),
+        if (attachment.caption != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            attachment.caption!,
+            style: TextStyle(color: mutedColor, fontSize: 11),
+            textDirection: TextDirection.rtl,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AttachmentBadge extends StatelessWidget {
+  const _AttachmentBadge({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.34)
+            : Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: isDark ? Colors.white : Colors.black54),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? Colors.white : Colors.black54,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineAction extends StatelessWidget {
+  const _InlineAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AudioWaveform extends StatelessWidget {
+  const _AudioWaveform({
+    required this.color,
+    required this.isDark,
+  });
+
+  final Color color;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    const heights = <double>[10, 18, 14, 24, 16, 28, 12, 22, 15, 20, 11, 17];
+
+    return Row(
+      children: [
+        for (final height in heights)
+          Expanded(
+            child: Align(
+              alignment: Alignment.center,
+              child: Container(
+                height: height,
+                margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: isDark ? 0.72 : 0.82),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PollOptionTile extends StatelessWidget {
+  const _PollOptionTile({
+    required this.option,
+    required this.totalVotes,
+    required this.color,
+    required this.textColor,
+    required this.mutedColor,
+    required this.isDark,
+  });
+
+  final _PollOption option;
+  final int totalVotes;
+  final Color color;
+  final Color textColor;
+  final Color mutedColor;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = totalVotes == 0 ? 0.0 : option.votes / totalVotes;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  option.label,
+                  style: TextStyle(color: textColor, fontSize: 13),
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+              Text(
+                '${(percentage * 100).round()}%',
+                style: TextStyle(
+                  color: mutedColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: percentage,
+              minHeight: 7,
+              backgroundColor: Colors.black.withValues(
+                alpha: isDark ? 0.24 : 0.08,
+              ),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({
     required this.message,
+    required this.attachment,
     required this.isCurrentUser,
     required this.isHighlighted,
     required this.index,
@@ -1111,6 +2113,7 @@ class _MessageBubble extends StatelessWidget {
   });
 
   final Message message;
+  final _MessageAttachment? attachment;
   final bool isCurrentUser;
   final bool isHighlighted;
   final int index;
@@ -1168,14 +2171,21 @@ class _MessageBubble extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  message.content,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 15,
+                if (attachment == null)
+                  Text(
+                    message.content,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 15,
+                    ),
+                    textDirection: TextDirection.rtl,
+                  )
+                else
+                  _MessageAttachmentView(
+                    attachment: attachment!,
+                    textColor: textColor,
+                    isDark: isDark,
                   ),
-                  textDirection: TextDirection.rtl,
-                ),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
