@@ -258,6 +258,7 @@ class SmartPaginationCubit<T>
         items: sorted,
         allItems: sortedAll,
         lastUpdate: DateTime.now(),
+        lastOperation: const PaginationOperationReload(),
       ),
     );
   }
@@ -276,6 +277,7 @@ class SmartPaginationCubit<T>
         allItems: sortedAllItems,
         activeOrderId: _orders?.activeOrderId,
         lastUpdate: DateTime.now(),
+        lastOperation: const PaginationOperationReload(),
       ),
     );
   }
@@ -428,6 +430,7 @@ class SmartPaginationCubit<T>
         currentState.copyWith(
           items: List<T>.from(currentState.allItems),
           lastUpdate: DateTime.now(),
+          lastOperation: const PaginationOperationReload(),
         ),
       );
       return;
@@ -439,7 +442,13 @@ class SmartPaginationCubit<T>
         'Applied pagination filter ${currentState.allItems.length} -> ${filtered.length}',
       );
     }
-    emit(currentState.copyWith(items: filtered, lastUpdate: DateTime.now()));
+    emit(
+      currentState.copyWith(
+        items: filtered,
+        lastUpdate: DateTime.now(),
+        lastOperation: const PaginationOperationReload(),
+      ),
+    );
   }
 
   @override
@@ -700,6 +709,30 @@ class SmartPaginationCubit<T>
 
       _onInsertionCallback?.call(sortedItems);
 
+      // Compute the operation that produced this state so the UI can decide
+      // whether to remount the animated list (Reload) or just animate the
+      // newly appended items (Insert at the previous tail).
+      final PaginationOperation fetchOperation;
+      if (reset) {
+        fetchOperation = const PaginationOperationReload();
+      } else {
+        final previousState = state;
+        final previousLength = previousState is SmartPaginationLoaded<T>
+            ? previousState.items.length
+            : 0;
+        final delta = sortedItems.length - previousLength;
+        // Only treat it as a clean append when sorting did not reorder the
+        // existing prefix; otherwise fall back to a reload signal.
+        final appendedCleanly = delta > 0 &&
+            _isPrefix(sortedItems, previousState, previousLength);
+        fetchOperation = appendedCleanly
+            ? PaginationOperationInsert(
+                index: previousLength,
+                count: delta,
+              )
+            : const PaginationOperationReload();
+      }
+
       emit(
         SmartPaginationLoaded<T>(
           items: List<T>.from(sortedItems),
@@ -713,6 +746,7 @@ class SmartPaginationCubit<T>
               ? _lastFetchTime!.add(_dataAge)
               : null,
           activeOrderId: _orders?.activeOrderId,
+          lastOperation: fetchOperation,
         ),
       );
 
@@ -878,6 +912,7 @@ class SmartPaginationCubit<T>
                 ? _lastFetchTime!.add(_dataAge)
                 : null,
             activeOrderId: _orders?.activeOrderId,
+            lastOperation: const PaginationOperationReload(),
           ),
         );
       },
@@ -899,6 +934,24 @@ class SmartPaginationCubit<T>
 
   List<T> _applyListBuilder(List<T> items) {
     return _listBuilder?.call(items) ?? items;
+  }
+
+  /// Returns true if the first [previousLength] items of [next] match the
+  /// items of [previousState] in order. Used to detect a clean append for
+  /// load-more so we can emit a precise [PaginationOperationInsert].
+  bool _isPrefix(
+    List<T> next,
+    SmartPaginationState<T> previousState,
+    int previousLength,
+  ) {
+    if (previousState is! SmartPaginationLoaded<T>) return false;
+    if (previousLength == 0) return true;
+    if (next.length < previousLength) return false;
+    final previousItems = previousState.items;
+    for (var i = 0; i < previousLength; i++) {
+      if (previousItems[i] != next[i]) return false;
+    }
+    return true;
   }
 
   void _trimCachedPages() {

@@ -158,6 +158,9 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
 
     return other is SmartPaginationLoaded<T> &&
         other.hasReachedEnd == hasReachedEnd &&
+        other.isLoadingMore == isLoadingMore &&
+        other.loadMoreError == loadMoreError &&
+        identical(other.lastOperation, lastOperation) &&
         listEquals(other.items, items) &&
         listEquals(other.allItems, allItems) &&
         other.meta == meta;
@@ -166,6 +169,9 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
   @override
   int get hashCode => Object.hash(
     hasReachedEnd,
+    isLoadingMore,
+    loadMoreError,
+    identityHashCode(lastOperation),
     Object.hashAll(items),
     Object.hashAll(allItems),
     meta,

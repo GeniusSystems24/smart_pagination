@@ -1360,11 +1360,39 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
     return widget.firstPageEmptyBuilder?.call(context) ?? widget.emptyWidget;
   }
 
+  /// Default [buildWhen] used when the user does not supply one.
+  /// Rebuilds the top-level widget only when something visually relevant
+  /// changes:
+  ///  - state runtimeType changes (Initial/Error/Loaded transitions);
+  ///  - the items list reference changes (insert/update/remove/reload);
+  ///  - hasReachedEnd, isLoadingMore, or loadMoreError flip;
+  ///  - lastOperation changes (so animated paths get the right signal).
+  /// Pure metadata-only changes (e.g. [SmartPaginationLoaded.lastUpdate]
+  /// or [SmartPaginationLoaded.fetchedAt]) no longer cause a rebuild.
+  bool _defaultBuildWhen(
+    SmartPaginationState<T> previous,
+    SmartPaginationState<T> current,
+  ) {
+    if (previous.runtimeType != current.runtimeType) return true;
+    if (previous is SmartPaginationLoaded<T> &&
+        current is SmartPaginationLoaded<T>) {
+      if (!identical(previous.items, current.items)) return true;
+      if (previous.hasReachedEnd != current.hasReachedEnd) return true;
+      if (previous.isLoadingMore != current.isLoadingMore) return true;
+      if (previous.loadMoreError != current.loadMoreError) return true;
+      if (!identical(previous.lastOperation, current.lastOperation)) {
+        return true;
+      }
+      return false;
+    }
+    return previous != current;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SmartPaginationCubit<T>, SmartPaginationState<T>>(
       bloc: widget.cubit,
-      buildWhen: widget.buildWhen,
+      buildWhen: widget.buildWhen ?? _defaultBuildWhen,
       builder: (context, state) {
         if (!widget.cubit.didFetch) widget.cubit.fetchPaginatedList();
 
@@ -1393,13 +1421,12 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
         final beforeBuildState =
             widget.beforeBuild?.call(loadedState) ?? loadedState;
 
-        if (beforeBuildState.items.isEmpty) {
-          return _buildWithScrollView(
-            context,
-            _buildFirstPageEmptyWidget(context),
-          );
-        }
-
+        // Empty state is rendered INSIDE PaginateApiView so that the same
+        // CustomScrollView instance (and its scroll controller, observer,
+        // and slivers) is preserved across empty <-> non-empty transitions.
+        // This eliminates flicker, scroll-position loss, and animation
+        // re-runs that happened when we previously swapped to a different
+        // widget tree via _buildWithScrollView.
         final view = PaginateApiView(
           loadedState: beforeBuildState,
           itemBuilderType: widget.itemBuilderType,
@@ -1430,6 +1457,8 @@ class _SmartPaginationState<T> extends State<SmartPagination<T>> {
           loadMoreLoadingBuilder: widget.loadMoreLoadingBuilder,
           loadMoreErrorBuilder: widget.loadMoreErrorBuilder,
           loadMoreNoMoreItemsBuilder: widget.loadMoreNoMoreItemsBuilder,
+          firstPageEmptyBuilder: widget.firstPageEmptyBuilder,
+          emptyWidget: widget.emptyWidget,
           invisibleItemsThreshold: widget.invisibleItemsThreshold,
           retryLoadMore: widget.cubit.fetchPaginatedList,
           itemKeyBuilder: widget.itemKeyBuilder,
