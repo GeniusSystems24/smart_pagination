@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback, Clipboard, ClipboardData;
+import 'package:flutter/services.dart'
+    show HapticFeedback, Clipboard, ClipboardData;
 import 'package:intl/intl.dart' show DateFormat;
 // import 'package:flutter/services.dart';
 import 'package:smart_pagination/pagination.dart';
@@ -17,10 +18,9 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
+class _ChatScreenState extends State<ChatScreen> {
   late SmartPaginationCubit<Message> _cubit;
   late ScrollController _scrollController;
-  late AnimationController _fabAnimationController;
 
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
@@ -41,11 +41,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
-    _fabAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-
     // Observer is now built-in! No need to create ListObserverController manually.
     // SmartPagination will automatically attach it to the cubit.
     _cubit = SmartPaginationCubit<Message>(
@@ -58,16 +53,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   void _onScroll() {
-    final showButton = _scrollController.hasClients &&
-        _scrollController.offset > 200;
+    final showButton =
+        _scrollController.hasClients && _scrollController.offset > 200;
 
     if (showButton != _showScrollToBottom) {
       setState(() => _showScrollToBottom = showButton);
-      if (showButton) {
-        _fabAnimationController.forward();
-      } else {
-        _fabAnimationController.reverse();
-      }
     }
   }
 
@@ -152,7 +142,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _messageController.dispose();
     _searchController.dispose();
     _messageFocusNode.dispose();
-    _fabAnimationController.dispose();
     super.dispose();
   }
 
@@ -216,50 +205,42 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
   }
 
-  Future<void> _scrollToNewest() async {
-    final success = await _cubit.animateToIndex(
-      0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-    );
+  void _scrollToNewest() {
+    final success = _cubit.jumpToIndex(0);
 
     if (success && mounted) {
       setState(() => _unreadCount = 0);
     }
   }
 
-  Future<void> _scrollToOldest() async {
+  void _scrollToOldest() {
     final items = _cubit.currentItems;
     if (items.isEmpty) return;
 
-    await _cubit.animateToIndex(
-      items.length - 1,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOutCubic,
-    );
+    _cubit.jumpToIndex(items.length - 1);
   }
 
-  Future<void> _jumpToUnread() async {
-    final success = await _cubit.animateFirstWhere(
+  void _jumpToUnread() {
+    final success = _cubit.jumpFirstWhere(
       (message) => !message.isRead,
-      duration: const Duration(milliseconds: 400),
       alignment: 0.3,
     );
 
     if (mounted) {
       _showSnackBar(
-        success ? 'تم العثور على أول رسالة غير مقروءة' : 'لا توجد رسائل غير مقروءة',
+        success
+            ? 'تم العثور على أول رسالة غير مقروءة'
+            : 'لا توجد رسائل غير مقروءة',
         success ? Colors.green : Colors.orange,
       );
     }
   }
 
-  Future<void> _searchAndScroll(String query) async {
+  void _searchAndScroll(String query) {
     if (query.isEmpty) return;
 
-    final success = await _cubit.animateFirstWhere(
+    final success = _cubit.jumpFirstWhere(
       (message) => message.content.toLowerCase().contains(query.toLowerCase()),
-      duration: const Duration(milliseconds: 400),
       alignment: 0.3,
     );
 
@@ -321,7 +302,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B141A) : const Color(0xFFECE5DD),
+      backgroundColor:
+          isDark ? const Color(0xFF0B141A) : const Color(0xFFECE5DD),
       appBar: _buildAppBar(isDark),
       body: Column(
         children: [
@@ -336,7 +318,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0B141A) : const Color(0xFFECE5DD),
+                      color: isDark
+                          ? const Color(0xFF0B141A)
+                          : const Color(0xFFECE5DD),
                     ),
                   ),
                 ),
@@ -353,7 +337,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     final isHighlighted = _highlightedIndex == index;
 
                     // Show date separator
-                    final showDateSeparator = _shouldShowDateSeparator(items, index);
+                    final showDateSeparator =
+                        _shouldShowDateSeparator(items, index);
 
                     return Column(
                       children: [
@@ -365,7 +350,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           isHighlighted: isHighlighted,
                           index: index,
                           isDark: isDark,
-                          onLongPress: () => _showMessageOptions(message, index),
+                          onLongPress: () =>
+                              _showMessageOptions(message, index),
                         ),
                       ],
                     );
@@ -463,7 +449,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   Positioned(
                     bottom: 8,
                     left: 16,
-                    child: _TypingIndicator(userName: _otherUser),
+                    child: const _TypingIndicator(),
                   ),
               ],
             ),
@@ -530,7 +516,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                             _isTyping ? 'يكتب...' : 'متصل الآن',
                             style: TextStyle(
                               fontSize: 12,
-                              color: _isTyping ? Colors.greenAccent : Colors.white70,
+                              color: _isTyping
+                                  ? Colors.greenAccent
+                                  : Colors.white70,
                             ),
                           ),
                         ],
@@ -802,50 +790,44 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   Widget? _buildScrollToBottomFab(bool isDark) {
     if (!_showScrollToBottom) return null;
 
-    return ScaleTransition(
-      scale: CurvedAnimation(
-        parent: _fabAnimationController,
-        curve: Curves.easeOutBack,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
-        child: Stack(
-          children: [
-            FloatingActionButton.small(
-              onPressed: _scrollToNewest,
-              backgroundColor: isDark ? const Color(0xFF2A3942) : Colors.white,
-              child: Icon(
-                Icons.keyboard_double_arrow_down,
-                color: isDark ? Colors.white70 : Colors.grey[700],
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 70),
+      child: Stack(
+        children: [
+          FloatingActionButton.small(
+            onPressed: _scrollToNewest,
+            backgroundColor: isDark ? const Color(0xFF2A3942) : Colors.white,
+            child: Icon(
+              Icons.keyboard_double_arrow_down,
+              color: isDark ? Colors.white70 : Colors.grey[700],
             ),
-            if (_unreadCount > 0)
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.teal,
-                    shape: BoxShape.circle,
+          ),
+          if (_unreadCount > 0)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.teal,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                child: Text(
+                  '$_unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
-                  constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
-                  ),
-                  child: Text(
-                    '$_unreadCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -954,7 +936,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   label: 'انتقال',
                   onTap: () {
                     Navigator.pop(context);
-                    _cubit.animateToIndex(index, alignment: 0.3);
+                    _cubit.jumpToIndex(index, alignment: 0.3);
                   },
                 ),
                 _MessageActionChip(
@@ -1018,33 +1000,8 @@ class _DateSeparator extends StatelessWidget {
   }
 }
 
-class _TypingIndicator extends StatefulWidget {
-  const _TypingIndicator({required this.userName});
-
-  final String userName;
-
-  @override
-  State<_TypingIndicator> createState() => _TypingIndicatorState();
-}
-
-class _TypingIndicatorState extends State<_TypingIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class _TypingIndicator extends StatelessWidget {
+  const _TypingIndicator();
 
   @override
   Widget build(BuildContext context) {
@@ -1062,34 +1019,18 @@ class _TypingIndicatorState extends State<_TypingIndicator>
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(3, (index) {
-                  final delay = index * 0.2;
-                  final value = (_controller.value - delay).clamp(0.0, 1.0);
-                  final scale = 0.5 + 0.5 * (1 - (value - 0.5).abs() * 2);
-
-                  return Transform.scale(
-                    scale: scale,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: const BoxDecoration(
-                        color: Colors.grey,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  );
-                }),
-              );
-            },
+        children: List.generate(
+          3,
+          (index) => Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: const BoxDecoration(
+              color: Colors.grey,
+              shape: BoxShape.circle,
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1185,8 +1126,7 @@ class _MessageBubble extends StatelessWidget {
 
     final textColor = isDark ? Colors.white : Colors.black87;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+    return Container(
       margin: EdgeInsets.only(
         left: isCurrentUser ? 64 : 8,
         right: isCurrentUser ? 8 : 64,
@@ -1202,7 +1142,8 @@ class _MessageBubble extends StatelessWidget {
       child: GestureDetector(
         onLongPress: onLongPress,
         child: Align(
-          alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+          alignment:
+              isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
