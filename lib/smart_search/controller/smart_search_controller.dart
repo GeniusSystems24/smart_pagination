@@ -33,7 +33,7 @@ part of '../../pagination.dart';
 /// ```
 class SmartSearchController<T, K> extends ChangeNotifier {
   SmartSearchController({
-    required SmartPaginationCubit<T> cubit,
+    required SmartPaginationCubit<T, dynamic> cubit,
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
     void Function(T item, K key)? onSelected,
@@ -71,7 +71,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
     }
   }
 
-  final SmartPaginationCubit<T> _cubit;
+  final SmartPaginationCubit<T, dynamic> _cubit;
   final PaginationRequest Function(String query) _searchRequestBuilder;
   final SmartSearchConfig _config;
   void Function(T item, K key)? _onSelected;
@@ -116,7 +116,7 @@ class SmartSearchController<T, K> extends ChangeNotifier {
   Object? _overlayValue;
 
   /// The connected pagination cubit.
-  SmartPaginationCubit<T> get cubit => _cubit;
+  SmartPaginationCubit<T, dynamic> get cubit => _cubit;
 
   /// The text editing controller for the search field.
   TextEditingController get textController => _textController;

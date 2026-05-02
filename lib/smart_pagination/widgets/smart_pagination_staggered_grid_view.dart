@@ -22,7 +22,7 @@ part of '../../pagination.dart';
 ///   },
 /// )
 /// ```
-class SmartPaginationStaggeredGridView<T> extends SmartPagination<T> {
+class SmartPaginationStaggeredGridView<T, F extends Object?> extends SmartPagination<T, F> {
   /// Creates a SmartPaginationStaggeredGridView with a provider for data fetching.
   ///
   /// The [request], [provider], and [crossAxisCount] are required to configure pagination.

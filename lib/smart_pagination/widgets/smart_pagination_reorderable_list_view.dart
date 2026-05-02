@@ -22,7 +22,7 @@ part of '../../pagination.dart';
 ///   },
 /// )
 /// ```
-class SmartPaginationReorderableListView<T> extends SmartPagination<T> {
+class SmartPaginationReorderableListView<T, F extends Object?> extends SmartPagination<T, F> {
   /// Creates a SmartPaginationReorderableListView with a provider for data fetching.
   ///
   /// The [request], [provider], and [onReorder] are required to configure pagination.

@@ -2,21 +2,24 @@ part of '../../pagination.dart';
 
 /// Base interface for pagination cubits that provides common functionality
 /// for both SmartPagination and DualPagination cubits.
-abstract class IPaginationCubit<T, StateType extends IPaginationState<T>>
-    extends Cubit<StateType> {
+///
+/// [F] is the type of the [PaginationRequest.filters] field. It defaults to
+/// `dynamic` so that existing code without typed filters continues to compile.
+abstract class IPaginationCubit<T, StateType extends IPaginationState<T>,
+    F extends Object?> extends Cubit<StateType> {
   IPaginationCubit(super.initialState);
 
   /// Initial request configuration used when the pagination starts.
-  PaginationRequest get initialRequest;
+  PaginationRequest<F> get initialRequest;
 
   /// Filters the paginated list based on the provided search term.
   void filterPaginatedList(WhereChecker<T>? searchTerm);
 
   /// Refreshes the paginated list, starting from the beginning.
-  void refreshPaginatedList({PaginationRequest? requestOverride, int? limit});
+  void refreshPaginatedList({PaginationRequest<F>? requestOverride, int? limit});
 
   /// Fetches the next page of the paginated list.
-  void fetchPaginatedList({PaginationRequest? requestOverride, int? limit});
+  void fetchPaginatedList({PaginationRequest<F>? requestOverride, int? limit});
 
   /// Cancels any inflight work.
   void cancelOngoingRequest();
@@ -28,8 +31,8 @@ abstract class IPaginationCubit<T, StateType extends IPaginationState<T>>
 }
 
 /// Base interface for pagination cubits with list building capabilities.
-abstract class IPaginationListCubit<T, StateType extends IPaginationState<T>>
-    extends IPaginationCubit<T, StateType> {
+abstract class IPaginationListCubit<T, StateType extends IPaginationState<T>,
+    F extends Object?> extends IPaginationCubit<T, StateType, F> {
   IPaginationListCubit(super.initialState);
 
   /// Whether the cubit has fetched data at least once.

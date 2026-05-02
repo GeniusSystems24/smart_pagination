@@ -19,7 +19,7 @@ part of '../../pagination.dart';
 ///   ),
 /// )
 /// ```
-class SmartPaginationRow<T> extends SmartPagination<T> {
+class SmartPaginationRow<T, F extends Object?> extends SmartPagination<T, F> {
   /// Creates a SmartPaginationRow with a provider for data fetching.
   ///
   /// The [request] and [provider] are required to configure pagination.

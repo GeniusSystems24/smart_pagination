@@ -25,7 +25,7 @@ enum PaginateBuilderType {
 
 /// A paginated view widget that automatically integrates scrollview_observer
 /// for programmatic scroll navigation (animateToIndex, jumpToIndex, etc.)
-class PaginateApiView<T> extends StatefulWidget {
+class PaginateApiView<T, F extends Object?> extends StatefulWidget {
   const PaginateApiView({
     super.key,
     required this.loadedState,
@@ -79,7 +79,7 @@ class PaginateApiView<T> extends StatefulWidget {
   /// The cubit to attach the observer controller to.
   /// When provided, the observer controller will be automatically attached
   /// for scroll navigation methods (animateToIndex, jumpToIndex, etc.)
-  final SmartPaginationCubit<T>? cubit;
+  final SmartPaginationCubit<T, F>? cubit;
 
   final double? heightOfInitialLoadingAndEmptyWidget;
   final SliverGridDelegate gridDelegate;
@@ -186,10 +186,11 @@ class PaginateApiView<T> extends StatefulWidget {
   final Duration animationDuration;
 
   @override
-  State<PaginateApiView<T>> createState() => _PaginateApiViewState<T>();
+  State<PaginateApiView<T, F>> createState() => _PaginateApiViewState<T, F>();
 }
 
-class _PaginateApiViewState<T> extends State<PaginateApiView<T>> {
+class _PaginateApiViewState<T, F extends Object?>
+    extends State<PaginateApiView<T, F>> {
   ScrollController? _internalScrollController;
   ListObserverController? _listObserverController;
   GridObserverController? _gridObserverController;

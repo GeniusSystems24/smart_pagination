@@ -16,7 +16,7 @@ part of '../../pagination.dart';
 ///   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
 /// )
 /// ```
-class SmartPaginationGridView<T> extends SmartPagination<T> {
+class SmartPaginationGridView<T, F extends Object?> extends SmartPagination<T, F> {
   /// Creates a SmartPaginationGridView with a provider for data fetching.
   ///
   /// The [request] and [provider] are required to configure pagination.

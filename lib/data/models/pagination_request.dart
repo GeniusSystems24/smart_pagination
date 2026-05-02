@@ -6,6 +6,10 @@ part of '../../pagination.dart';
 /// a page of data. It supports both offset-based (page/pageSize) and
 /// cursor-based pagination strategies.
 ///
+/// The optional type parameter [F] makes the [filters] field type-safe.
+/// When [F] is omitted it defaults to `dynamic`, preserving backward
+/// compatibility with code that passes a plain `Map<String, dynamic>`.
+///
 /// ## Offset-based pagination:
 ///
 /// ```dart
@@ -27,7 +31,7 @@ part of '../../pagination.dart';
 /// );
 /// ```
 ///
-/// ## With filters:
+/// ## With untyped filters (backward-compatible):
 ///
 /// ```dart
 /// final request = PaginationRequest(
@@ -36,26 +40,27 @@ part of '../../pagination.dart';
 ///   filters: {
 ///     'category': 'electronics',
 ///     'minPrice': 100,
-///     'maxPrice': 500,
 ///   },
 /// );
 /// ```
 ///
-/// ## With extra metadata:
+/// ## With typed filters (generic):
 ///
 /// ```dart
-/// final request = PaginationRequest(
+/// class ProductFilters {
+///   const ProductFilters({required this.category, this.maxPrice});
+///   final String category;
+///   final double? maxPrice;
+/// }
+///
+/// final request = PaginationRequest<ProductFilters>(
 ///   page: 1,
 ///   pageSize: 20,
-///   extra: {
-///     'sortBy': 'price',
-///     'sortOrder': 'desc',
-///     'includeDeleted': false,
-///   },
+///   filters: ProductFilters(category: 'electronics', maxPrice: 500),
 /// );
 /// ```
 @immutable
-class PaginationRequest {
+class PaginationRequest<F extends Object?> {
   const PaginationRequest({
     this.page = 1,
     this.pageSize,
@@ -75,7 +80,10 @@ class PaginationRequest {
   final String? cursor;
 
   /// Optional filter payload forwarded to the data provider.
-  final Map<String, dynamic>? filters;
+  ///
+  /// Typed as [F] for compile-time safety. When [F] is omitted the field
+  /// accepts any value (backward-compatible with `Map<String, dynamic>`).
+  final F? filters;
 
   /// Bag for any additional metadata callers want to persist.
   final Map<String, dynamic>? extra;
@@ -83,15 +91,15 @@ class PaginationRequest {
   /// Optional search query string for search operations.
   final String? searchQuery;
 
-  PaginationRequest copyWith({
+  PaginationRequest<F> copyWith({
     int? page,
     int? pageSize,
     String? cursor,
-    Map<String, dynamic>? filters,
+    F? filters,
     Map<String, dynamic>? extra,
     String? searchQuery,
   }) {
-    return PaginationRequest(
+    return PaginationRequest<F>(
       page: page ?? this.page,
       pageSize: pageSize ?? this.pageSize,
       cursor: cursor ?? this.cursor,
