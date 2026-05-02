@@ -15,7 +15,7 @@ part of '../../pagination.dart';
 ///   },
 /// )
 /// ```
-class SmartPaginationListView<T> extends SmartPagination<T> {
+class SmartPaginationListView<T, R extends PaginationRequest> extends SmartPagination<T, R> {
   /// Creates a SmartPaginationListView with a provider for data fetching.
   ///
   /// The [request] and [provider] are required to configure pagination.

@@ -15,12 +15,12 @@ enum ErrorRetryStrategy {
   none,
 }
 
-class SmartPaginationCubit<T>
-    extends IPaginationListCubit<T, SmartPaginationState<T>> {
+class SmartPaginationCubit<T, R extends PaginationRequest>
+    extends IPaginationListCubit<T, SmartPaginationState<T>, R> {
   static bool enableLogging = false;
   SmartPaginationCubit({
-    required PaginationRequest request,
-    required PaginationProvider<T> provider,
+    required R request,
+    required PaginationProvider<T, R> provider,
     ListBuilder<T>? listBuilder,
     OnInsertionCallback<T>? onInsertionCallback,
     VoidCallback? onClear,
@@ -51,7 +51,7 @@ class SmartPaginationCubit<T>
     }
   }
 
-  final PaginationProvider<T> _provider;
+  final PaginationProvider<T, R> _provider;
   final ListBuilder<T>? _listBuilder;
   final OnInsertionCallback<T>? _onInsertionCallback;
   final VoidCallback? _onClear;
@@ -71,9 +71,9 @@ class SmartPaginationCubit<T>
   final ErrorRetryStrategy errorRetryStrategy;
 
   @override
-  final PaginationRequest initialRequest;
+  final R initialRequest;
 
-  PaginationRequest _currentRequest;
+  R _currentRequest;
   PaginationMeta? _currentMeta;
   final List<List<T>> _pages = <List<T>>[];
   StreamSubscription<List<T>>? _streamSubscription;
@@ -452,7 +452,7 @@ class SmartPaginationCubit<T>
   }
 
   @override
-  void refreshPaginatedList({PaginationRequest? requestOverride, int? limit}) {
+  void refreshPaginatedList({R? requestOverride, int? limit}) {
     // Cancel any ongoing request
     cancelOngoingRequest();
     _streamSubscription?.cancel();
@@ -567,7 +567,7 @@ class SmartPaginationCubit<T>
   }
 
   @override
-  void fetchPaginatedList({PaginationRequest? requestOverride, int? limit}) {
+  void fetchPaginatedList({R? requestOverride, int? limit}) {
     // Prevent concurrent fetch operations
     if (_isFetching) {
       if (SmartPaginationCubit.enableLogging) {
@@ -637,7 +637,7 @@ class SmartPaginationCubit<T>
   }
 
   Future<void> _fetch({
-    required PaginationRequest request,
+    required R request,
     required bool reset,
   }) async {
     // Set fetching flag to prevent concurrent requests
@@ -647,7 +647,7 @@ class SmartPaginationCubit<T>
     try {
       // Fetch data based on provider type
       final pageItems = await switch (_provider) {
-        FuturePaginationProvider<T>(:final dataProvider) =>
+        FuturePaginationProvider<T, R>(:final dataProvider) =>
           _retryHandler != null
               ? _retryHandler.execute(
                   () => dataProvider(request),
@@ -658,9 +658,9 @@ class SmartPaginationCubit<T>
                   },
                 )
               : dataProvider(request),
-        StreamPaginationProvider<T> provider =>
+        StreamPaginationProvider<T, R> provider =>
           provider.streamProvider(request).first,
-        MergedStreamPaginationProvider<T> provider =>
+        MergedStreamPaginationProvider<T, R> provider =>
           provider.getMergedStream(request).first,
       };
 
@@ -752,10 +752,10 @@ class SmartPaginationCubit<T>
 
       // Attach stream if it's a stream provider and this is initial load
       if (reset) {
-        if (_provider is StreamPaginationProvider<T>) {
+        if (_provider is StreamPaginationProvider<T, R>) {
           final streamProvider = _provider;
           _attachStream(streamProvider.streamProvider(request), request);
-        } else if (_provider is MergedStreamPaginationProvider<T>) {
+        } else if (_provider is MergedStreamPaginationProvider<T, R>) {
           final mergedProvider = _provider;
           _attachStream(mergedProvider.getMergedStream(request), request);
         }
@@ -829,16 +829,19 @@ class SmartPaginationCubit<T>
     }
   }
 
-  PaginationRequest _buildRequest({
+  R _buildRequest({
     required bool reset,
-    PaginationRequest? override,
+    R? override,
     int? limit,
   }) {
     final base = override ?? (reset ? initialRequest : _currentRequest);
     final pageSize = limit ?? base.pageSize ?? initialRequest.pageSize;
     final nextPage = reset ? 1 : base.page + 1;
 
-    return base.copyWith(page: nextPage, pageSize: pageSize);
+    // copyWith is declared on PaginationRequest but subclasses should override
+    // it to return their own type (preserving custom fields). The cast is safe
+    // when the override is implemented correctly.
+    return base.copyWith(page: nextPage, pageSize: pageSize) as R;
   }
 
   bool _computeHasNext(List<T> items, int? pageSize) {
@@ -883,7 +886,7 @@ class SmartPaginationCubit<T>
         lowerMessage.contains('clientexception'); // http package
   }
 
-  void _attachStream(Stream<List<T>> stream, PaginationRequest request) {
+  void _attachStream(Stream<List<T>> stream, R request) {
     _streamSubscription?.cancel();
     _streamSubscription = stream.listen(
       (items) {

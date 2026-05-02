@@ -49,7 +49,7 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
   const SmartSearchMultiDropdown.withProvider({
     super.key,
     required PaginationRequest request,
-    required PaginationProvider<T> provider,
+    required PaginationProvider<T, PaginationRequest> provider,
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelected,
@@ -113,7 +113,7 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
   /// Creates a multi-selection search dropdown with an external cubit.
   const SmartSearchMultiDropdown.withCubit({
     super.key,
-    required SmartPaginationCubit<T> cubit,
+    required SmartPaginationCubit<T, PaginationRequest> cubit,
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelected,
@@ -167,9 +167,9 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
         _dataAge = null,
         _orders = null;
 
-  final SmartPaginationCubit<T>? _cubit;
+  final SmartPaginationCubit<T, PaginationRequest>? _cubit;
   final PaginationRequest? _request;
-  final PaginationProvider<T>? _provider;
+  final PaginationProvider<T, PaginationRequest>? _provider;
   final ListBuilder<T>? _listBuilder;
   final OnInsertionCallback<T>? _onInsertionCallback;
   final int _maxPagesInMemory;
@@ -332,10 +332,10 @@ class SmartSearchMultiDropdown<T, K> extends StatefulWidget {
 
 class _SmartSearchMultiDropdownState<T, K>
     extends State<SmartSearchMultiDropdown<T, K>> {
-  SmartPaginationCubit<T>? _internalCubit;
+  SmartPaginationCubit<T, PaginationRequest>? _internalCubit;
   SmartSearchMultiController<T, K>? _searchController;
 
-  SmartPaginationCubit<T> get _cubit => widget._cubit ?? _internalCubit!;
+  SmartPaginationCubit<T, PaginationRequest> get _cubit => widget._cubit ?? _internalCubit!;
 
   @override
   void initState() {
@@ -346,7 +346,7 @@ class _SmartSearchMultiDropdownState<T, K>
 
   void _initializeCubit() {
     if (widget._cubit == null) {
-      _internalCubit = SmartPaginationCubit<T>(
+      _internalCubit = SmartPaginationCubit<T, PaginationRequest>(
         request: widget._request!,
         provider: widget._provider!,
         listBuilder: widget._listBuilder,
@@ -1176,7 +1176,7 @@ class _MultiOverlayContentState<T, K> extends State<_MultiOverlayContent<T, K>> 
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, _) {
-        return BlocBuilder<SmartPaginationCubit<T>, SmartPaginationState<T>>(
+        return BlocBuilder<SmartPaginationCubit<T, PaginationRequest>, SmartPaginationState<T>>(
           bloc: widget.controller.cubit,
           builder: (context, state) {
             return switch (state) {
@@ -1563,7 +1563,7 @@ class _SmartSearchBottomSheetContent<T, K> extends StatefulWidget {
   });
 
   final SmartSearchMultiController<T, K> controller;
-  final SmartPaginationCubit<T> cubit;
+  final SmartPaginationCubit<T, PaginationRequest> cubit;
   final SmartSearchBottomSheetConfig config;
   final Widget Function(BuildContext context, T item) itemBuilder;
   final double heightFactor;
@@ -1636,7 +1636,7 @@ class _SmartSearchBottomSheetContentState<T, K>
             child: ListenableBuilder(
               listenable: widget.controller,
               builder: (context, _) {
-                return BlocBuilder<SmartPaginationCubit<T>, SmartPaginationState<T>>(
+                return BlocBuilder<SmartPaginationCubit<T, PaginationRequest>, SmartPaginationState<T>>(
                   bloc: widget.cubit,
                   builder: (context, state) {
                     return switch (state) {

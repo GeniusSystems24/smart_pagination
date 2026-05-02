@@ -31,7 +31,7 @@ part of '../../pagination.dart';
 /// ```
 class SmartSearchMultiController<T, K> extends ChangeNotifier {
   SmartSearchMultiController({
-    required SmartPaginationCubit<T> cubit,
+    required SmartPaginationCubit<T, PaginationRequest> cubit,
     required PaginationRequest Function(String query) searchRequestBuilder,
     SmartSearchConfig config = const SmartSearchConfig(),
     void Function(List<T> items, List<K> keys)? onSelected,
@@ -87,7 +87,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
     return <K>[];
   }
 
-  final SmartPaginationCubit<T> _cubit;
+  final SmartPaginationCubit<T, PaginationRequest> _cubit;
   final PaginationRequest Function(String query) _searchRequestBuilder;
   final SmartSearchConfig _config;
   void Function(List<T> items, List<K> keys)? _onSelected;
@@ -121,7 +121,7 @@ class SmartSearchMultiController<T, K> extends ChangeNotifier {
   final Set<K> _pendingKeys;
 
   /// The connected pagination cubit.
-  SmartPaginationCubit<T> get cubit => _cubit;
+  SmartPaginationCubit<T, PaginationRequest> get cubit => _cubit;
 
   /// The text editing controller for the search field.
   TextEditingController get textController => _textController;
