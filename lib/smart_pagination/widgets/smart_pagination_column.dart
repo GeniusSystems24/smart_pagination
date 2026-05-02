@@ -18,7 +18,7 @@ part of '../../pagination.dart';
 ///   ),
 /// )
 /// ```
-class SmartPaginationColumn<T, F extends Object?> extends SmartPagination<T, F> {
+class SmartPaginationColumn<T, R extends PaginationRequest> extends SmartPagination<T, R> {
   /// Creates a SmartPaginationColumn with a provider for data fetching.
   ///
   /// The [request] and [provider] are required to configure pagination.

@@ -743,7 +743,7 @@ class _OverlayContentState<T, K> extends State<_OverlayContent<T, K>> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, _) {
-        return BlocBuilder<SmartPaginationCubit<T, dynamic>, SmartPaginationState<T>>(
+        return BlocBuilder<SmartPaginationCubit<T, PaginationRequest>, SmartPaginationState<T>>(
           bloc: widget.controller.cubit,
           builder: (context, state) {
             return switch (state) {

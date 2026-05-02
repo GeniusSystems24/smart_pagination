@@ -73,7 +73,7 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
   const SmartSearchDropdown.withProvider({
     super.key,
     required PaginationRequest request,
-    required PaginationProvider<T, dynamic> provider,
+    required PaginationProvider<T, PaginationRequest> provider,
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelected,
@@ -128,7 +128,7 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
   /// Creates a search dropdown with an external cubit.
   const SmartSearchDropdown.withCubit({
     super.key,
-    required SmartPaginationCubit<T, dynamic> cubit,
+    required SmartPaginationCubit<T, PaginationRequest> cubit,
     required this.searchRequestBuilder,
     required this.itemBuilder,
     this.onSelected,
@@ -173,9 +173,9 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
         _dataAge = null,
         _orders = null;
 
-  final SmartPaginationCubit<T, dynamic>? _cubit;
+  final SmartPaginationCubit<T, PaginationRequest>? _cubit;
   final PaginationRequest? _request;
-  final PaginationProvider<T, dynamic>? _provider;
+  final PaginationProvider<T, PaginationRequest>? _provider;
   final ListBuilder<T>? _listBuilder;
   final OnInsertionCallback<T>? _onInsertionCallback;
   final int _maxPagesInMemory;
@@ -330,10 +330,10 @@ class SmartSearchDropdown<T, K> extends StatefulWidget {
 }
 
 class _SmartSearchDropdownState<T, K> extends State<SmartSearchDropdown<T, K>> {
-  SmartPaginationCubit<T, dynamic>? _internalCubit;
+  SmartPaginationCubit<T, PaginationRequest>? _internalCubit;
   SmartSearchController<T, K>? _searchController;
 
-  SmartPaginationCubit<T, dynamic> get _cubit => widget._cubit ?? _internalCubit!;
+  SmartPaginationCubit<T, PaginationRequest> get _cubit => widget._cubit ?? _internalCubit!;
 
   @override
   void initState() {
@@ -344,7 +344,7 @@ class _SmartSearchDropdownState<T, K> extends State<SmartSearchDropdown<T, K>> {
 
   void _initializeCubit() {
     if (widget._cubit == null) {
-      _internalCubit = SmartPaginationCubit<T, dynamic>(
+      _internalCubit = SmartPaginationCubit<T, PaginationRequest>(
         request: widget._request!,
         provider: widget._provider!,
         listBuilder: widget._listBuilder,

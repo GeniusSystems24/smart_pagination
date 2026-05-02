@@ -6,45 +6,49 @@ typedef OnInsertionCallback<T> = void Function(List<T> items);
 
 /// Unified pagination data provider that can be either Future-based or Stream-based.
 ///
-/// The second type parameter [F] is the type of the [PaginationRequest.filters]
-/// field. It defaults to `dynamic` so that existing code using untyped filters
-/// continues to work without modification.
+/// The second type parameter [R] is the concrete [PaginationRequest] type
+/// (or subclass) that the provider callback will receive. This enables
+/// compile-time type safety when passing custom request objects.
 ///
 /// Use [PaginationProvider.future] for standard REST API pagination.
 /// Use [PaginationProvider.stream] for real-time updates.
 ///
-/// Example with Future (untyped – backward-compatible):
+/// Example with the base request type (no custom fields):
 /// ```dart
+/// final provider = PaginationProvider<Product, PaginationRequest>.future(
+///   (request) => apiService.fetchProducts(request),
+/// );
+/// // Shorthand – PaginationRequest is the default bound:
 /// final provider = PaginationProvider<Product>.future(
 ///   (request) => apiService.fetchProducts(request),
 /// );
 /// ```
 ///
-/// Example with typed filters:
+/// Example with a custom typed request:
 /// ```dart
-/// final provider = PaginationProvider<Product, ProductFilters>.future(
-///   (request) => apiService.fetchProducts(request.filters!),
+/// final provider = PaginationProvider<Product, ProductRequest>.future(
+///   (req) => apiService.fetchProducts(req.category, maxPrice: req.maxPrice),
 /// );
 /// ```
 ///
 /// Example with Stream:
 /// ```dart
-/// final provider = PaginationProvider<Product, ProductFilters>.stream(
-///   (request) => apiService.productsStream(request),
+/// final provider = PaginationProvider<Product, ProductRequest>.stream(
+///   (req) => apiService.productsStream(req.category),
 /// );
 /// ```
-sealed class PaginationProvider<T, F extends Object?> {
+sealed class PaginationProvider<T, R extends PaginationRequest> {
   const PaginationProvider();
 
   /// Creates a Future-based pagination provider for standard REST APIs.
   const factory PaginationProvider.future(
-    Future<List<T>> Function(PaginationRequest<F> request) dataProvider,
-  ) = FuturePaginationProvider<T, F>;
+    Future<List<T>> Function(R request) dataProvider,
+  ) = FuturePaginationProvider<T, R>;
 
   /// Creates a Stream-based pagination provider for real-time updates.
   const factory PaginationProvider.stream(
-    Stream<List<T>> Function(PaginationRequest<F> request) streamProvider,
-  ) = StreamPaginationProvider<T, F>;
+    Stream<List<T>> Function(R request) streamProvider,
+  ) = StreamPaginationProvider<T, R>;
 
   /// Creates a provider that merges multiple streams into a single stream.
   ///
@@ -53,50 +57,49 @@ sealed class PaginationProvider<T, F extends Object?> {
   ///
   /// Example:
   /// ```dart
-  /// final provider = PaginationProvider<Product, ProductFilters>.mergeStreams(
-  ///   (request) => [
-  ///     apiService.regularProductsStream(request),
-  ///     apiService.featuredProductsStream(request),
+  /// final provider = PaginationProvider<Product, ProductRequest>.mergeStreams(
+  ///   (req) => [
+  ///     apiService.regularProductsStream(req),
+  ///     apiService.featuredProductsStream(req),
   ///   ],
   /// );
   /// ```
   factory PaginationProvider.mergeStreams(
-    List<Stream<List<T>>> Function(PaginationRequest<F> request) streamsProvider,
-  ) = MergedStreamPaginationProvider<T, F>;
+    List<Stream<List<T>>> Function(R request) streamsProvider,
+  ) = MergedStreamPaginationProvider<T, R>;
 }
 
 /// Future-based pagination provider for standard REST APIs.
-final class FuturePaginationProvider<T, F extends Object?>
-    extends PaginationProvider<T, F> {
+final class FuturePaginationProvider<T, R extends PaginationRequest>
+    extends PaginationProvider<T, R> {
   const FuturePaginationProvider(this.dataProvider);
 
   /// Function that fetches a page of data from your API.
-  final Future<List<T>> Function(PaginationRequest<F> request) dataProvider;
+  final Future<List<T>> Function(R request) dataProvider;
 }
 
 /// Stream-based pagination provider for real-time updates.
-final class StreamPaginationProvider<T, F extends Object?>
-    extends PaginationProvider<T, F> {
+final class StreamPaginationProvider<T, R extends PaginationRequest>
+    extends PaginationProvider<T, R> {
   const StreamPaginationProvider(this.streamProvider);
 
   /// Function that provides a stream of data updates.
-  final Stream<List<T>> Function(PaginationRequest<F> request) streamProvider;
+  final Stream<List<T>> Function(R request) streamProvider;
 }
 
 /// Merged streams pagination provider that combines multiple streams into one.
 ///
 /// This provider takes multiple data streams and merges them into a single
 /// stream, emitting data whenever any of the source streams emit.
-final class MergedStreamPaginationProvider<T, F extends Object?>
-    extends PaginationProvider<T, F> {
+final class MergedStreamPaginationProvider<T, R extends PaginationRequest>
+    extends PaginationProvider<T, R> {
   MergedStreamPaginationProvider(this.streamsProvider);
 
   /// Function that provides a list of streams to be merged.
-  final List<Stream<List<T>>> Function(PaginationRequest<F> request)
-      streamsProvider;
+  final List<Stream<List<T>>> Function(R request) streamsProvider;
 
   /// Gets a merged stream that combines all source streams.
-  Stream<List<T>> getMergedStream(PaginationRequest<F> request) {
+  Stream<List<T>> getMergedStream(R request) {
     final streams = streamsProvider(request);
 
     if (streams.isEmpty) {

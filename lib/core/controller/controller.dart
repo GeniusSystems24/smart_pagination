@@ -2,9 +2,9 @@ part of '../../pagination.dart';
 
 /// Base interface for pagination controllers that provides common functionality
 /// for both SmartPagination and DualPagination controllers.
-abstract class IPaginationController<T, F extends Object?> {
+abstract class IPaginationController<T, R extends PaginationRequest> {
   /// The cubit exposing the REST-backed pagination state.
-  IPaginationCubit<T, IPaginationState<T>, F> get cubit;
+  IPaginationCubit<T, IPaginationState<T>, R> get cubit;
 
   /// The refresh listeners to the cubit.
   List<IPaginationRefreshedChangeListener>? get refreshListeners;
@@ -38,8 +38,8 @@ abstract class IPaginationController<T, F extends Object?> {
 }
 
 /// Base interface for pagination controllers with scroll capabilities.
-abstract class IPaginationScrollController<T, F extends Object?>
-    extends IPaginationController<T, F> {
+abstract class IPaginationScrollController<T, R extends PaginationRequest>
+    extends IPaginationController<T, R> {
   /// Animates to the item at the given [index] with smooth scrolling.
   ///
   /// Returns `true` if successful, `false` if no observer controller is attached

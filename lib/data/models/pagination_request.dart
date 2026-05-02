@@ -6,61 +6,76 @@ part of '../../pagination.dart';
 /// a page of data. It supports both offset-based (page/pageSize) and
 /// cursor-based pagination strategies.
 ///
-/// The optional type parameter [F] makes the [filters] field type-safe.
-/// When [F] is omitted it defaults to `dynamic`, preserving backward
-/// compatibility with code that passes a plain `Map<String, dynamic>`.
+/// ## Subclassing for type-safe custom requests
+///
+/// Extend [PaginationRequest] to attach strongly-typed fields to every
+/// page fetch.  **You must override [copyWith] in the subclass** so that
+/// the cubit can create the next-page request while preserving your
+/// custom fields:
+///
+/// ```dart
+/// class ProductRequest extends PaginationRequest {
+///   const ProductRequest({
+///     super.page,
+///     super.pageSize,
+///     required this.category,
+///     this.maxPrice,
+///   });
+///
+///   final String category;
+///   final double? maxPrice;
+///
+///   @override
+///   ProductRequest copyWith({
+///     int? page,
+///     int? pageSize,
+///     String? cursor,
+///     Map<String, dynamic>? filters,
+///     Map<String, dynamic>? extra,
+///     String? searchQuery,
+///   }) {
+///     return ProductRequest(
+///       page: page ?? this.page,
+///       pageSize: pageSize ?? this.pageSize,
+///       category: category,
+///       maxPrice: maxPrice,
+///     );
+///   }
+/// }
+///
+/// // Then use it with the typed cubit/provider:
+/// SmartPaginationCubit<Product, ProductRequest>(
+///   request: ProductRequest(page: 1, pageSize: 20, category: 'electronics'),
+///   provider: PaginationProvider<Product, ProductRequest>.future(
+///     (req) => api.fetchProducts(req.category, maxPrice: req.maxPrice),
+///   ),
+/// );
+/// ```
 ///
 /// ## Offset-based pagination:
 ///
 /// ```dart
-/// final request = PaginationRequest(
-///   page: 1,
-///   pageSize: 20,
-/// );
-///
-/// // Next page
+/// final request = PaginationRequest(page: 1, pageSize: 20);
 /// final nextRequest = request.copyWith(page: request.page + 1);
 /// ```
 ///
 /// ## Cursor-based pagination:
 ///
 /// ```dart
-/// final request = PaginationRequest(
-///   pageSize: 20,
-///   cursor: 'next_page_token',
-/// );
+/// final request = PaginationRequest(pageSize: 20, cursor: 'next_page_token');
 /// ```
 ///
-/// ## With untyped filters (backward-compatible):
+/// ## With filters:
 ///
 /// ```dart
 /// final request = PaginationRequest(
 ///   page: 1,
 ///   pageSize: 20,
-///   filters: {
-///     'category': 'electronics',
-///     'minPrice': 100,
-///   },
-/// );
-/// ```
-///
-/// ## With typed filters (generic):
-///
-/// ```dart
-/// class ProductFilters {
-///   const ProductFilters({required this.category, this.maxPrice});
-///   final String category;
-///   final double? maxPrice;
-/// }
-///
-/// final request = PaginationRequest<ProductFilters>(
-///   page: 1,
-///   pageSize: 20,
-///   filters: ProductFilters(category: 'electronics', maxPrice: 500),
+///   filters: {'category': 'electronics', 'minPrice': 100},
 /// );
 /// ```
 @immutable
-class PaginationRequest<F extends Object?> {
+class PaginationRequest {
   const PaginationRequest({
     this.page = 1,
     this.pageSize,
@@ -80,10 +95,7 @@ class PaginationRequest<F extends Object?> {
   final String? cursor;
 
   /// Optional filter payload forwarded to the data provider.
-  ///
-  /// Typed as [F] for compile-time safety. When [F] is omitted the field
-  /// accepts any value (backward-compatible with `Map<String, dynamic>`).
-  final F? filters;
+  final Map<String, dynamic>? filters;
 
   /// Bag for any additional metadata callers want to persist.
   final Map<String, dynamic>? extra;
@@ -91,15 +103,19 @@ class PaginationRequest<F extends Object?> {
   /// Optional search query string for search operations.
   final String? searchQuery;
 
-  PaginationRequest<F> copyWith({
+  /// Creates a copy of this request with the given fields replaced.
+  ///
+  /// **Override this in every subclass** to ensure the cubit can build
+  /// the next-page request while preserving your custom fields.
+  PaginationRequest copyWith({
     int? page,
     int? pageSize,
     String? cursor,
-    F? filters,
+    Map<String, dynamic>? filters,
     Map<String, dynamic>? extra,
     String? searchQuery,
   }) {
-    return PaginationRequest<F>(
+    return PaginationRequest(
       page: page ?? this.page,
       pageSize: pageSize ?? this.pageSize,
       cursor: cursor ?? this.cursor,
