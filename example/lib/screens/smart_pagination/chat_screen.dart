@@ -12,42 +12,84 @@ import '../../models/message.dart';
 
 /// A realistic chat screen demonstrating scroll navigation methods
 /// with proper reverse ListView and modern UI design.
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  Widget build(BuildContext context) => const _ChatControllerScope();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
-  late SmartPaginationCubit<Message> _cubit;
-  late ScrollController _scrollController;
+class _ChatControllerScope extends StatefulWidget {
+  const _ChatControllerScope();
 
-  final TextEditingController _messageController = TextEditingController();
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _messageFocusNode = FocusNode();
+  @override
+  State<_ChatControllerScope> createState() => _ChatControllerScopeState();
+}
 
-  static const String _currentUser = 'أنت';
-  static const String _otherUser = 'أحمد محمد';
-
-  final Map<String, _MessageAttachment> _messageAttachments =
-      <String, _MessageAttachment>{};
-
-  int? _highlightedIndex;
-  bool _isSearching = false;
-  bool _showScrollToBottom = false;
-  bool _isTyping = false;
-  int _unreadCount = 0;
+class _ChatControllerScopeState extends State<_ChatControllerScope> {
+  late final _ChatScreenController _controller;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
+    _controller = _ChatScreenController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _ChatScreenView(controller: _controller);
+  }
+}
+
+const Object _notSet = Object();
+
+class _ChatUiState {
+  const _ChatUiState({
+    this.highlightedIndex,
+    this.isSearching = false,
+    this.showScrollToBottom = false,
+    this.isTyping = false,
+    this.unreadCount = 0,
+  });
+
+  final int? highlightedIndex;
+  final bool isSearching;
+  final bool showScrollToBottom;
+  final bool isTyping;
+  final int unreadCount;
+
+  _ChatUiState copyWith({
+    Object? highlightedIndex = _notSet,
+    bool? isSearching,
+    bool? showScrollToBottom,
+    bool? isTyping,
+    int? unreadCount,
+  }) {
+    return _ChatUiState(
+      highlightedIndex: identical(highlightedIndex, _notSet)
+          ? this.highlightedIndex
+          : highlightedIndex as int?,
+      isSearching: isSearching ?? this.isSearching,
+      showScrollToBottom: showScrollToBottom ?? this.showScrollToBottom,
+      isTyping: isTyping ?? this.isTyping,
+      unreadCount: unreadCount ?? this.unreadCount,
+    );
+  }
+}
+
+class _ChatScreenController {
+  _ChatScreenController() {
+    scrollController.addListener(_onScroll);
 
     // Observer is now built-in! No need to create ListObserverController manually.
     // SmartPagination will automatically attach it to the cubit.
-    _cubit = SmartPaginationCubit<Message>(
+    cubit = SmartPaginationCubit<Message>(
       request: const PaginationRequest(page: 1, pageSize: 30),
       provider: PaginationProvider.future(_fetchMessages),
     );
@@ -56,28 +98,53 @@ class _ChatScreenState extends State<ChatScreen> {
     _simulateTyping();
   }
 
+  late final SmartPaginationCubit<Message> cubit;
+  final ScrollController scrollController = ScrollController();
+
+  final TextEditingController messageController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
+  final FocusNode messageFocusNode = FocusNode();
+  final ValueNotifier<_ChatUiState> uiState =
+      ValueNotifier<_ChatUiState>(const _ChatUiState());
+
+  static const String _currentUser = 'أنت';
+  static const String _otherUser = 'أحمد محمد';
+
+  final Map<String, _MessageAttachment> messageAttachments =
+      <String, _MessageAttachment>{};
+
+  bool _disposed = false;
+
+  void _updateUiState(_ChatUiState Function(_ChatUiState current) update) {
+    if (_disposed) return;
+    uiState.value = update(uiState.value);
+  }
+
   void _onScroll() {
     final showButton =
-        _scrollController.hasClients && _scrollController.offset > 200;
+        scrollController.hasClients && scrollController.offset > 200;
 
-    if (showButton != _showScrollToBottom) {
-      setState(() => _showScrollToBottom = showButton);
+    if (showButton != uiState.value.showScrollToBottom) {
+      _updateUiState(
+        (current) => current.copyWith(showScrollToBottom: showButton),
+      );
     }
   }
 
   void _simulateTyping() {
     Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() => _isTyping = true);
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) setState(() => _isTyping = false);
-        });
-      }
+      if (_disposed) return;
+      _updateUiState((current) => current.copyWith(isTyping: true));
+      Future.delayed(const Duration(seconds: 2), () {
+        if (_disposed) return;
+        _updateUiState((current) => current.copyWith(isTyping: false));
+      });
     });
   }
 
   Future<List<Message>> _fetchMessages(PaginationRequest request) async {
     await Future.delayed(const Duration(milliseconds: 800));
+    if (_disposed) return <Message>[];
 
     final messages = <Message>[];
     final now = DateTime.now();
@@ -94,9 +161,9 @@ class _ChatScreenState extends State<ChatScreen> {
       final messageId = 'msg_${request.page}_$index';
 
       if (messageData.attachment != null) {
-        _messageAttachments[messageId] = messageData.attachment!;
+        messageAttachments[messageId] = messageData.attachment!;
       } else {
-        _messageAttachments.remove(messageId);
+        messageAttachments.remove(messageId);
       }
 
       // Create timestamps going backwards in time
@@ -114,7 +181,11 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     // Update unread count
-    _unreadCount = messages.where((m) => !m.isRead).length;
+    _updateUiState(
+      (current) => current.copyWith(
+        unreadCount: messages.where((m) => !m.isRead).length,
+      ),
+    );
 
     return messages;
   }
@@ -292,21 +363,24 @@ class _ChatScreenState extends State<ChatScreen> {
     ];
   }
 
-  @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
+    _disposed = true;
+    scrollController.removeListener(_onScroll);
     // No need to detach observer - it's handled automatically by SmartPagination
-    _cubit.close();
-    _scrollController.dispose();
-    _messageController.dispose();
-    _searchController.dispose();
-    _messageFocusNode.dispose();
-    super.dispose();
+    cubit.close();
+    scrollController.dispose();
+    messageController.dispose();
+    searchController.dispose();
+    messageFocusNode.dispose();
+    uiState.dispose();
   }
 
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+  void sendMessage() {
+    final text = messageController.text.trim();
+    if (text.isEmpty) {
+      messageFocusNode.requestFocus();
+      return;
+    }
 
     final newMessage = Message(
       id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
@@ -316,15 +390,18 @@ class _ChatScreenState extends State<ChatScreen> {
       isRead: true,
     );
 
-    _cubit.insertEmit(newMessage, index: 0);
-    _messageController.clear();
+    cubit.insertEmit(newMessage, index: 0);
+    messageController.clear();
+    messageFocusNode.requestFocus();
 
     // Haptic feedback
     HapticFeedback.lightImpact();
 
     // Scroll to bottom (index 0 in reverse list)
     Future.delayed(const Duration(milliseconds: 100), () {
-      _scrollToNewest();
+      if (_disposed) return;
+      scrollToNewest();
+      messageFocusNode.requestFocus();
     });
 
     // Simulate reply
@@ -333,14 +410,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _simulateReply() {
     Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
+      if (_disposed) return;
 
-      setState(() => _isTyping = true);
+      _updateUiState((current) => current.copyWith(isTyping: true));
 
       Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
+        if (_disposed) return;
 
-        setState(() => _isTyping = false);
+        _updateUiState((current) => current.copyWith(isTyping: false));
 
         final replies = [
           'تمام 👍',
@@ -358,35 +435,38 @@ class _ChatScreenState extends State<ChatScreen> {
           isRead: false,
         );
 
-        _cubit.insertEmit(reply, index: 0);
-        setState(() => _unreadCount++);
+        cubit.insertEmit(reply, index: 0);
+        _updateUiState(
+          (current) => current.copyWith(unreadCount: current.unreadCount + 1),
+        );
       });
     });
   }
 
-  void _scrollToNewest() {
-    final success = _cubit.jumpToIndex(0);
+  void scrollToNewest() {
+    final success = cubit.jumpToIndex(0);
 
-    if (success && mounted) {
-      setState(() => _unreadCount = 0);
+    if (success) {
+      _updateUiState((current) => current.copyWith(unreadCount: 0));
     }
   }
 
-  void _scrollToOldest() {
-    final items = _cubit.currentItems;
+  void scrollToOldest() {
+    final items = cubit.currentItems;
     if (items.isEmpty) return;
 
-    _cubit.jumpToIndex(items.length - 1);
+    cubit.jumpToIndex(items.length - 1);
   }
 
-  void _jumpToUnread() {
-    final success = _cubit.jumpFirstWhere(
+  void jumpToUnread(BuildContext context) {
+    final success = cubit.jumpFirstWhere(
       (message) => !message.isRead,
       alignment: 0.3,
     );
 
-    if (mounted) {
-      _showSnackBar(
+    if (!_disposed) {
+      showSnackBar(
+        context,
         success
             ? 'تم العثور على أول رسالة غير مقروءة'
             : 'لا توجد رسائل غير مقروءة',
@@ -395,25 +475,26 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _searchAndScroll(String query) {
+  void searchAndScroll(BuildContext context, String query) {
     if (query.isEmpty) return;
 
-    final success = _cubit.jumpFirstWhere(
+    final success = cubit.jumpFirstWhere(
       (message) => message.content.toLowerCase().contains(query.toLowerCase()),
       alignment: 0.3,
     );
 
-    final items = _cubit.currentItems;
+    final items = cubit.currentItems;
     final index = items.indexWhere(
       (m) => m.content.toLowerCase().contains(query.toLowerCase()),
     );
 
-    setState(() {
-      _highlightedIndex = success ? index : null;
-    });
+    _updateUiState(
+      (current) => current.copyWith(highlightedIndex: success ? index : null),
+    );
 
-    if (mounted) {
-      _showSnackBar(
+    if (!_disposed) {
+      showSnackBar(
+        context,
         success
             ? 'تم العثور على الرسالة رقم ${index + 1}'
             : 'لم يتم العثور على "$query"',
@@ -423,16 +504,20 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (success) {
       Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) setState(() => _highlightedIndex = null);
+        if (_disposed) return;
+        _updateUiState(
+          (current) => current.copyWith(highlightedIndex: null),
+        );
       });
     }
   }
 
-  void _jumpToIndex(int index) {
-    final success = _cubit.jumpToIndex(index, alignment: 0.3);
+  void jumpToIndex(BuildContext context, int index) {
+    final success = cubit.jumpToIndex(index, alignment: 0.3);
 
-    if (mounted) {
-      _showSnackBar(
+    if (!_disposed) {
+      showSnackBar(
+        context,
         success
             ? 'تم الانتقال للرسالة #${index + 1}'
             : 'لا يمكن الانتقال للرسالة #${index + 1}',
@@ -441,9 +526,49 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+  void setSearching(bool isSearching) {
+    if (!isSearching) {
+      searchController.clear();
+    }
+
+    _updateUiState(
+      (current) => current.copyWith(
+        isSearching: isSearching,
+        highlightedIndex: isSearching ? current.highlightedIndex : null,
+      ),
+    );
+  }
+
+  void toggleSearch() {
+    setSearching(!uiState.value.isSearching);
+  }
+
+  void handleMenuAction(BuildContext context, String value) {
+    switch (value) {
+      case 'top':
+        scrollToOldest();
+        break;
+      case 'bottom':
+        scrollToNewest();
+        break;
+      case 'unread':
+        jumpToUnread(context);
+        break;
+      case 'middle':
+        final items = cubit.currentItems;
+        if (items.isNotEmpty) {
+          jumpToIndex(context, items.length ~/ 2);
+        }
+        break;
+    }
+  }
+
+  void showSnackBar(BuildContext context, String message, Color color) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text(message, textAlign: TextAlign.center),
         backgroundColor: color,
@@ -454,176 +579,193 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+}
+
+class _ChatScreenView extends StatelessWidget {
+  const _ChatScreenView({required this.controller});
+
+  final _ChatScreenController controller;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0B141A) : const Color(0xFFECE5DD),
-      appBar: _buildAppBar(isDark),
-      body: Column(
-        children: [
-          // Navigation toolbar
-          _buildNavigationToolbar(isDark),
+    return ValueListenableBuilder<_ChatUiState>(
+      valueListenable: controller.uiState,
+      builder: (context, uiState, _) {
+        return Scaffold(
+          backgroundColor:
+              isDark ? const Color(0xFF0B141A) : const Color(0xFFECE5DD),
+          appBar: _buildAppBar(context, isDark, uiState),
+          body: Column(
+            children: [
+              // Navigation toolbar
+              _buildNavigationToolbar(context, isDark),
 
-          // Chat messages
-          Expanded(
-            child: Stack(
-              children: [
-                // Background pattern
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF0B141A)
-                          : const Color(0xFFECE5DD),
+              // Chat messages
+              Expanded(
+                child: Stack(
+                  children: [
+                    // Background pattern
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF0B141A)
+                              : const Color(0xFFECE5DD),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
 
-                // Messages list - ListViewObserver is now built-in!
-                SmartPagination<Message>.listViewWithCubit(
-                  cubit: _cubit,
-                  scrollController: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  reverse: true, // Important for chat!
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemBuilder: (context, items, index) {
-                    final message = items[index];
-                    final isHighlighted = _highlightedIndex == index;
+                    // Messages list - ListViewObserver is now built-in!
+                    SmartPagination<Message>.listViewWithCubit(
+                      cubit: controller.cubit,
+                      scrollController: controller.scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      reverse: true, // Important for chat!
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemBuilder: (context, items, index) {
+                        final message = items[index];
+                        final isHighlighted = uiState.highlightedIndex == index;
 
-                    // Show date separator
-                    final showDateSeparator =
-                        _shouldShowDateSeparator(items, index);
+                        // Show date separator
+                        final showDateSeparator =
+                            _shouldShowDateSeparator(items, index);
 
-                    return Column(
-                      children: [
-                        if (showDateSeparator)
-                          _DateSeparator(date: message.timestamp),
-                        _MessageBubble(
-                          message: message,
-                          attachment: _messageAttachments[message.id],
-                          isCurrentUser: message.author == _currentUser,
-                          isHighlighted: isHighlighted,
-                          index: index,
-                          isDark: isDark,
-                          onLongPress: () =>
-                              _showMessageOptions(message, index),
-                        ),
-                      ],
-                    );
-                  },
-                  firstPageLoadingBuilder: (context) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          color: isDark ? Colors.teal : Colors.teal,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'جاري تحميل الرسائل...',
-                          style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  firstPageErrorBuilder: (context, error, retry) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cloud_off,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'فشل تحميل الرسائل',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
+                        return Column(
+                          children: [
+                            if (showDateSeparator)
+                              _DateSeparator(date: message.timestamp),
+                            _MessageBubble(
+                              message: message,
+                              attachment:
+                                  controller.messageAttachments[message.id],
+                              isCurrentUser: message.author ==
+                                  _ChatScreenController._currentUser,
+                              isHighlighted: isHighlighted,
+                              index: index,
+                              isDark: isDark,
+                              onLongPress: () =>
+                                  _showMessageOptions(context, message, index),
                             ),
+                          ],
+                        );
+                      },
+                      firstPageLoadingBuilder: (context) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              color: isDark ? Colors.teal : Colors.teal,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'جاري تحميل الرسائل...',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      firstPageErrorBuilder: (context, error, retry) => Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.cloud_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'فشل تحميل الرسائل',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'تحقق من اتصالك بالإنترنت',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                              const SizedBox(height: 24),
+                              FilledButton.icon(
+                                onPressed: retry,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('إعادة المحاولة'),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'تحقق من اتصالك بالإنترنت',
-                            style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ),
+                      firstPageEmptyBuilder: (context) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 80,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'لا توجد رسائل',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'ابدأ المحادثة الآن!',
+                              style: TextStyle(color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                      ),
+                      loadMoreLoadingBuilder: (context) => const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          const SizedBox(height: 24),
-                          FilledButton.icon(
-                            onPressed: retry,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('إعادة المحاولة'),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                  firstPageEmptyBuilder: (context) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'لا توجد رسائل',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'ابدأ المحادثة الآن!',
-                          style: TextStyle(color: Colors.grey[500]),
-                        ),
-                      ],
-                    ),
-                  ),
-                  loadMoreLoadingBuilder: (context) => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+
+                    // Typing indicator
+                    if (uiState.isTyping)
+                      Positioned(
+                        bottom: 8,
+                        left: 16,
+                        child: const _TypingIndicator(),
                       ),
-                    ),
-                  ),
+                  ],
                 ),
+              ),
 
-                // Typing indicator
-                if (_isTyping)
-                  Positioned(
-                    bottom: 8,
-                    left: 16,
-                    child: const _TypingIndicator(),
-                  ),
-              ],
-            ),
+              // Message input
+              _buildMessageInput(isDark),
+            ],
           ),
-
-          // Message input
-          _buildMessageInput(isDark),
-        ],
-      ),
-      floatingActionButton: _buildScrollToBottomFab(isDark),
+          floatingActionButton: _buildScrollToBottomFab(isDark, uiState),
+        );
+      },
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isDark) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    bool isDark,
+    _ChatUiState uiState,
+  ) {
     final bgColor = isDark ? const Color(0xFF1F2C34) : Colors.teal;
 
     return AppBar(
@@ -631,9 +773,9 @@ class _ChatScreenState extends State<ChatScreen> {
       foregroundColor: Colors.white,
       elevation: 0,
       titleSpacing: 0,
-      title: _isSearching
+      title: uiState.isSearching
           ? TextField(
-              controller: _searchController,
+              controller: controller.searchController,
               autofocus: true,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
@@ -642,8 +784,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 border: InputBorder.none,
               ),
               onSubmitted: (query) {
-                _searchAndScroll(query);
-                setState(() => _isSearching = false);
+                controller.searchAndScroll(context, query);
+                controller.setSearching(false);
               },
             )
           : Row(
@@ -666,17 +808,17 @@ class _ChatScreenState extends State<ChatScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Text(
-                            _otherUser,
+                            _ChatScreenController._otherUser,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           Text(
-                            _isTyping ? 'يكتب...' : 'متصل الآن',
+                            uiState.isTyping ? 'يكتب...' : 'متصل الآن',
                             style: TextStyle(
                               fontSize: 12,
-                              color: _isTyping
+                              color: uiState.isTyping
                                   ? Colors.greenAccent
                                   : Colors.white70,
                             ),
@@ -690,20 +832,12 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
       actions: [
         IconButton(
-          icon: Icon(_isSearching ? Icons.close : Icons.search),
-          onPressed: () {
-            setState(() {
-              _isSearching = !_isSearching;
-              if (!_isSearching) {
-                _searchController.clear();
-                _highlightedIndex = null;
-              }
-            });
-          },
+          icon: Icon(uiState.isSearching ? Icons.close : Icons.search),
+          onPressed: controller.toggleSearch,
         ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
-          onSelected: _handleMenuAction,
+          onSelected: (value) => controller.handleMenuAction(context, value),
           itemBuilder: (context) => [
             const PopupMenuItem(
               value: 'top',
@@ -765,7 +899,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            _otherUser,
+            _ChatScreenController._otherUser,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -808,7 +942,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildNavigationToolbar(bool isDark) {
+  Widget _buildNavigationToolbar(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       color: isDark ? const Color(0xFF1F2C34) : Colors.teal.shade50,
@@ -819,55 +953,55 @@ class _ChatScreenState extends State<ChatScreen> {
             _NavigationChip(
               label: 'الأولى',
               icon: Icons.looks_one,
-              onTap: () => _jumpToIndex(0),
+              onTap: () => controller.jumpToIndex(context, 0),
               color: Colors.teal,
             ),
             _NavigationChip(
               label: 'رقم 10',
               icon: Icons.filter_1,
-              onTap: () => _jumpToIndex(9),
+              onTap: () => controller.jumpToIndex(context, 9),
               color: Colors.blue,
             ),
             _NavigationChip(
               label: 'رقم 20',
               icon: Icons.filter_2,
-              onTap: () => _jumpToIndex(19),
+              onTap: () => controller.jumpToIndex(context, 19),
               color: Colors.purple,
             ),
             _NavigationChip(
               label: 'المشروع',
               icon: Icons.search,
-              onTap: () => _searchAndScroll('المشروع'),
+              onTap: () => controller.searchAndScroll(context, 'المشروع'),
               color: Colors.orange,
             ),
             _NavigationChip(
               label: 'الاجتماع',
               icon: Icons.event,
-              onTap: () => _searchAndScroll('الاجتماع'),
+              onTap: () => controller.searchAndScroll(context, 'الاجتماع'),
               color: Colors.pink,
             ),
             _NavigationChip(
               label: 'وسائط',
               icon: Icons.perm_media,
-              onTap: () => _searchAndScroll('media'),
+              onTap: () => controller.searchAndScroll(context, 'media'),
               color: Colors.indigo,
             ),
             _NavigationChip(
               label: 'موقع',
               icon: Icons.location_on,
-              onTap: () => _searchAndScroll('location'),
+              onTap: () => controller.searchAndScroll(context, 'location'),
               color: Colors.deepOrange,
             ),
             _NavigationChip(
               label: 'جهة اتصال',
               icon: Icons.person_add_alt,
-              onTap: () => _searchAndScroll('contact'),
+              onTap: () => controller.searchAndScroll(context, 'contact'),
               color: Colors.green,
             ),
             _NavigationChip(
               label: 'استطلاع',
               icon: Icons.poll,
-              onTap: () => _searchAndScroll('poll'),
+              onTap: () => controller.searchAndScroll(context, 'poll'),
               color: Colors.deepPurple,
             ),
           ],
@@ -911,8 +1045,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: TextField(
-                  controller: _messageController,
-                  focusNode: _messageFocusNode,
+                  controller: controller.messageController,
+                  focusNode: controller.messageFocusNode,
+                  textInputAction: TextInputAction.send,
                   textDirection: TextDirection.rtl,
                   decoration: InputDecoration(
                     hintText: 'اكتب رسالة...',
@@ -928,7 +1063,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   style: TextStyle(
                     color: isDark ? Colors.white : Colors.black87,
                   ),
-                  onSubmitted: (_) => _sendMessage(),
+                  onEditingComplete: () {},
+                  onSubmitted: (_) => controller.sendMessage(),
                 ),
               ),
             ),
@@ -957,10 +1093,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 radius: 24,
                 backgroundColor: Colors.teal,
                 child: IconButton(
-                  onPressed: _sendMessage,
-                  icon: Icon(
-                    _messageController.text.isEmpty ? Icons.mic : Icons.send,
-                    color: Colors.white,
+                  onPressed: controller.sendMessage,
+                  icon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller.messageController,
+                    builder: (context, value, _) {
+                      return Icon(
+                        value.text.trim().isEmpty ? Icons.mic : Icons.send,
+                        color: Colors.white,
+                      );
+                    },
                   ),
                 ),
               ),
@@ -971,22 +1112,22 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget? _buildScrollToBottomFab(bool isDark) {
-    if (!_showScrollToBottom) return null;
+  Widget? _buildScrollToBottomFab(bool isDark, _ChatUiState uiState) {
+    if (!uiState.showScrollToBottom) return null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 70),
       child: Stack(
         children: [
           FloatingActionButton.small(
-            onPressed: _scrollToNewest,
+            onPressed: controller.scrollToNewest,
             backgroundColor: isDark ? const Color(0xFF2A3942) : Colors.white,
             child: Icon(
               Icons.keyboard_double_arrow_down,
               color: isDark ? Colors.white70 : Colors.grey[700],
             ),
           ),
-          if (_unreadCount > 0)
+          if (uiState.unreadCount > 0)
             Positioned(
               right: 0,
               top: 0,
@@ -1001,7 +1142,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   minHeight: 18,
                 ),
                 child: Text(
-                  '$_unreadCount',
+                  '${uiState.unreadCount}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -1016,26 +1157,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _handleMenuAction(String value) {
-    switch (value) {
-      case 'top':
-        _scrollToOldest();
-        break;
-      case 'bottom':
-        _scrollToNewest();
-        break;
-      case 'unread':
-        _jumpToUnread();
-        break;
-      case 'middle':
-        final items = _cubit.currentItems;
-        if (items.isNotEmpty) {
-          _jumpToIndex(items.length ~/ 2);
-        }
-        break;
-    }
-  }
-
   bool _shouldShowDateSeparator(List<Message> items, int index) {
     if (index == items.length - 1) return true;
 
@@ -1045,7 +1166,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return currentDate != nextDate;
   }
 
-  void _showMessageOptions(Message message, int index) {
+  void _showMessageOptions(BuildContext context, Message message, int index) {
     HapticFeedback.mediumImpact();
 
     showModalBottomSheet(
@@ -1097,7 +1218,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: message.content));
                     Navigator.pop(context);
-                    _showSnackBar('تم النسخ', Colors.green);
+                    controller.showSnackBar(context, 'تم النسخ', Colors.green);
                   },
                 ),
                 _MessageActionChip(
@@ -1120,7 +1241,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   label: 'انتقال',
                   onTap: () {
                     Navigator.pop(context);
-                    _cubit.jumpToIndex(index, alignment: 0.3);
+                    controller.cubit.jumpToIndex(index, alignment: 0.3);
                   },
                 ),
                 _MessageActionChip(
