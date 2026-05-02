@@ -1439,6 +1439,473 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     }
   }
 
+  // ==================== TARGETED DATA OPERATIONS ====================
+
+  @override
+  Future<bool> updateFirstWhereEmit(
+    bool Function(T item) matcher,
+    T Function(T item) updater,
+  ) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final index = updated.indexWhere(matcher);
+
+    if (index == -1) return false;
+
+    final updatedItem = updater(updated[index]);
+
+    final order = _orders?.activeOrder;
+    if (order != null) {
+      updated.removeAt(index);
+      final newIndex = _findSortedInsertIndex(
+        updated,
+        updatedItem,
+        fallbackIndex: index,
+      );
+      updated.insert(newIndex, updatedItem);
+    } else {
+      updated[index] = updatedItem;
+    }
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationUpdate(indices: [index]),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> updateLastWhereEmit(
+    bool Function(T item) matcher,
+    T Function(T item) updater,
+  ) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final index = updated.lastIndexWhere(matcher);
+
+    if (index == -1) return false;
+
+    final updatedItem = updater(updated[index]);
+
+    final order = _orders?.activeOrder;
+    if (order != null) {
+      updated.removeAt(index);
+      final newIndex = _findSortedInsertIndex(
+        updated,
+        updatedItem,
+        fallbackIndex: index,
+      );
+      updated.insert(newIndex, updatedItem);
+    } else {
+      updated[index] = updatedItem;
+    }
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationUpdate(indices: [index]),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> updateAtEmit(int index, T Function(T item) updater) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+
+    if (index < 0 || index >= updated.length) return false;
+
+    final updatedItem = updater(updated[index]);
+
+    final order = _orders?.activeOrder;
+    if (order != null) {
+      updated.removeAt(index);
+      final newIndex = _findSortedInsertIndex(
+        updated,
+        updatedItem,
+        fallbackIndex: index,
+      );
+      updated.insert(newIndex, updatedItem);
+    } else {
+      updated[index] = updatedItem;
+    }
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationUpdate(indices: [index]),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> replaceFirstWhereEmit(
+    bool Function(T item) matcher,
+    T replacement,
+  ) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final index = updated.indexWhere(matcher);
+
+    if (index == -1) return false;
+
+    final order = _orders?.activeOrder;
+    if (order != null) {
+      updated.removeAt(index);
+      final newIndex = _findSortedInsertIndex(
+        updated,
+        replacement,
+        fallbackIndex: index,
+      );
+      updated.insert(newIndex, replacement);
+    } else {
+      updated[index] = replacement;
+    }
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationUpdate(indices: [index]),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> replaceLastWhereEmit(
+    bool Function(T item) matcher,
+    T replacement,
+  ) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final index = updated.lastIndexWhere(matcher);
+
+    if (index == -1) return false;
+
+    final order = _orders?.activeOrder;
+    if (order != null) {
+      updated.removeAt(index);
+      final newIndex = _findSortedInsertIndex(
+        updated,
+        replacement,
+        fallbackIndex: index,
+      );
+      updated.insert(newIndex, replacement);
+    } else {
+      updated[index] = replacement;
+    }
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationUpdate(indices: [index]),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> replaceAtEmit(int index, T replacement) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+
+    if (index < 0 || index >= updated.length) return false;
+
+    final order = _orders?.activeOrder;
+    if (order != null) {
+      updated.removeAt(index);
+      final newIndex = _findSortedInsertIndex(
+        updated,
+        replacement,
+        fallbackIndex: index,
+      );
+      updated.insert(newIndex, replacement);
+    } else {
+      updated[index] = replacement;
+    }
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationUpdate(indices: [index]),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> refreshFirstWhereEmit(
+    bool Function(T item) matcher,
+    Future<T> Function(T currentItem) refresher,
+  ) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final index = currentState.allItems.indexWhere(matcher);
+    if (index == -1) return false;
+
+    try {
+      final currentItem = currentState.allItems[index];
+      final refreshedItem = await refresher(currentItem);
+
+      final latestState = state;
+      if (latestState is! SmartPaginationLoaded<T>) return false;
+
+      final updated = List<T>.from(latestState.allItems);
+      final latestIndex = updated.indexWhere(matcher);
+      if (latestIndex == -1) return false;
+
+      final order = _orders?.activeOrder;
+      if (order != null) {
+        updated.removeAt(latestIndex);
+        final newIndex = _findSortedInsertIndex(
+          updated,
+          refreshedItem,
+          fallbackIndex: latestIndex,
+        );
+        updated.insert(newIndex, refreshedItem);
+      } else {
+        updated[latestIndex] = refreshedItem;
+      }
+
+      _onInsertionCallback?.call(updated);
+      _refreshDataAge();
+      emit(
+        latestState.copyWith(
+          allItems: updated,
+          items: updated,
+          lastUpdate: DateTime.now(),
+          lastOperation: PaginationOperationRefresh(index: latestIndex),
+          fetchedAt: _lastFetchTime,
+          dataExpiredAt: _getDataExpiredAt(),
+        ),
+      );
+      return true;
+    } on Exception catch (e) {
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e('Failed to refresh first item', error: e);
+      }
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> refreshLastWhereEmit(
+    bool Function(T item) matcher,
+    Future<T> Function(T currentItem) refresher,
+  ) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final index = currentState.allItems.lastIndexWhere(matcher);
+    if (index == -1) return false;
+
+    try {
+      final currentItem = currentState.allItems[index];
+      final refreshedItem = await refresher(currentItem);
+
+      final latestState = state;
+      if (latestState is! SmartPaginationLoaded<T>) return false;
+
+      final updated = List<T>.from(latestState.allItems);
+      final latestIndex = updated.lastIndexWhere(matcher);
+      if (latestIndex == -1) return false;
+
+      final order = _orders?.activeOrder;
+      if (order != null) {
+        updated.removeAt(latestIndex);
+        final newIndex = _findSortedInsertIndex(
+          updated,
+          refreshedItem,
+          fallbackIndex: latestIndex,
+        );
+        updated.insert(newIndex, refreshedItem);
+      } else {
+        updated[latestIndex] = refreshedItem;
+      }
+
+      _onInsertionCallback?.call(updated);
+      _refreshDataAge();
+      emit(
+        latestState.copyWith(
+          allItems: updated,
+          items: updated,
+          lastUpdate: DateTime.now(),
+          lastOperation: PaginationOperationRefresh(index: latestIndex),
+          fetchedAt: _lastFetchTime,
+          dataExpiredAt: _getDataExpiredAt(),
+        ),
+      );
+      return true;
+    } on Exception catch (e) {
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e('Failed to refresh last item', error: e);
+      }
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> refreshAtEmit(
+    int index,
+    Future<T> Function(T currentItem) refresher,
+  ) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    if (index < 0 || index >= currentState.allItems.length) return false;
+
+    try {
+      final currentItem = currentState.allItems[index];
+      final refreshedItem = await refresher(currentItem);
+
+      final latestState = state;
+      if (latestState is! SmartPaginationLoaded<T>) return false;
+
+      if (index >= latestState.allItems.length) return false;
+
+      final updated = List<T>.from(latestState.allItems);
+
+      final order = _orders?.activeOrder;
+      if (order != null) {
+        updated.removeAt(index);
+        final newIndex = _findSortedInsertIndex(
+          updated,
+          refreshedItem,
+          fallbackIndex: index,
+        );
+        updated.insert(newIndex, refreshedItem);
+      } else {
+        updated[index] = refreshedItem;
+      }
+
+      _onInsertionCallback?.call(updated);
+      _refreshDataAge();
+      emit(
+        latestState.copyWith(
+          allItems: updated,
+          items: updated,
+          lastUpdate: DateTime.now(),
+          lastOperation: PaginationOperationRefresh(index: index),
+          fetchedAt: _lastFetchTime,
+          dataExpiredAt: _getDataExpiredAt(),
+        ),
+      );
+      return true;
+    } on Exception catch (e) {
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.e('Failed to refresh item at index $index', error: e);
+      }
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> removeFirstWhereEmit(bool Function(T item) test) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final index = updated.indexWhere(test);
+
+    if (index == -1) return false;
+
+    updated.removeAt(index);
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationRemove(index: index),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> removeLastWhereEmit(bool Function(T item) test) async {
+    final currentState = state;
+    if (currentState is! SmartPaginationLoaded<T>) return false;
+
+    final updated = List<T>.from(currentState.allItems);
+    final index = updated.lastIndexWhere(test);
+
+    if (index == -1) return false;
+
+    updated.removeAt(index);
+
+    _onInsertionCallback?.call(updated);
+    _refreshDataAge();
+    emit(
+      currentState.copyWith(
+        allItems: updated,
+        items: updated,
+        lastUpdate: DateTime.now(),
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _getDataExpiredAt(),
+        lastOperation: PaginationOperationRemove(index: index),
+      ),
+    );
+    return true;
+  }
+
   // ==================== SCROLL NAVIGATION ====================
 
   /// The attached list observer controller for scroll navigation.
