@@ -12,14 +12,14 @@ class ScrollControlScreen extends StatefulWidget {
 }
 
 class _ScrollControlScreenState extends State<ScrollControlScreen> {
-  late SmartPaginationCubit<Product> _cubit;
+  late SmartPaginationCubit<Product, PaginationRequest> _cubit;
   final TextEditingController _indexController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     // Create a cubit with built-in scroll navigation support
-    _cubit = SmartPaginationCubit<Product>(
+    _cubit = SmartPaginationCubit<Product, PaginationRequest>(
       request: const PaginationRequest(page: 1, pageSize: 100),
       provider: PaginationProvider.future(
         (request) => MockApiService.fetchProducts(request),
@@ -69,7 +69,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.indigo.withValues(alpha:0.1),
+            color: Colors.indigo.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.keyboard_arrow_down, color: Colors.indigo),
@@ -205,7 +205,8 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
           const Divider(height: 1),
           // Product List
           Expanded(
-            child: SmartPagination<Product>.listViewWithCubit(
+            child:
+                SmartPagination<Product, PaginationRequest>.listViewWithCubit(
               cubit: _cubit,
               itemBuilder: (context, items, index) {
                 return _buildProductCard(items[index], index);
@@ -423,7 +424,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: Colors.indigo.withValues(alpha:0.1),
+                color: Colors.indigo.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
@@ -460,7 +461,7 @@ class _ScrollControlScreenState extends State<ScrollControlScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.withValues(alpha:0.2),
+                          color: Colors.indigo.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

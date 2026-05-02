@@ -15,7 +15,7 @@ class RetryDemoScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.orange.withValues(alpha:0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.info_outline, color: Colors.orange),
@@ -32,7 +32,8 @@ class RetryDemoScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
+            child: SmartPagination<Product,
+                PaginationRequest>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(
@@ -322,7 +323,7 @@ class RetryDemoScreen extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha:0.1),
+          color: Colors.green.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Icon(Icons.check_circle, color: Colors.green),

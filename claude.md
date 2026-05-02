@@ -266,7 +266,7 @@ final positionData = OverlayPositioner.calculatePosition(
 testWidgets('shows loading indicator', (tester) async {
   await tester.pumpWidget(
     MaterialApp(
-      home: SmartPagination<Product>.withProvider(
+      home: SmartPagination<Product, PaginationRequest>.withProvider(
         // ... setup
       ),
     ),

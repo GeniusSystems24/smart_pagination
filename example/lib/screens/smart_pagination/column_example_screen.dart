@@ -30,9 +30,9 @@ class _ColumnExampleScreenState extends State<ColumnExampleScreen> {
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 16),
-              
+
               // SmartPagination.column example
-              SmartPagination<Product>.columnWithProvider(
+              SmartPagination<Product, PaginationRequest>.columnWithProvider(
                 request: const PaginationRequest(page: 1, pageSize: 3),
                 provider: PaginationProvider.future(
                   (request) => MockApiService.fetchProducts(

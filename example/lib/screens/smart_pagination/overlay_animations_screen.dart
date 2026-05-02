@@ -368,12 +368,12 @@ class _OverlayValueDemo extends StatefulWidget {
 
 class _OverlayValueDemoState extends State<_OverlayValueDemo> {
   late SmartSearchController<Product, Product> _controller;
-  late SmartPaginationCubit<Product> _cubit;
+  late SmartPaginationCubit<Product, PaginationRequest> _cubit;
 
   @override
   void initState() {
     super.initState();
-    _cubit = SmartPaginationCubit<Product>(
+    _cubit = SmartPaginationCubit<Product, PaginationRequest>(
       request: PaginationRequest(page: 1, pageSize: 10),
       provider: PaginationProvider.future(
         (request) => MockApiService.fetchProducts(request),

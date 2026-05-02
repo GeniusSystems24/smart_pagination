@@ -15,8 +15,6 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
   final List<String> _logs = [];
   final int _buildCount = 0;
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +26,7 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.brown.withValues(alpha:0.1),
+            color: Colors.brown.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.build, color: Colors.brown),
@@ -123,7 +121,7 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>.withProvider(
+            child: SmartPagination<Product, PaginationRequest>.withProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
@@ -179,7 +177,7 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.brown.withValues(alpha:0.1),
+          color: Colors.brown.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -207,7 +205,7 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.brown.withValues(alpha:0.2),
+              color: Colors.brown.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -240,7 +238,7 @@ class _BeforeBuildHookScreenState extends State<BeforeBuildHookScreen> {
                 'beforeBuild hook executed',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.brown.withValues(alpha:0.7),
+                  color: Colors.brown.withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),

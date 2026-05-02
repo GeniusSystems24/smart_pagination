@@ -20,7 +20,7 @@ class SortingScreen extends StatefulWidget {
 }
 
 class _SortingScreenState extends State<SortingScreen> {
-  late final SmartPaginationCubit<Product> _cubit;
+  late final SmartPaginationCubit<Product, PaginationRequest> _cubit;
 
   @override
   void initState() {
@@ -68,7 +68,7 @@ class _SortingScreenState extends State<SortingScreen> {
     );
 
     // Create cubit with orders
-    _cubit = SmartPaginationCubit<Product>(
+    _cubit = SmartPaginationCubit<Product, PaginationRequest>(
       request: const PaginationRequest(page: 1, pageSize: 15),
       provider: PaginationProvider.future(
         (request) => MockApiService.fetchProducts(
@@ -131,49 +131,45 @@ class _SortingScreenState extends State<SortingScreen> {
                 const Text('Sort by: '),
                 const SizedBox(width: 8),
                 Expanded(
-                  child:
-                      BlocBuilder<
-                        SmartPaginationCubit<Product>,
-                        SmartPaginationState<Product>
-                      >(
-                        bloc: _cubit,
-                        builder: (context, state) {
-                          return DropdownButton<String>(
-                            value: _cubit.activeOrderId,
-                            isExpanded: true,
-                            hint: const Text('Select sort order'),
-                            items: [
-                              const DropdownMenuItem(
-                                value: null,
-                                child: Text('None (Original Order)'),
-                              ),
-                              ..._cubit.availableOrders.map((order) {
-                                return DropdownMenuItem(
-                                  value: order.id,
-                                  child: Text(order.label),
-                                );
-                              }),
-                            ],
-                            onChanged: (orderId) {
-                              if (orderId == null) {
-                                _cubit.clearOrder();
-                              } else {
-                                _cubit.setActiveOrder(orderId);
-                              }
-                            },
-                          );
+                  child: BlocBuilder<
+                      SmartPaginationCubit<Product, PaginationRequest>,
+                      SmartPaginationState<Product>>(
+                    bloc: _cubit,
+                    builder: (context, state) {
+                      return DropdownButton<String>(
+                        value: _cubit.activeOrderId,
+                        isExpanded: true,
+                        hint: const Text('Select sort order'),
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('None (Original Order)'),
+                          ),
+                          ..._cubit.availableOrders.map((order) {
+                            return DropdownMenuItem(
+                              value: order.id,
+                              child: Text(order.label),
+                            );
+                          }),
+                        ],
+                        onChanged: (orderId) {
+                          if (orderId == null) {
+                            _cubit.clearOrder();
+                          } else {
+                            _cubit.setActiveOrder(orderId);
+                          }
                         },
-                      ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
           ),
 
           // Current order indicator
-          BlocBuilder<
-            SmartPaginationCubit<Product>,
-            SmartPaginationState<Product>
-          >(
+          BlocBuilder<SmartPaginationCubit<Product, PaginationRequest>,
+              SmartPaginationState<Product>>(
             bloc: _cubit,
             builder: (context, state) {
               if (state is SmartPaginationLoaded<Product>) {

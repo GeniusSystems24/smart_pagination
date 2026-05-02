@@ -18,7 +18,7 @@ class HorizontalListScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepOrange.withValues(alpha:0.1),
+            color: Colors.deepOrange.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.swipe_left, color: Colors.deepOrange),
@@ -43,7 +43,8 @@ class HorizontalListScreen extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             height: 250,
-            child: SmartPagination<Product>.listViewWithProvider(
+            child: SmartPagination<Product,
+                PaginationRequest>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 10),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
@@ -201,11 +202,13 @@ class HorizontalListScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.red.shade700, size: 20),
+                      Icon(Icons.warning_amber,
+                          color: Colors.red.shade700, size: 20),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: retry,
-                        child: const Text('Retry', style: TextStyle(fontSize: 11)),
+                        child:
+                            const Text('Retry', style: TextStyle(fontSize: 11)),
                       ),
                     ],
                   ),
@@ -220,7 +223,8 @@ class HorizontalListScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle, size: 18, color: Colors.green.shade600),
+                      Icon(Icons.check_circle,
+                          size: 18, color: Colors.green.shade600),
                       const SizedBox(height: 4),
                       Text(
                         'All loaded',
@@ -269,7 +273,7 @@ class HorizontalListScreen extends StatelessWidget {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.deepOrange.withValues(alpha:0.1),
+                  color: Colors.deepOrange.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
@@ -278,7 +282,7 @@ class HorizontalListScreen extends StatelessWidget {
                   child: Icon(
                     Icons.shopping_bag,
                     size: 64,
-                    color: Colors.deepOrange.withValues(alpha:0.5),
+                    color: Colors.deepOrange.withValues(alpha: 0.5),
                   ),
                 ),
               ),

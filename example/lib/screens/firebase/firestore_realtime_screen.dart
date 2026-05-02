@@ -163,7 +163,9 @@ class _FirestoreRealtimeScreenState extends State<FirestoreRealtimeScreen> {
                 Icon(
                   Icons.circle,
                   size: 8,
-                  color: _isFirebaseInitialized ? Colors.white : Colors.grey.shade300,
+                  color: _isFirebaseInitialized
+                      ? Colors.white
+                      : Colors.grey.shade300,
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -229,7 +231,8 @@ class _FirestoreRealtimeScreenState extends State<FirestoreRealtimeScreen> {
 
         // Messages list
         Expanded(
-          child: SmartPagination<RealtimeMessage>.listViewWithProvider(
+          child: SmartPagination<RealtimeMessage,
+              PaginationRequest>.listViewWithProvider(
             request: const PaginationRequest(page: 1, pageSize: 50),
             provider: PaginationProvider.stream(streamMessages),
             itemBuilder: (context, items, index) {
@@ -241,7 +244,8 @@ class _FirestoreRealtimeScreenState extends State<FirestoreRealtimeScreen> {
                 duration: const Duration(milliseconds: 300),
                 color: isNew ? Colors.green.shade50 : Colors.transparent,
                 child: Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundImage: NetworkImage(message.avatarUrl),
@@ -307,7 +311,8 @@ class _FirestoreRealtimeScreenState extends State<FirestoreRealtimeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey.shade400),
+                  Icon(Icons.chat_bubble_outline,
+                      size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   const Text('No messages yet'),
                   const SizedBox(height: 8),

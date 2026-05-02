@@ -65,7 +65,7 @@ SmartPaginationGridView.withProvider(
 ### With External Cubit
 
 ```dart
-final cubit = SmartPaginationCubit<Product>(
+final cubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   dataAge: Duration(minutes: 5), // Auto-refresh stale data
@@ -437,7 +437,7 @@ SmartPaginationListView.withProvider(
 ### Automatic Retry
 
 ```dart
-SmartPaginationCubit<Product>(
+SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   retryConfig: RetryConfig(
@@ -522,7 +522,7 @@ final orders = SortOrderCollection<Product>(
   defaultOrderId: 'name',
 );
 
-final cubit = SmartPaginationCubit<Product>(
+final cubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   orders: orders,

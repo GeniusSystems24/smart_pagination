@@ -72,7 +72,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.purple.withValues(alpha:0.1),
+            color: Colors.purple.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.drag_indicator, color: Colors.purple),
@@ -133,7 +133,8 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
                   return const Center(child: Text('No items to display'));
                 }
 
-                return SmartPagination<Product>.reorderableListViewWithProvider(
+                return SmartPagination<Product,
+                    PaginationRequest>.reorderableListViewWithProvider(
                   request: const PaginationRequest(page: 1, pageSize: 20),
                   provider: PaginationProvider.future(
                     (request) async => _items,
@@ -218,7 +219,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.purple.withValues(alpha:0.1),
+                color: Colors.purple.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
@@ -248,7 +249,7 @@ class _ReorderableListScreenState extends State<ReorderableListScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.purple.withValues(alpha:0.2),
+                color: Colors.purple.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -351,7 +352,7 @@ class _PriorityTasksScreenState extends State<PriorityTasksScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepPurple.withValues(alpha:0.1),
+            color: Colors.deepPurple.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.priority_high, color: Colors.deepPurple),
@@ -394,7 +395,8 @@ class _PriorityTasksScreenState extends State<PriorityTasksScreen> {
                   return const Center(child: Text('No tasks'));
                 }
 
-                return SmartPagination<Product>.reorderableListViewWithProvider(
+                return SmartPagination<Product,
+                    PaginationRequest>.reorderableListViewWithProvider(
                   request: const PaginationRequest(page: 1, pageSize: 15),
                   provider: PaginationProvider.future(
                     (request) async => _tasks,

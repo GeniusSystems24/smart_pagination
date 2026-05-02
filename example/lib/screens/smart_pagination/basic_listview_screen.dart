@@ -14,7 +14,7 @@ class BasicListViewScreen extends StatelessWidget {
         title: const Text('Basic ListView'),
         backgroundColor: Colors.blue,
       ),
-      body: SmartPagination<Product>.withProvider(
+      body: SmartPagination<Product, PaginationRequest>.withProvider(
         request: const PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(
           (request) => MockApiService.fetchProducts(request),
@@ -194,7 +194,8 @@ class BasicListViewScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle, size: 18, color: Colors.green.shade600),
+                Icon(Icons.check_circle,
+                    size: 18, color: Colors.green.shade600),
                 const SizedBox(width: 8),
                 Text(
                   'All products loaded',
@@ -230,7 +231,7 @@ class BasicListViewScreen extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha:0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.shopping_bag, color: Colors.blue),
@@ -258,7 +259,7 @@ class BasicListViewScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha:0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(

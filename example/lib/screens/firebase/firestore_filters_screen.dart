@@ -259,7 +259,8 @@ class _FirestoreFiltersScreenState extends State<FirestoreFiltersScreen> {
 
         // Products list
         Expanded(
-          child: SmartPagination<FilteredProduct>.listViewWithProvider(
+          child: SmartPagination<FilteredProduct,
+              PaginationRequest>.listViewWithProvider(
             request: const PaginationRequest(page: 1, pageSize: 15),
             provider: PaginationProvider.future(fetchFilteredProducts),
             refreshListener: _refreshListener,
@@ -349,7 +350,8 @@ class _FirestoreFiltersScreenState extends State<FirestoreFiltersScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                    Icon(Icons.error_outline,
+                        size: 64, color: Colors.red.shade300),
                     const SizedBox(height: 16),
                     Text(
                       'Query Error',
@@ -375,7 +377,8 @@ class _FirestoreFiltersScreenState extends State<FirestoreFiltersScreen> {
                       ),
                       child: Text(
                         error.toString(),
-                        style: TextStyle(color: Colors.red.shade700, fontSize: 11),
+                        style:
+                            TextStyle(color: Colors.red.shade700, fontSize: 11),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -526,12 +529,14 @@ class _FirestoreFiltersScreenState extends State<FirestoreFiltersScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.amber.shade700, size: 20),
+                    Icon(Icons.info_outline,
+                        color: Colors.amber.shade700, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Composite queries require Firestore indexes',
-                        style: TextStyle(color: Colors.amber.shade900, fontSize: 12),
+                        style: TextStyle(
+                            color: Colors.amber.shade900, fontSize: 12),
                       ),
                     ),
                   ],

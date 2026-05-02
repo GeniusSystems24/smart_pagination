@@ -26,7 +26,7 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.deepPurple.withValues(alpha:0.1),
+            color: Colors.deepPurple.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.speed, color: Colors.deepPurple),
@@ -135,7 +135,8 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
 
           // Product List
           Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
+            child: SmartPagination<Product,
+                PaginationRequest>.listViewWithProvider(
               key: ValueKey(_threshold), // Rebuild when threshold changes
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
@@ -173,10 +174,10 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
                   padding: const EdgeInsets.all(20),
                   margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha:0.1),
+                    color: Colors.deepPurple.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.deepPurple.withValues(alpha:0.3),
+                      color: Colors.deepPurple.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -218,10 +219,10 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha:0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.green.withValues(alpha:0.3),
+                      color: Colors.green.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -291,8 +292,8 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
               height: 56,
               decoration: BoxDecoration(
                 color: willTrigger
-                    ? Colors.deepPurple.withValues(alpha:0.2)
-                    : Colors.grey.withValues(alpha:0.1),
+                    ? Colors.deepPurple.withValues(alpha: 0.2)
+                    : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
@@ -378,7 +379,8 @@ class _SmartPreloadingScreenState extends State<SmartPreloadingScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     color: willTrigger ? Colors.deepPurple : Colors.grey[500],
-                    fontWeight: willTrigger ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        willTrigger ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ],

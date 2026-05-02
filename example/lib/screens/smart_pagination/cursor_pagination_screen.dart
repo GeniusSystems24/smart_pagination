@@ -18,7 +18,7 @@ class CursorPaginationScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.teal.withValues(alpha:0.1),
+            color: Colors.teal.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.list_alt, color: Colors.teal),
@@ -34,7 +34,7 @@ class CursorPaginationScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>.withProvider(
+            child: SmartPagination<Product, PaginationRequest>.withProvider(
               request: PaginationRequest(
                 page: 1,
                 pageSize: 15,
@@ -301,7 +301,7 @@ class CursorPaginationScreen extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.teal.withValues(alpha:0.1),
+          color: Colors.teal.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -326,7 +326,7 @@ class CursorPaginationScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.teal.withValues(alpha:0.2),
+              color: Colors.teal.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

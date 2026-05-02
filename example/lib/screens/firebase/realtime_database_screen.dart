@@ -196,7 +196,8 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
 
         // Posts list
         Expanded(
-          child: SmartPagination<RTDBPost>.listViewWithProvider(
+          child:
+              SmartPagination<RTDBPost, PaginationRequest>.listViewWithProvider(
             request: const PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(fetchPosts),
             itemBuilder: (context, items, index) {
@@ -212,9 +213,8 @@ class _RealtimeDatabaseScreenState extends State<RealtimeDatabaseScreen> {
                       Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor:
-                                Colors.primaries[post.author.hashCode %
-                                    Colors.primaries.length],
+                            backgroundColor: Colors.primaries[
+                                post.author.hashCode % Colors.primaries.length],
                             child: Text(
                               post.author.isNotEmpty ? post.author[0] : '?',
                               style: const TextStyle(color: Colors.white),

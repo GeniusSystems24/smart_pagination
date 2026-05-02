@@ -17,8 +17,7 @@ class GracefulDegradationExample extends StatefulWidget {
       _GracefulDegradationExampleState();
 }
 
-class _GracefulDegradationExampleState
-    extends State<GracefulDegradationExample>
+class _GracefulDegradationExampleState extends State<GracefulDegradationExample>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -148,9 +147,7 @@ class _OfflineModeTabState extends State<_OfflineModeTab> {
           ),
         ),
         Expanded(
-          child: _isOffline
-              ? _buildOfflineView()
-              : _buildOnlineView(),
+          child: _isOffline ? _buildOfflineView() : _buildOnlineView(),
         ),
       ],
     );
@@ -233,7 +230,7 @@ class _OfflineModeTabState extends State<_OfflineModeTab> {
   }
 
   Widget _buildOnlineView() {
-    return SmartPagination<Product>.listViewWithProvider(
+    return SmartPagination<Product, PaginationRequest>.listViewWithProvider(
       key: const Key('online_mode'),
       request: PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(_fetchProducts),
@@ -280,7 +277,8 @@ class _PlaceholderContentTab extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
             itemBuilder: (context, products, index) {
@@ -384,7 +382,7 @@ class _LimitedFeaturesTabState extends State<_LimitedFeaturesTab> {
       description: 'Basic info available',
       price: 19.99 + index,
       category: 'Electronics',
-      imageUrl: '',  // No images during error
+      imageUrl: '', // No images during error
       createdAt: DateTime.now(),
     );
   });
@@ -457,7 +455,8 @@ class _LimitedFeaturesTabState extends State<_LimitedFeaturesTab> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: _hasError ? Colors.grey[300] : Colors.blue[100],
+                          color:
+                              _hasError ? Colors.grey[300] : Colors.blue[100],
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -506,7 +505,8 @@ class _LimitedFeaturesTabState extends State<_LimitedFeaturesTab> {
                       // Action button (disabled during error)
                       ElevatedButton.icon(
                         onPressed: _hasError ? null : () {},
-                        icon: Icon(_hasError ? Icons.block : Icons.shopping_cart),
+                        icon:
+                            Icon(_hasError ? Icons.block : Icons.shopping_cart),
                         label: Text(_hasError ? 'Unavailable' : 'Add'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _hasError ? Colors.grey : null,

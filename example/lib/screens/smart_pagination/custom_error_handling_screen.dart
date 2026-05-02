@@ -80,7 +80,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.withProvider(
+          child: SmartPagination<Product, PaginationRequest>.withProvider(
             key: const Key('material_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
@@ -132,7 +132,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.withProvider(
+          child: SmartPagination<Product, PaginationRequest>.withProvider(
             key: const Key('compact_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
@@ -183,7 +183,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.withProvider(
+          child: SmartPagination<Product, PaginationRequest>.withProvider(
             itemBuilderType: PaginateBuilderType.gridView,
             key: const Key('card_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
@@ -256,7 +256,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.withProvider(
+          child: SmartPagination<Product, PaginationRequest>.withProvider(
             key: const Key('minimal_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
@@ -310,7 +310,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.withProvider(
+          child: SmartPagination<Product, PaginationRequest>.withProvider(
             key: const Key('custom_error'),
             request: PaginationRequest(page: 1, pageSize: 10),
             provider: PaginationProvider.future(
@@ -344,7 +344,7 @@ class _CustomErrorHandlingScreenState extends State<CustomErrorHandlingScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.red.withValues(alpha:0.3),
+                              color: Colors.red.withValues(alpha: 0.3),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),

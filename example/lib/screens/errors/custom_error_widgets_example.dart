@@ -65,7 +65,8 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.blue,
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: const Key('material_error'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProductsWithError),
@@ -102,7 +103,8 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.orange,
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: const Key('compact_error'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProductsWithError),
@@ -139,7 +141,8 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.green,
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: const Key('card_error'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProductsWithError),
@@ -175,7 +178,8 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.purple,
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: const Key('minimal_error'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProductsWithError),
@@ -210,7 +214,8 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.indigo,
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: const Key('snackbar_error'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProductsWithError),
@@ -259,7 +264,8 @@ class CustomErrorWidgetsExample extends StatelessWidget {
           Colors.red,
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: const Key('custom_error'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProductsWithError),

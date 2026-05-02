@@ -13,7 +13,7 @@ class GridViewScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('GridView Pagination'),
       ),
-      body: SmartPagination<Product>.gridViewWithProvider(
+      body: SmartPagination<Product, PaginationRequest>.gridViewWithProvider(
         request: const PaginationRequest(page: 1, pageSize: 20),
         provider: PaginationProvider.future(
           (request) => MockApiService.fetchProducts(request),
@@ -300,7 +300,8 @@ class GridViewScreen extends StatelessWidget {
           Expanded(
             flex: 3,
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
               child: Image.network(
                 product.imageUrl,
                 width: double.infinity,

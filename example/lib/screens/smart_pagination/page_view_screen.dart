@@ -18,7 +18,7 @@ class PageViewScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.pink.withValues(alpha:0.1),
+            color: Colors.pink.withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.swipe, color: Colors.pink),
@@ -33,7 +33,8 @@ class PageViewScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>.pageViewWithProvider(
+            child: SmartPagination<Product,
+                PaginationRequest>.pageViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 1),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),
@@ -187,7 +188,8 @@ class PageViewScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.red.shade700, size: 32),
+                      Icon(Icons.warning_amber,
+                          color: Colors.red.shade700, size: 32),
                       const SizedBox(height: 16),
                       Text(
                         'Failed to load next page',
@@ -218,7 +220,8 @@ class PageViewScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle, size: 32, color: Colors.green.shade600),
+                      Icon(Icons.check_circle,
+                          size: 32, color: Colors.green.shade600),
                       const SizedBox(height: 12),
                       Text(
                         'All pages loaded',
@@ -284,7 +287,7 @@ class PageViewScreen extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.pink.withValues(alpha:0.2),
+                      color: Colors.pink.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -305,14 +308,14 @@ class PageViewScreen extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: BoxDecoration(
-                  color: Colors.pink.withValues(alpha:0.1),
+                  color: Colors.pink.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Center(
                   child: Icon(
                     Icons.shopping_bag_outlined,
                     size: 120,
-                    color: Colors.pink.withValues(alpha:0.5),
+                    color: Colors.pink.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -333,7 +336,7 @@ class PageViewScreen extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.pink.withValues(alpha:0.1),
+                        color: Colors.pink.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

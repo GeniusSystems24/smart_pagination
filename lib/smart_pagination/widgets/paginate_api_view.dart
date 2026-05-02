@@ -259,7 +259,7 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
   }
 
   @override
-  void didUpdateWidget(covariant PaginateApiView<T> oldWidget) {
+  void didUpdateWidget(covariant PaginateApiView<T, R> oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     // Re-attach if cubit changed

@@ -58,7 +58,7 @@ class _MultiStreamScreenState extends State<MultiStreamScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: _getTabColor().withValues(alpha:0.1),
+            color: _getTabColor().withValues(alpha: 0.1),
             child: Row(
               children: [
                 Icon(Icons.stream, color: _getTabColor()),
@@ -128,7 +128,7 @@ class _MultiStreamScreenState extends State<MultiStreamScreen> {
   }
 
   Widget _buildStreamContent() {
-    return SmartPagination<Product>.listViewWithProvider(
+    return SmartPagination<Product, PaginationRequest>.listViewWithProvider(
       key: ValueKey(_selectedTabIndex), // Force rebuild when tab changes
       request: const PaginationRequest(page: 1, pageSize: 15),
       provider: PaginationProvider.stream(
@@ -466,7 +466,7 @@ class _MultiStreamScreenState extends State<MultiStreamScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: badgeColor.withValues(alpha:0.1),
+                  color: badgeColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -506,7 +506,7 @@ class _MultiStreamScreenState extends State<MultiStreamScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: badgeColor.withValues(alpha:0.2),
+              color: badgeColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(

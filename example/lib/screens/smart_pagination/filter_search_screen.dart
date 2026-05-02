@@ -101,7 +101,7 @@ class _FilterSearchScreenState extends State<FilterSearchScreen> {
           const Divider(height: 1),
           // Product List
           Expanded(
-            child: SmartPagination<Product>.withProvider(
+            child: SmartPagination<Product, PaginationRequest>.withProvider(
               key: ValueKey('$_selectedCategory-$_searchQuery'),
               request: PaginationRequest(
                 page: 1,

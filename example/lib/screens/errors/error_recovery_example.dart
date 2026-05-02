@@ -194,7 +194,7 @@ class _CachedDataTabState extends State<_CachedDataTab> {
   }
 
   Widget _buildNormalView() {
-    return SmartPagination<Product>.listViewWithProvider(
+    return SmartPagination<Product, PaginationRequest>.listViewWithProvider(
       key: ValueKey('cached_data_$_shouldFail'),
       request: PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(_fetchProducts),
@@ -264,9 +264,8 @@ class _PartialDataTabState extends State<_PartialDataTab> {
           ),
         ),
         Expanded(
-          child: _hasPartialData
-              ? _buildPartialDataView()
-              : _buildLoadingView(),
+          child:
+              _hasPartialData ? _buildPartialDataView() : _buildLoadingView(),
         ),
       ],
     );
@@ -326,7 +325,7 @@ class _PartialDataTabState extends State<_PartialDataTab> {
   }
 
   Widget _buildLoadingView() {
-    return SmartPagination<Product>.listViewWithProvider(
+    return SmartPagination<Product, PaginationRequest>.listViewWithProvider(
       key: const Key('partial_data_loading'),
       request: PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(_fetchProducts),
@@ -386,7 +385,8 @@ class _AlternativeSourceTabState extends State<_AlternativeSourceTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: ValueKey('alt_source_$_usePrimarySource'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(
@@ -414,7 +414,8 @@ class _AlternativeSourceTabState extends State<_AlternativeSourceTab> {
                   });
                 },
                 title: 'Primary Server Unavailable',
-                message: 'The main server is not responding. Switch to backup server?',
+                message:
+                    'The main server is not responding. Switch to backup server?',
                 retryButtonText: 'Use Backup Server',
                 icon: Icons.swap_horiz,
                 iconColor: Colors.orange,
@@ -510,7 +511,8 @@ class _UserRecoveryTabState extends State<_UserRecoveryTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: ValueKey('user_recovery_$_requiresLogin'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),

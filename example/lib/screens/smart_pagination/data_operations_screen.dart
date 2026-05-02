@@ -22,14 +22,14 @@ class DataOperationsScreen extends StatefulWidget {
 }
 
 class _DataOperationsScreenState extends State<DataOperationsScreen> {
-  late SmartPaginationCubit<Product> _cubit;
+  late SmartPaginationCubit<Product, PaginationRequest> _cubit;
 
   int _productCounter = 1000; // For generating unique product IDs
 
   @override
   void initState() {
     super.initState();
-    _cubit = SmartPaginationCubit<Product>(
+    _cubit = SmartPaginationCubit<Product, PaginationRequest>(
       request: const PaginationRequest(page: 1, pageSize: 10),
       provider: PaginationProvider.future(
         (request) => MockApiService.fetchProducts(
@@ -128,8 +128,7 @@ class _DataOperationsScreenState extends State<DataOperationsScreen> {
         createdAt: DateTime.now(),
       ),
     );
-    _showSnackBar(
-        success ? 'Applied 10% discount' : 'No items to discount');
+    _showSnackBar(success ? 'Applied 10% discount' : 'No items to discount');
   }
 
   // Refresh first item from server

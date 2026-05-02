@@ -40,7 +40,8 @@ class _RowExampleScreenState extends State<RowExampleScreen> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SmartPagination<Product>.rowWithProvider(
+              child:
+                  SmartPagination<Product, PaginationRequest>.rowWithProvider(
                 request: const PaginationRequest(page: 1, pageSize: 5),
                 provider: PaginationProvider.future(
                   (request) => MockApiService.fetchProducts(request),

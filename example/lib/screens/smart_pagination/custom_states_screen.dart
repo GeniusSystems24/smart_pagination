@@ -34,7 +34,8 @@ class CustomStatesScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
+            child: SmartPagination<Product,
+                PaginationRequest>.listViewWithProvider(
               request: const PaginationRequest(page: 1, pageSize: 15),
               provider: PaginationProvider.future(
                 (request) => MockApiService.fetchProducts(request),

@@ -206,7 +206,8 @@ class _OfflineSupportScreenState extends State<OfflineSupportScreen> {
             children: [
               Icon(
                 _isOnline ? Icons.wifi : Icons.wifi_off,
-                color: _isOnline ? Colors.green.shade700 : Colors.orange.shade700,
+                color:
+                    _isOnline ? Colors.green.shade700 : Colors.orange.shade700,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -225,7 +226,8 @@ class _OfflineSupportScreenState extends State<OfflineSupportScreen> {
               ),
               if (!_isOnline && _cachedCount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.orange.shade200,
                     borderRadius: BorderRadius.circular(8),
@@ -283,7 +285,8 @@ class _OfflineSupportScreenState extends State<OfflineSupportScreen> {
 
         // Products list
         Expanded(
-          child: SmartPagination<OfflineProduct>.listViewWithProvider(
+          child: SmartPagination<OfflineProduct,
+              PaginationRequest>.listViewWithProvider(
             request: const PaginationRequest(page: 1, pageSize: 30),
             provider: PaginationProvider.stream(streamProducts),
             itemBuilder: (context, items, index) {

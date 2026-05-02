@@ -72,7 +72,7 @@ SmartPaginationListView.withCubit(
 
 ```dart
 // Option 1: Using connectivity_plus package with stream
-final cubit = SmartPaginationCubit<Product>(
+final cubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: request,
   provider: provider,
   connectivityStream: Connectivity().onConnectivityChanged
@@ -397,7 +397,7 @@ await cubit.animateFirstWhere(
 // In your widget, wrap with ListViewObserver
 ListViewObserver(
   controller: observerController,
-  child: SmartPagination<Message>.listViewWithCubit(
+  child: SmartPagination<Message, PaginationRequest>.listViewWithCubit(
     cubit: cubit,
     scrollController: scrollController,
     itemBuilder: (context, items, index) => MessageWidget(items[index]),
@@ -470,7 +470,7 @@ Added configurable error retry strategy to prevent infinite retry loops when ser
 
 **Usage:**
 ```dart
-SmartPaginationCubit<Product>(
+SmartPaginationCubit<Product, PaginationRequest>(
   request: request,
   provider: provider,
   // Prevent automatic retries on error
@@ -1118,7 +1118,7 @@ SmartSearchDropdown<Product>.withProvider(
 )
 
 // With external cubit
-final searchCubit = SmartPaginationCubit<Product>(
+final searchCubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(searchProducts),
 );
@@ -1259,7 +1259,7 @@ final orders = SortOrderCollection<Product>(
 );
 
 // Create cubit with orders
-final cubit = SmartPaginationCubit<Product>(
+final cubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   orders: orders,
@@ -1343,7 +1343,7 @@ SmartPaginationGridView.withProvider(
 )
 
 // External cubit example
-final cubit = SmartPaginationCubit<Product>(
+final cubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   dataAge: Duration(minutes: 5),
@@ -1393,7 +1393,7 @@ New feature for automatic data invalidation and refresh when using cubit as a gl
 
 ```dart
 // Create a global cubit with 5-minute data age
-final productsCubit = SmartPaginationCubit<Product>(
+final productsCubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
   provider: PaginationProvider.future(fetchProducts),
   dataAge: Duration(minutes: 5), // Data expires after 5 minutes
@@ -1451,7 +1451,7 @@ New programmatic data operations accessible from anywhere in your app via the cu
 
 ```dart
 // Get the cubit reference
-final cubit = SmartPaginationCubit<Product>(...);
+final cubit = SmartPaginationCubit<Product, PaginationRequest>(...);
 
 // Insert operations
 cubit.insertEmit(newProduct);
@@ -1675,13 +1675,13 @@ print('Total items: ${items.length}');
 
 ```dart
 // Before (v0.0.4)
-SmartPagination<Product>(
+SmartPagination<Product, PaginationRequest>(
   dataProvider: (request) => apiService.fetchProducts(request),
   ...
 )
 
 // After (v0.0.5)
-SmartPagination<Product>(
+SmartPagination<Product, PaginationRequest>(
   provider: PaginationProvider.future(
     (request) => apiService.fetchProducts(request),
   ),
@@ -1693,13 +1693,13 @@ SmartPagination<Product>(
 
 ```dart
 // Before
-SmartPagination<Product>(
+SmartPagination<Product, PaginationRequest>(
   streamProvider: (request) => apiService.productsStream(request),
   ...
 )
 
 // After
-SmartPagination<Product>(
+SmartPagination<Product, PaginationRequest>(
   provider: PaginationProvider.stream(
     (request) => apiService.productsStream(request),
   ),

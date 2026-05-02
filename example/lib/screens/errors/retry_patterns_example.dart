@@ -94,7 +94,8 @@ class _ManualRetryTabState extends State<_ManualRetryTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: ValueKey('manual_retry_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
@@ -193,7 +194,8 @@ class _AutoRetryTabState extends State<_AutoRetryTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: ValueKey('auto_retry_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
@@ -320,7 +322,8 @@ class _ExponentialBackoffTabState extends State<_ExponentialBackoffTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: ValueKey('exponential_backoff_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
@@ -388,7 +391,8 @@ class _LimitedAttemptsTabState extends State<_LimitedAttemptsTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: ValueKey('limited_attempts_$_attemptCount'),
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),

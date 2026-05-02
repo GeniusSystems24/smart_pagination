@@ -104,7 +104,8 @@ class _CompactErrorTabState extends State<_CompactErrorTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             request: PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(_fetchProducts),
             itemBuilder: (context, products, index) {
@@ -206,7 +207,8 @@ class _InlineRetryTabState extends State<_InlineRetryTab> {
           ),
         ),
         Expanded(
-          child: SmartPagination<Product>.listViewWithProvider(
+          child:
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
             key: ValueKey('inline_retry_$_loadMoreAttempts'),
             request: PaginationRequest(page: 1, pageSize: 15),
             provider: PaginationProvider.future(_fetchProducts),
@@ -334,7 +336,7 @@ class _SilentFailureTabState extends State<_SilentFailureTab> {
         Expanded(
           child: Stack(
             children: [
-              SmartPagination<Product>.listViewWithProvider(
+              SmartPagination<Product, PaginationRequest>.listViewWithProvider(
                 request: PaginationRequest(page: 1, pageSize: 20),
                 provider: PaginationProvider.future(_fetchProducts),
                 itemBuilder: (context, products, index) {

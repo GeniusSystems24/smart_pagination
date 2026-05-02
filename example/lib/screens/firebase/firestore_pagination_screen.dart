@@ -78,7 +78,8 @@ class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
   }
 
   /// Fetches products from Firestore using cursor-based pagination
-  Future<List<FirestoreProduct>> fetchProducts(PaginationRequest request) async {
+  Future<List<FirestoreProduct>> fetchProducts(
+      PaginationRequest request) async {
     final firestore = FirebaseFirestore.instance;
     final pageSize = request.pageSize ?? 20;
 
@@ -174,7 +175,8 @@ class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
 
         // Product list
         Expanded(
-          child: SmartPagination<FirestoreProduct>.listViewWithProvider(
+          child: SmartPagination<FirestoreProduct,
+              PaginationRequest>.listViewWithProvider(
             request: const PaginationRequest(page: 1, pageSize: 20),
             provider: PaginationProvider.future(fetchProducts),
             itemBuilder: (context, items, index) {
@@ -243,7 +245,8 @@ class _FirestorePaginationScreenState extends State<FirestorePaginationScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                    Icon(Icons.error_outline,
+                        size: 64, color: Colors.red.shade300),
                     const SizedBox(height: 16),
                     Text(
                       'Failed to load products',

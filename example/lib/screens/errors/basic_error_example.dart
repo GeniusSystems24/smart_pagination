@@ -111,7 +111,8 @@ class _BasicErrorExampleState extends State<BasicErrorExample> {
 
           // Paginated list
           Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
+            child: SmartPagination<Product,
+                PaginationRequest>.listViewWithProvider(
               key: ValueKey('basic_error_$_retryCount'),
               request: PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(_fetchProducts),

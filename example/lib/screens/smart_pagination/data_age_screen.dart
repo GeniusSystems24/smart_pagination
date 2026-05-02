@@ -24,7 +24,7 @@ class DataAgeScreen extends StatefulWidget {
 class _DataAgeScreenState extends State<DataAgeScreen> {
   // Cubit with 30 second data age for demo purposes
   // In real apps, you might use Duration(minutes: 5) or longer
-  late SmartPaginationCubit<Product> _cubit;
+  late SmartPaginationCubit<Product, PaginationRequest> _cubit;
 
   // Track selected data age
   Duration _selectedDataAge = const Duration(seconds: 30);
@@ -36,7 +36,7 @@ class _DataAgeScreenState extends State<DataAgeScreen> {
   }
 
   void _createCubit() {
-    _cubit = SmartPaginationCubit<Product>(
+    _cubit = SmartPaginationCubit<Product, PaginationRequest>(
       request: const PaginationRequest(page: 1, pageSize: 10),
       provider: PaginationProvider.future(
         (request) => MockApiService.fetchProducts(
@@ -72,8 +72,7 @@ class _DataAgeScreenState extends State<DataAgeScreen> {
     } else if (isExpired) {
       _showSnackBar('Data has EXPIRED! Will refresh on next fetch.');
     } else {
-      final remaining =
-          _cubit.dataAge!.inSeconds -
+      final remaining = _cubit.dataAge!.inSeconds -
           DateTime.now().difference(lastFetch).inSeconds;
       _showSnackBar('Data valid for $remaining more seconds');
     }
@@ -521,7 +520,7 @@ class _ExpirationCountdownState extends State<_ExpirationCountdown> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: color.withValues(alpha:0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: color),
           ),

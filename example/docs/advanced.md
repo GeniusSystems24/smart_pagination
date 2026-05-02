@@ -364,12 +364,12 @@ class ScrollControlScreen extends StatefulWidget {
 
 class _ScrollControlScreenState extends State<ScrollControlScreen> {
   final ScrollController _scrollController = ScrollController();
-  late final SmartPaginationCubit<Product> _cubit;
+  late final SmartPaginationCubit<Product, PaginationRequest> _cubit;
 
   @override
   void initState() {
     super.initState();
-    _cubit = SmartPaginationCubit<Product>(
+    _cubit = SmartPaginationCubit<Product, PaginationRequest>(
       request: const PaginationRequest(page: 1, pageSize: 50),
       provider: PaginationProvider.future(fetchProducts),
     );
@@ -566,12 +566,12 @@ class DataOperationsScreen extends StatefulWidget {
 }
 
 class _DataOperationsScreenState extends State<DataOperationsScreen> {
-  late final SmartPaginationCubit<Product> _cubit;
+  late final SmartPaginationCubit<Product, PaginationRequest> _cubit;
 
   @override
   void initState() {
     super.initState();
-    _cubit = SmartPaginationCubit<Product>(
+    _cubit = SmartPaginationCubit<Product, PaginationRequest>(
       request: const PaginationRequest(page: 1, pageSize: 20),
       provider: PaginationProvider.future(fetchProducts),
     );

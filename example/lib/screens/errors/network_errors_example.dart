@@ -230,7 +230,8 @@ class _NetworkErrorsExampleState extends State<NetworkErrorsExample> {
 
           // Paginated list
           Expanded(
-            child: SmartPagination<Product>.listViewWithProvider(
+            child: SmartPagination<Product,
+                PaginationRequest>.listViewWithProvider(
               key: ValueKey('network_error_$_selectedErrorType'),
               request: PaginationRequest(page: 1, pageSize: 20),
               provider: PaginationProvider.future(_fetchProducts),
