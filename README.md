@@ -11,7 +11,7 @@
 ```dart
 SmartPaginationListView.withProvider(
   request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future((req) => api.getProducts(req)),
+  provider: PaginationProvider<Type, PaginationRequest>.future((req) => api.getProducts(req)),
   itemBuilder: (context, items, index) => ProductTile(items[index]),
 )
 ```
@@ -44,7 +44,7 @@ import 'package:smart_pagination/pagination.dart';
 ```dart
 SmartPaginationListView.withProvider(
   request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future((req) => fetchProducts(req)),
+  provider: PaginationProvider<Type, PaginationRequest>.future((req) => fetchProducts(req)),
   itemBuilder: (context, items, index) => ListTile(
     title: Text(items[index].name),
   ),
@@ -56,7 +56,7 @@ SmartPaginationListView.withProvider(
 ```dart
 SmartPaginationGridView.withProvider(
   request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future((req) => fetchProducts(req)),
+  provider: PaginationProvider<Type, PaginationRequest>.future((req) => fetchProducts(req)),
   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
   itemBuilder: (context, items, index) => ProductCard(items[index]),
 )
@@ -67,7 +67,7 @@ SmartPaginationGridView.withProvider(
 ```dart
 final cubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future(fetchProducts),
+  provider: PaginationProvider<Type, PaginationRequest>.future(fetchProducts),
   dataAge: Duration(minutes: 5), // Auto-refresh stale data
 );
 
@@ -106,7 +106,7 @@ Search components with auto-positioning overlay and key-based selection.
 ```dart
 SmartSearchDropdown<Product, int>.withProvider(
   request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future((req) => api.search(req.searchQuery)),
+  provider: PaginationProvider<Product, PaginationRequest>.future((req) => api.search(req.searchQuery)),
   searchRequestBuilder: (query) => PaginationRequest(page: 1, pageSize: 20, searchQuery: query),
   itemBuilder: (context, product) => ListTile(title: Text(product.name)),
   keyExtractor: (product) => product.id,
@@ -205,8 +205,8 @@ SmartSearchDropdown<Product, int>.withProvider(
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `request` | `PaginationRequest` | Yes* | - | Pagination config (for `.withProvider`) |
-| `provider` | `PaginationProvider<T>` | Yes* | - | Data source (for `.withProvider`) |
-| `cubit` | `SmartPaginationCubit<T>` | Yes* | - | External cubit (for `.withCubit`) |
+| `provider` | `PaginationProvider<T, PaginationRequest>` | Yes* | - | Data source (for `.withProvider`) |
+| `cubit` | `SmartPaginationCubit<T, PaginationRequest>` | Yes* | - | External cubit (for `.withCubit`) |
 | `searchRequestBuilder` | `PaginationRequest Function(String)` | Yes | - | Builds request from search query |
 | `itemBuilder` | `Widget Function(BuildContext, T)` | Yes | - | Builds each result item |
 
@@ -302,8 +302,8 @@ SmartSearchDropdown<Product, int>.withProvider(
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `request` | `PaginationRequest` | Yes* | - | Pagination config (for `.withProvider`) |
-| `provider` | `PaginationProvider<T>` | Yes* | - | Data source (for `.withProvider`) |
-| `cubit` | `SmartPaginationCubit<T>` | Yes* | - | External cubit (for `.withCubit`) |
+| `provider` | `PaginationProvider<T, PaginationRequest>` | Yes* | - | Data source (for `.withProvider`) |
+| `cubit` | `SmartPaginationCubit<T, PaginationRequest>` | Yes* | - | External cubit (for `.withCubit`) |
 | `searchRequestBuilder` | `PaginationRequest Function(String)` | Yes | - | Builds request from search query |
 | `itemBuilder` | `Widget Function(BuildContext, T)` | Yes | - | Builds each result item |
 
@@ -439,7 +439,7 @@ SmartPaginationListView.withProvider(
 ```dart
 SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future(fetchProducts),
+  provider: PaginationProvider<Product, PaginationRequest>.future(fetchProducts),
   retryConfig: RetryConfig(
     maxAttempts: 3,
     initialDelay: Duration(seconds: 1),
@@ -583,7 +583,7 @@ final orders = SortOrderCollection<Product>(
 
 final cubit = SmartPaginationCubit<Product, PaginationRequest>(
   request: PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future(fetchProducts),
+  provider: PaginationProvider<Product, PaginationRequest>.future(fetchProducts),
   orders: orders,
 );
 
@@ -624,7 +624,7 @@ PaginationProvider.mergeStreams((request) => [
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `request` | `PaginationRequest` | Page number and size |
-| `provider` | `PaginationProvider<T>` | Data source |
+| `provider` | `PaginationProvider<T, PaginationRequest>` | Data source |
 | `itemBuilder` | `Widget Function(context, items, index)` | Item widget builder |
 | `invisibleItemsThreshold` | `int` | Preload trigger (default: 3) |
 | `separator` | `Widget?` | Divider between items |
@@ -637,9 +637,9 @@ PaginationProvider.mergeStreams((request) => [
 ### Built-in Pull to Refresh
 
 ```dart
-SmartPaginationListView.withProvider<Product>(
+SmartPaginationListView.withProvider(
   request: const PaginationRequest(page: 1, pageSize: 20),
-  provider: PaginationProvider.future(fetchProducts),
+  provider: PaginationProvider<Product, PaginationRequest>.future(fetchProducts),
   canRefresh: true,
   onRefresh: (cubit) async {
     cubit.reload();
@@ -664,9 +664,9 @@ SmartPaginationListView.withProvider<Product>(
 ## Cubit API
 
 ```dart
-final cubit = SmartPaginationCubit<T>({
+final cubit = SmartPaginationCubit<T, PaginationRequest>({
   required PaginationRequest request,
-  required PaginationProvider<T> provider,
+  required PaginationProvider<T, PaginationRequest> provider,
   RetryConfig? retryConfig,
   Duration? dataAge,
   int? maxPagesInMemory,
