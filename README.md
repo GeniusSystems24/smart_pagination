@@ -23,7 +23,7 @@ SmartPaginationListView.withProvider(
 - **Built-in BLoC** - State management included, or bring your own cubit
 - **Error Handling** - 6 pre-built styles with first-page/load-more separation
 - **Stream Support** - Future, Stream, and merged streams
-- **Data Operations** - Insert, remove, update items programmatically
+- **Data Operations** - Insert, remove, update, replace, and refresh items with first/last/at targeting
 - **Auto Expiration** - Configurable data age for global cubits
 
 ## Installation
@@ -452,34 +452,93 @@ SmartPaginationCubit<Product, PaginationRequest>(
 
 ## Data Operations
 
-Programmatically manipulate items through the cubit.
+Programmatically manipulate items through the cubit. All methods return `Future<bool>` indicating success.
+
+### Insert
 
 ```dart
-// Insert — returns Future<bool>
-final success = await cubit.insertEmit(newProduct);
-await cubit.insertAllEmit([product1, product2], index: 0);
+await cubit.insertEmit(newProduct);                        // insert at index 0
+await cubit.insertAllEmit([product1, product2], index: 0); // insert multiple
+await cubit.addOrUpdateEmit(product);                      // add if new, update if exists
+```
 
-// Remove — returns Future<bool>
-await cubit.removeItemEmit(product);
-await cubit.removeAtEmit(index);
-await cubit.removeWhereEmit((item) => item.stock == 0);
+### Remove
 
-// Update — returns Future<bool>
+```dart
+await cubit.removeItemEmit(product);                       // remove by value
+await cubit.removeAtEmit(2);                               // remove at index
+await cubit.removeWhereEmit((p) => p.stock == 0);          // remove all matches
+await cubit.removeFirstWhereEmit((p) => p.stock == 0);     // remove first match
+await cubit.removeLastWhereEmit((p) => p.isArchived);      // remove last match
+```
+
+### Update
+
+Applies a transform function to the matched item(s).
+
+```dart
 await cubit.updateItemEmit(
-  (item) => item.id == productId,
-  (item) => item.copyWith(price: newPrice),
-);
+  (p) => p.id == productId,
+  (p) => p.copyWith(price: newPrice),
+); // first match
 
-// Refresh from server
+await cubit.updateWhereEmit(
+  (p) => p.category == 'sale',
+  (p) => p.copyWith(discount: 0.2),
+); // all matches
+
+await cubit.updateFirstWhereEmit(
+  (p) => p.isPinned,
+  (p) => p.copyWith(isPinned: false),
+); // explicitly first match
+
+await cubit.updateLastWhereEmit(
+  (p) => p.isPinned,
+  (p) => p.copyWith(isPinned: false),
+); // last match
+
+await cubit.updateAtEmit(0, (p) => p.copyWith(isFeatured: true)); // at index
+```
+
+### Replace
+
+Swaps the matched item with a new instance directly (no updater function).
+
+```dart
+await cubit.replaceFirstWhereEmit((p) => p.id == id, updatedProduct); // first match
+await cubit.replaceLastWhereEmit((p) => p.isDraft, publishedProduct);  // last match
+await cubit.replaceAtEmit(3, newProduct);                              // at index
+```
+
+### Refresh
+
+Async re-fetch of a specific item from the server.
+
+```dart
 await cubit.refreshItem(
-  (item) => item.id == productId,
-  (currentItem) => api.fetchProduct(currentItem.id),
-);
+  (p) => p.id == productId,
+  (p) => api.fetchProduct(p.id),
+); // first match
 
-// Other
+await cubit.refreshFirstWhereEmit(
+  (p) => p.isStale,
+  (p) => api.fetchProduct(p.id),
+); // explicitly first match
+
+await cubit.refreshLastWhereEmit(
+  (p) => p.isStale,
+  (p) => api.fetchProduct(p.id),
+); // last match
+
+await cubit.refreshAtEmit(0, (p) => api.fetchProduct(p.id)); // at index
+```
+
+### Bulk
+
+```dart
 await cubit.clearItems();
-cubit.reload();
 await cubit.setItems(customList);
+cubit.reload();
 ```
 
 ---
@@ -613,21 +672,85 @@ final cubit = SmartPaginationCubit<T>({
   int? maxPagesInMemory,
   SortOrderCollection<T>? orders,
 });
+```
 
-// Properties
-cubit.currentItems;      // List<T>
-cubit.isDataExpired;     // bool
-cubit.lastFetchTime;     // DateTime?
-cubit.activeOrder;       // SortOrder<T>?
+### Properties
 
-// Methods
+```dart
+cubit.currentItems;   // List<T>
+cubit.isDataExpired;  // bool
+cubit.lastFetchTime;  // DateTime?
+cubit.activeOrder;    // SortOrder<T>?
+cubit.didFetch;       // bool
+```
+
+### Pagination Control
+
+```dart
 cubit.fetchPaginatedList();
+cubit.refreshPaginatedList();
+cubit.filterPaginatedList(test);
+cubit.cancelOngoingRequest();
 cubit.reload();
-await cubit.insertEmit(item);           // Future<bool>
-await cubit.removeItemEmit(item);       // Future<bool>
-await cubit.updateItemEmit(matcher, updater); // Future<bool>
-await cubit.refreshItem(matcher, refresher);  // Future<bool>
+```
+
+### Insert
+
+| Method | Description |
+|--------|-------------|
+| `insertEmit(item, {index})` | Insert single item |
+| `insertAllEmit(items, {index})` | Insert multiple items |
+| `addOrUpdateEmit(item, {index})` | Add if new, update if exists |
+
+### Remove
+
+| Method | Description |
+|--------|-------------|
+| `removeItemEmit(item)` | Remove by value |
+| `removeAtEmit(index)` | Remove at index |
+| `removeWhereEmit(test)` | Remove all matching |
+| `removeFirstWhereEmit(test)` | Remove first matching |
+| `removeLastWhereEmit(test)` | Remove last matching |
+
+### Update
+
+| Method | Description |
+|--------|-------------|
+| `updateItemEmit(matcher, updater)` | Update first matching item |
+| `updateWhereEmit(matcher, updater)` | Update all matching items |
+| `updateFirstWhereEmit(matcher, updater)` | Update first matching item (explicit) |
+| `updateLastWhereEmit(matcher, updater)` | Update last matching item |
+| `updateAtEmit(index, updater)` | Update item at index |
+
+### Replace
+
+| Method | Description |
+|--------|-------------|
+| `replaceFirstWhereEmit(matcher, item)` | Replace first matching item |
+| `replaceLastWhereEmit(matcher, item)` | Replace last matching item |
+| `replaceAtEmit(index, item)` | Replace item at index |
+
+### Refresh (async, re-fetches from server)
+
+| Method | Description |
+|--------|-------------|
+| `refreshItem(matcher, refresher)` | Refresh first matching item |
+| `refreshFirstWhereEmit(matcher, refresher)` | Refresh first matching item (explicit) |
+| `refreshLastWhereEmit(matcher, refresher)` | Refresh last matching item |
+| `refreshAtEmit(index, refresher)` | Refresh item at index |
+
+### Bulk
+
+| Method | Description |
+|--------|-------------|
+| `setItems(items)` | Replace entire list |
+| `clearItems()` | Remove all items |
+
+### Sorting
+
+```dart
 cubit.setActiveOrder(orderId);
+cubit.resetOrder();
 ```
 
 ---
