@@ -345,3 +345,8 @@ When implementing new features, reference these files:
 8. Update README.md
 9. Add example usage
 10. Update version in pubspec.yaml
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
