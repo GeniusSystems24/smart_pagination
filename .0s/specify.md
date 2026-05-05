@@ -1,153 +1,69 @@
+
 /speckit.specify
 
-Maintain and stabilize the `PaginationProvider` system in the existing Flutter/Dart package `smart_pagination`.
-
-The goal is to improve provider correctness, stream lifecycle safety, accumulated stream behavior, merged stream behavior, error handling, type safety, documentation, and test coverage without rewriting the package or breaking the public API unnecessarily.
+Add a new stability feature to the existing Flutter/Dart package `smart_pagination` to prevent infinite duplicate page fetching during rapid repeated scrolling.
 
 ## Problem
 
-The package currently supports multiple data provider styles:
+When the user scrolls quickly and repeatedly near the end of a paginated list, the package may trigger `load more` many times before the previous request finishes or before pagination state is updated correctly.
 
-- `PaginationProvider.future(...)` for Future-based pagination.
-- `PaginationProvider.stream(...)` for stream-based realtime pagination.
-- `PaginationProvider.mergeStreams(...)` for combining multiple streams.
+This causes uncontrolled repeated fetching of next pages. The list may keep requesting pages indefinitely, even when the end should have been reached. It may also fetch the same page multiple times, append duplicate data, skip correct stop conditions, or keep network/API calls running without a valid need.
 
-The provider layer needs professional maintenance to ensure it behaves correctly in real applications, especially when using stream-based pagination.
+The issue is visible when fast scroll gestures repeatedly hit the invisible-items threshold near the bottom of the list. The pagination trigger fires again and again while the previous load-more operation is still pending or while the cubit has not yet committed the next-page state.
 
-The key requirement is that `StreamPaginationProvider` must support accumulated page streams. When the user loads page 1, page 1 stream remains active. When the user loads page 2, page 2 stream is added without cancelling page 1. When the user loads page 3, page 3 stream is added without cancelling page 1 or page 2.
+## Goal
 
-All active streams in the same pagination scope must be merged into one coherent paginated state.
+Implement robust load-more guarding so the package never starts duplicate, overlapping, stale, or unnecessary page requests during fast scrolling.
 
-Old streams should be cancelled only when the pagination scope resets.
+The package must correctly stop fetching when it reaches the end of available data.
 
-## Goals
+## Core Requirements
 
-1. Preserve existing public API behavior as much as possible.
-2. Stabilize `FuturePaginationProvider` behavior.
-3. Stabilize `StreamPaginationProvider` behavior.
-4. Add accumulated stream support for stream pagination.
-5. Stabilize `MergedStreamPaginationProvider` lifecycle behavior.
-6. Prevent memory leaks from stream subscriptions or controllers.
-7. Prevent stale emissions from old requests or old scopes.
-8. Keep duplicate handling explicit.
-9. Preserve generic request typing with `R extends PaginationRequest`.
-10. Improve error handling and completion behavior.
-11. Add complete tests for provider behavior.
-12. Update README and CHANGELOG.
+1. Only one load-more request may be active per pagination scope at a time.
+2. Repeated scroll notifications while `isLoadingMore == true` must not start another fetch.
+3. The same page/request/cursor must not be fetched multiple times concurrently.
+4. The cubit must ignore stale load-more responses from old request generations.
+5. `hasReachedEnd` must reliably prevent additional load-more calls.
+6. Empty or short page responses must mark the list as ended when appropriate.
+7. Errors must not mark the list as ended incorrectly.
+8. Refresh, reload, search change, and filter change must reset the load-more guard and end state safely.
+9. Fast scrolling must not create an infinite fetch loop.
+10. The UI must remain responsive and must not repeatedly append loading indicators.
+
+## Expected User Behavior
+
+When the user scrolls fast near the end:
+
+- The first valid load-more request starts.
+- Additional scroll threshold events are ignored while that request is active.
+- When the request succeeds, the next page is appended once.
+- If the returned page indicates there is no more data, loading stops permanently for that scope.
+- If there is more data, a future load-more may happen only after the current request completes and the user reaches the threshold again.
 
 ## Non-Goals
 
-1. Do not rewrite the whole package.
-2. Do not replace `SmartPaginationCubit`.
-3. Do not remove `.withProvider(...)`.
-4. Do not remove `.withCubit(...)`.
-5. Do not silently deduplicate items.
-6. Do not introduce heavy dependencies unless necessary.
-7. Do not make providers responsible for UI state.
-8. Do not break existing examples unless unavoidable.
+Do not:
 
-## Required Behavior
-
-### Future Provider
-
-`PaginationProvider.future(...)` must continue to support normal REST/API pagination.
-
-It must handle:
-
-- Successful page fetch.
-- First-page errors.
-- Load-more errors.
-- Stale response protection.
-- Request cancellation semantics through cubit token/generation logic.
-- Retry integration owned by the cubit.
-- Disposal safety.
-
-### Stream Provider
-
-`PaginationProvider.stream(...)` must support realtime paginated streams.
-
-It must handle:
-
-- Initial stream registration.
-- Load-more stream registration.
-- Accumulating active streams within the same pagination scope.
-- Emissions from any active stream.
-- Aggregating all active stream latest values into one list.
-- Stream error handling.
-- Stream completion handling.
-- Scope reset cancellation.
-- Disposal cancellation.
-- Page eviction cancellation.
-- Stale-scope emission protection.
-
-### Merged Stream Provider
-
-`PaginationProvider.mergeStreams(...)` must be lifecycle-safe.
-
-It must handle:
-
-- Zero streams.
-- One stream.
-- Multiple streams.
-- Child stream errors.
-- Child stream completion.
-- Cancelling all child subscriptions.
-- Closing internal controllers.
-- Avoiding memory leaks.
-
-## Pagination Scope Definition
-
-A pagination scope represents one logical query context.
-
-The same scope means:
-
-- Same provider instance.
-- Same filters.
-- Same search query.
-- Same logical request family.
-- Same pagination session.
-
-A new scope begins when:
-
-- Refresh is called.
-- Reload is called.
-- Search query changes.
-- Filters change.
-- Provider instance changes.
-- Request scope identity changes.
-- Cubit is disposed.
-
-## Stream Accumulation Requirement
-
-When the same scope is active:
-
-- Page 1 stream remains active.
-- Page 2 stream is added.
-- Page 3 stream is added.
-- Emissions from page 1 update page 1 items.
-- Emissions from page 2 update page 2 items.
-- Emissions from page 3 update page 3 items.
-- Final state is page 1 + page 2 + page 3 in a coherent order.
-
-When scope resets:
-
-- All active streams are cancelled.
-- Registry is cleared.
-- New scope starts from a clean stream collection.
+- Rewrite the whole package.
+- Replace the Cubit architecture.
+- Remove `.withProvider(...)` or `.withCubit(...)`.
+- Break existing public API usage.
+- Hide duplicate items silently without explicit identity rules.
+- Treat API errors as end-of-list.
+- Disable pagination entirely.
 
 ## Acceptance Criteria
 
-1. Existing Future provider usage still works.
-2. Existing Stream provider usage still works.
-3. Existing Merged Streams usage still works.
-4. Stream load-more adds a new stream instead of replacing the old stream.
-5. Refresh/reload cancels old accumulated streams.
-6. Filter/search reset cancels old accumulated streams.
-7. Cubit dispose cancels all active streams.
-8. Page eviction cancels the related stream if stream accumulation uses page-based ownership.
-9. No stale stream from an old scope can update current state.
-10. Merged streams do not leak subscriptions or controllers.
-11. Duplicate handling is explicit.
-12. Custom `PaginationRequest` subclasses still reach provider callbacks correctly.
-13. README and CHANGELOG are updated.
-14. Tests cover all new behavior.
+The feature is accepted only if:
+
+1. Fast repeated scrolling cannot trigger multiple simultaneous load-more requests.
+2. The same page is not fetched twice concurrently.
+3. The provider is not called again after `hasReachedEnd == true`.
+4. Empty load-more response stops further loading for the current scope.
+5. Short page response stops further loading when using page-size based pagination.
+6. Errors do not set `hasReachedEnd` to true.
+7. Refresh/reload resets the guards correctly.
+8. Search/filter changes reset the guards correctly.
+9. Stale responses cannot append items or change end state.
+10. Unit/widget tests reproduce the fast-scroll issue and prove it is fixed.
+11. README and CHANGELOG document the behavior.
