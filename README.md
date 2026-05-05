@@ -608,6 +608,16 @@ PaginationProvider.future((request) => api.fetchProducts(request))
 PaginationProvider.stream((request) => firestore.collection('products').snapshots())
 ```
 
+#### Stream Accumulation
+
+Stream pagination accumulates per-page subscriptions within a pagination scope. When a user loads page 2, the page 1 stream stays subscribed; when they load page 3, page 2 stays subscribed too. Emissions on any active page update only that page's slice; the merged list always reflects `page1 ∪ page2 ∪ … ∪ pageN` in page order.
+
+The cubit owns one subscription per page in an internal registry. All accumulated subscriptions are cancelled together on a **scope reset**: refresh, reload, filter change, search-query change, provider replacement, page eviction (via `maxPagesInMemory`), or cubit dispose. Stale emissions buffered before a reset are dropped via a generation token.
+
+#### End-of-pagination semantics
+
+A page whose latest emission has fewer items than `pageSize` is treated as the end of pagination. While at least one active page is in this state the cubit rejects subsequent `loadMore()` calls. The rule is dynamic: if a later emission grows a partial page back to a full page, `loadMore()` is re-enabled in the same scope. An empty list `[]` emission is honoured — it clears that page's slice and triggers end-of-pagination, just like any other partial emission.
+
 ### Merged Streams
 
 ```dart
@@ -616,6 +626,33 @@ PaginationProvider.mergeStreams((request) => [
   featuredStream(request),
 ])
 ```
+
+The merged provider supports zero, one, or many input streams. The single-stream case is wrapped in a controller for lifecycle symmetry: cancelling the merged subscription cancels every underlying child subscription. The merged stream completes only when every child has completed.
+
+### Per-Page Error Annotation
+
+When a stream provider's page errors, the cubit isolates the failure to that page rather than transitioning to a global error state. The failing page's subscription is cancelled, sibling pages keep emitting, and the page's last good slice remains in the merged view alongside an entry in `state.pageErrors`:
+
+```dart
+BlocBuilder<SmartPaginationCubit<Product, ProductRequest>, SmartPaginationState<Product>>(
+  builder: (context, state) {
+    if (state is! SmartPaginationLoaded<Product>) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        if (state.pageErrors.isNotEmpty)
+          MaterialBanner(
+            content: Text('Failed to refresh ${state.pageErrors.length} page(s)'),
+            actions: const [SizedBox.shrink()],
+          ),
+        Expanded(child: ProductList(items: state.items)),
+      ],
+    );
+  },
+)
+```
+
+`state.pageErrors` is a `Map<int, Object>` keyed by 1-based page index. Empty when no per-page error is in flight. A successful subsequent emission on the same page (after re-subscribing via a refresh) clears its annotation.
 
 ---
 

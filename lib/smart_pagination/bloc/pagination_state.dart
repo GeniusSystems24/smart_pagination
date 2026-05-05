@@ -89,6 +89,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     this.dataExpiredAt,
     this.activeOrderId,
     this.lastOperation = const PaginationOperationNone(),
+    this.pageErrors = const <int, Object>{},
   }) : lastUpdate = lastUpdate ?? DateTime.now();
 
   final List<T> items;
@@ -121,6 +122,15 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
   /// Not included in equality checks.
   final PaginationOperation lastOperation;
 
+  /// Per-page errors emitted by the stream provider when one page's underlying
+  /// stream errors while sibling pages keep emitting.
+  ///
+  /// Keys are 1-based page indices; values are the error objects produced by
+  /// the failing page's stream. The failing page's subscription is cancelled
+  /// before this map is populated; sibling pages are unaffected. Empty when
+  /// no per-page error is in flight.
+  final Map<int, Object> pageErrors;
+
   SmartPaginationLoaded<T> copyWith({
     List<T>? items,
     List<T>? allItems,
@@ -133,6 +143,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     DateTime? dataExpiredAt,
     String? activeOrderId,
     PaginationOperation lastOperation = const PaginationOperationNone(),
+    Map<int, Object>? pageErrors,
   }) {
     final updatedAllItems = allItems ?? this.allItems;
     final updatedItems = items ?? this.items;
@@ -149,6 +160,7 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
       dataExpiredAt: dataExpiredAt ?? this.dataExpiredAt,
       activeOrderId: activeOrderId ?? this.activeOrderId,
       lastOperation: lastOperation,
+      pageErrors: pageErrors ?? this.pageErrors,
     );
   }
 
@@ -163,7 +175,8 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
         identical(other.lastOperation, lastOperation) &&
         listEquals(other.items, items) &&
         listEquals(other.allItems, allItems) &&
-        other.meta == meta;
+        other.meta == meta &&
+        mapEquals(other.pageErrors, pageErrors);
   }
 
   @override
@@ -175,5 +188,6 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     Object.hashAll(items),
     Object.hashAll(allItems),
     meta,
+    Object.hashAllUnordered(pageErrors.entries.map((e) => Object.hash(e.key, e.value))),
   );
 }

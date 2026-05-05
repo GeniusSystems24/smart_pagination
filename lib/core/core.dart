@@ -99,27 +99,46 @@ final class MergedStreamPaginationProvider<T, R extends PaginationRequest>
   final List<Stream<List<T>>> Function(R request) streamsProvider;
 
   /// Gets a merged stream that combines all source streams.
+  ///
+  /// Lifecycle contract (spec 002-stabilize-provider §FR-020 to FR-023):
+  ///
+  /// - **Zero streams**: returns `Stream.value([])` which owns no
+  ///   subscription and no controller; nothing to leak.
+  /// - **One or more streams**: wraps every child subscription in an
+  ///   internal `StreamController` whose `onCancel` cancels every child
+  ///   subscription and whose internal `completed` counter closes the
+  ///   controller only when **every** child has completed. The single-stream
+  ///   case uses the same wrapper as the multi-stream case so cancellation
+  ///   is symmetric (previously the single branch returned the underlying
+  ///   stream directly, leaking the subscription if the consumer never
+  ///   cancelled via the merge provider).
   Stream<List<T>> getMergedStream(R request) {
     final streams = streamsProvider(request);
 
     if (streams.isEmpty) {
-      return Stream.value([]);
+      return Stream.value(<T>[]);
     }
 
-    if (streams.length == 1) {
-      return streams.first;
-    }
-
-    // Create a stream controller to merge all streams
     late StreamController<List<T>> controller;
     final subscriptions = <StreamSubscription<List<T>>>[];
+    var completed = 0;
+
+    void maybeClose() {
+      if (completed == streams.length && !controller.isClosed) {
+        controller.close();
+      }
+    }
 
     controller = StreamController<List<T>>(
       onListen: () {
         for (final stream in streams) {
           final subscription = stream.listen(
-            (data) => controller.add(data),
-            onError: (error) => controller.addError(error),
+            controller.add,
+            onError: controller.addError,
+            onDone: () {
+              completed++;
+              maybeClose();
+            },
           );
           subscriptions.add(subscription);
         }

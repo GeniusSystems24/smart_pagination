@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-05-05
+
+### Added
+
+- **Stream pagination now accumulates page subscriptions within a scope.** `PaginationProvider.stream(...)` and `PaginationProvider.mergeStreams(...)` register a new per-page subscription on every `loadMore()` instead of overwriting the previous one. Emissions on any active page update only that page's slice; the merged list reflects `page1 ∪ page2 ∪ … ∪ pageN` in page order.
+- **Per-page error annotation on `SmartPaginationLoaded.pageErrors`.** When a stream provider's page errors, only that page's subscription is cancelled and the error is recorded at `state.pageErrors[page]`. Sibling pages keep emitting, and the failing page's last good slice remains visible in the merged view. `pageErrors` is `const <int, Object>{}` by default — additive and backward-compatible.
+- **Dynamic end-of-pagination derivation.** A page whose latest emission has fewer items than `pageSize` (including `[]`) signals the end of pagination and gates `loadMore()`. Re-evaluated on every emission: a later emission that restores `count == pageSize` re-enables `loadMore()` in the same scope.
+
+### Fixed
+
+- **`MergedStreamPaginationProvider` single-stream branch leaked subscriptions.** The branch now wraps the underlying stream in a controller, so cancelling the merged subscription cancels the underlying subscription. Symmetric with the multi-stream branch.
+- **Merged streams never closed when all children completed.** The provider now tracks per-child completion and closes the controller after the last child completes (FR-023).
+- **`_fetch` could mutate state after `dispose()`** when a future response arrived post-close. Added an `isClosed` check after the await so late responses are dropped silently (FR-005).
+- **Stale stream emissions could update a new scope's state.** Each registered per-page entry is now tagged with a scope generation; emissions whose generation no longer matches the cubit's current generation are discarded (FR-016).
+
+### Changed
+
+- **`maxPagesInMemory` eviction propagates to the per-page subscription registry.** When the cap drops the oldest in-memory page, its stream subscription is cancelled and its `pageErrors` annotation is cleared. No new public knob — existing eviction semantics preserved.
+
 ## [3.2.0] - 2026-03-16
 
 ### Breaking Changes

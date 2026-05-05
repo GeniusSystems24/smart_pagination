@@ -1,5 +1,60 @@
 part of '../../pagination.dart';
 
+/// Per-page stream subscription entry tracked by `SmartPaginationCubit`'s
+/// `_pageStreams` registry. Private to this library — not exported.
+///
+/// Each entry owns exactly one `StreamSubscription`, the generation it was
+/// registered under (used to drop stale buffered emissions after a scope
+/// reset), and the page's most recent emission (the authoritative slice in
+/// the merged paginated view).
+///
+/// See spec 002-stabilize-provider §FR-010 to FR-019c, data-model.md §4.
+class _PageStreamEntry<T> {
+  _PageStreamEntry({
+    required this.subscription,
+    required this.generation,
+    required this.latestValue,
+    this.error,
+  });
+
+  final StreamSubscription<List<T>> subscription;
+  final int generation;
+  List<T> latestValue;
+
+  /// Non-null when the page's stream errored. Per FR-017 / Clarifications Q1
+  /// the entry is kept in the registry (its `latestValue` continues to
+  /// contribute to the merged view) but its [subscription] is cancelled, so
+  /// no further emissions will arrive for this page.
+  Object? error;
+}
+
+// =============================================================================
+// Spec 002-stabilize-provider — Phase 3 (US1) refactor landed.
+// =============================================================================
+// The previous single `_streamSubscription` field has been replaced by the
+// per-page registry `Map<int, _PageStreamEntry<T>> _pageStreams` together
+// with the per-page error annotation map `Map<int, Object> _pageErrors`.
+//
+// Lifecycle entry points:
+//   `_resetToInitial`, `refreshPaginatedList`, `dispose` — bump `_generation`
+//                                                          and call
+//                                                          `_cancelAllPageStreams()`.
+//   `_attachStream(stream, request)`                     — registers a new
+//                                                          per-page subscription
+//                                                          in `_pageStreams[page]`,
+//                                                          gates emissions by
+//                                                          `entry.generation == _generation`,
+//                                                          and rebuilds the
+//                                                          merged view via
+//                                                          `_emitMergedLoaded`.
+//   `_isolatePageError`                                  — per-page error
+//                                                          isolation per
+//                                                          FR-017 / Q1.
+//   `_trimCachedPages`                                   — propagates page
+//                                                          eviction to the
+//                                                          registry (Research R6).
+// =============================================================================
+
 /// Strategy for handling retry behavior after an error occurs.
 enum ErrorRetryStrategy {
   /// Automatically retry on next fetch call.
@@ -76,10 +131,49 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   R _currentRequest;
   PaginationMeta? _currentMeta;
   final List<List<T>> _pages = <List<T>>[];
-  StreamSubscription<List<T>>? _streamSubscription;
   StreamSubscription<bool>? _connectivitySubscription;
   int _fetchToken = 0;
   DateTime? _lastFetchTime;
+
+  /// Pagination scope generation counter.
+  ///
+  /// Bumped before any cancellation begins on every scope-reset path
+  /// (`_resetToInitial`, `refreshPaginatedList`, `dispose`). Every per-page
+  /// stream entry in `_pageStreams` is tagged with the generation in effect
+  /// at registration time; buffered emissions whose tagged generation no
+  /// longer matches `_generation` are discarded.
+  ///
+  /// See spec 002-stabilize-provider §FR-003, FR-013, FR-016.
+  int _generation = 0;
+
+  /// Per-page stream subscription registry.
+  ///
+  /// Keys are 1-based page indices (the `request.page` of each registered
+  /// page load). The map preserves insertion order (Dart `Map` default), so
+  /// `_pageStreams.keys.first` is always the oldest active page — used by
+  /// `_trimCachedPages` to propagate eviction to the registry.
+  ///
+  /// `StreamPaginationProvider` and `MergedStreamPaginationProvider` populate
+  /// this map. `FuturePaginationProvider` does not.
+  ///
+  /// See spec 002-stabilize-provider §FR-010 to FR-018, data-model.md §5.
+  final Map<int, _PageStreamEntry<T>> _pageStreams =
+      <int, _PageStreamEntry<T>>{};
+
+  /// Per-page error annotations carried in the public `SmartPaginationLoaded`
+  /// state. Populated when a page's stream errors; the failing page's
+  /// subscription is cancelled and removed from `_pageStreams` before this
+  /// map is updated. Sibling pages remain unaffected.
+  ///
+  /// See spec 002-stabilize-provider §FR-017, Clarifications Q1.
+  final Map<int, Object> _pageErrors = <int, Object>{};
+
+  /// Bumps the scope generation. Call **before** cancellation runs on any
+  /// scope-reset path so late buffered emissions are dropped by generation
+  /// mismatch in Phase 3.
+  void _bumpGeneration() {
+    _generation++;
+  }
 
   /// Flag to prevent concurrent fetch operations.
   bool _isFetching = false;
@@ -391,8 +485,9 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
 
   /// Resets the cubit to its initial state, clearing all data.
   void _resetToInitial() {
+    _bumpGeneration();
     cancelOngoingRequest();
-    _streamSubscription?.cancel();
+    _cancelAllPageStreams();
     _onClear?.call();
     didFetch = false;
     _pages.clear();
@@ -453,9 +548,10 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
 
   @override
   void refreshPaginatedList({R? requestOverride, int? limit}) {
+    _bumpGeneration();
     // Cancel any ongoing request
     cancelOngoingRequest();
-    _streamSubscription?.cancel();
+    _cancelAllPageStreams();
     _onClear?.call();
     didFetch = false;
     _pages.clear();
@@ -669,6 +765,12 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         _isFetching = false;
         return;
       }
+      // Per FR-005: do not mutate state after the cubit has been closed
+      // (e.g., a slow page response that resolves after `dispose()`).
+      if (isClosed) {
+        _isFetching = false;
+        return;
+      }
 
       didFetch = true;
       _currentRequest = request;
@@ -750,15 +852,16 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         ),
       );
 
-      // Attach stream if it's a stream provider and this is initial load
-      if (reset) {
-        if (_provider is StreamPaginationProvider<T, R>) {
-          final streamProvider = _provider;
-          _attachStream(streamProvider.streamProvider(request), request);
-        } else if (_provider is MergedStreamPaginationProvider<T, R>) {
-          final mergedProvider = _provider;
-          _attachStream(mergedProvider.getMergedStream(request), request);
-        }
+      // Register a per-page stream subscription for **every** page load
+      // (initial AND load-more) per spec FR-010. This delivers stream
+      // accumulation: page N's subscription is added to the registry without
+      // cancelling pages 1..N-1.
+      if (_provider is StreamPaginationProvider<T, R>) {
+        final streamProvider = _provider;
+        _attachStream(streamProvider.streamProvider(request), request);
+      } else if (_provider is MergedStreamPaginationProvider<T, R>) {
+        final mergedProvider = _provider;
+        _attachStream(mergedProvider.getMergedStream(request), request);
       }
     } on Exception catch (error, stackTrace) {
       if (SmartPaginationCubit.enableLogging) {
@@ -886,53 +989,157 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         lowerMessage.contains('clientexception'); // http package
   }
 
+  /// Registers a per-page stream subscription in `_pageStreams[page]`.
+  ///
+  /// Each emission is gated by `entry.generation == _generation` (stale-scope
+  /// protection per FR-016), then attributed to the originating page (FR-011),
+  /// and the cubit re-emits a merged `SmartPaginationLoaded` whose `items` is
+  /// the concatenation of every active page's `latestValue` in ascending page
+  /// order (FR-012). On a per-page error, only the failing page's subscription
+  /// is cancelled and removed; sibling pages keep emitting (FR-017,
+  /// Clarifications Q1).
+  ///
+  /// Replaces the prior single-`_streamSubscription` implementation. Called
+  /// for **every** page load (initial + load-more), not just on reset.
   void _attachStream(Stream<List<T>> stream, R request) {
-    _streamSubscription?.cancel();
-    _streamSubscription = stream.listen(
+    final page = request.page;
+    final generation = _generation;
+
+    // Defensive: cancel any existing entry for this page (should not happen
+    // under correct usage, but eviction + re-load could in theory create one).
+    _pageStreams.remove(page)?.subscription.cancel();
+
+    // Seed the registry with whatever `_pages` currently has for this page.
+    // The `_fetch` method has already appended the `.first` snapshot to
+    // `_pages` before calling us, so the slot mapping to `request.page` is
+    // the most recently appended entry.
+    final seededValue = _pages.isNotEmpty
+        ? List<T>.from(_pages.last)
+        : <T>[];
+
+    late StreamSubscription<List<T>> sub;
+    sub = stream.listen(
       (items) {
-        final aggregated = _applyListBuilder(items);
-        final sortedItems = _applySorting(aggregated);
-        _onInsertionCallback?.call(sortedItems);
-
-        final meta = PaginationMeta(
-          page: request.page,
-          pageSize: request.pageSize,
-          hasNext: _computeHasNext(items, request.pageSize),
-          hasPrevious: request.page > 1,
-        );
-        _currentMeta = meta;
-
-        emit(
-          SmartPaginationLoaded<T>(
-            items: List<T>.from(sortedItems),
-            allItems: sortedItems,
-            meta: meta,
-            hasReachedEnd: !meta.hasNext,
-            isLoadingMore: false,
-            loadMoreError: null,
-            fetchedAt: _lastFetchTime,
-            dataExpiredAt: _dataAge != null && _lastFetchTime != null
-                ? _lastFetchTime!.add(_dataAge)
-                : null,
-            activeOrderId: _orders?.activeOrderId,
-            lastOperation: const PaginationOperationReload(),
-          ),
-        );
+        if (generation != _generation) return; // stale-scope emission
+        if (isClosed) return;
+        final entry = _pageStreams[page];
+        if (entry == null) return; // entry already cancelled by reset/eviction
+        entry.latestValue = items;
+        _pageErrors.remove(page); // a fresh successful emission clears prior error
+        _rebuildPagesFromRegistry();
+        _emitMergedLoaded(request);
       },
       onError: (error, stack) {
-        final exception = error is Exception
-            ? error
-            : Exception(error.toString());
-        if (SmartPaginationCubit.enableLogging) {
-          _logger.e(
-            'Pagination stream failed',
-            error: exception,
-            stackTrace: stack,
-          );
-        }
-        emit(SmartPaginationError<T>(error: exception));
+        if (generation != _generation) return;
+        if (isClosed) return;
+        _isolatePageError(page, error, stack, request);
       },
     );
+
+    _pageStreams[page] = _PageStreamEntry<T>(
+      subscription: sub,
+      generation: generation,
+      latestValue: seededValue,
+    );
+  }
+
+  /// Cancels every active per-page stream subscription, clears the registry,
+  /// and clears the `_pageErrors` annotation map. Used on every scope-reset
+  /// path (`_resetToInitial`, `refreshPaginatedList`, `dispose`) per FR-013
+  /// and FR-014.
+  void _cancelAllPageStreams() {
+    for (final entry in _pageStreams.values) {
+      entry.subscription.cancel();
+    }
+    _pageStreams.clear();
+    _pageErrors.clear();
+  }
+
+  /// Rebuilds `_pages` from the per-page registry, in ascending page order,
+  /// so the existing aggregation pipeline (`_applyListBuilder`, `_applySorting`,
+  /// emission) sees the merged view of every active page's latest emission.
+  void _rebuildPagesFromRegistry() {
+    final keys = _pageStreams.keys.toList()..sort();
+    _pages
+      ..clear()
+      ..addAll(keys.map((k) => _pageStreams[k]!.latestValue));
+  }
+
+  /// Emits a `SmartPaginationLoaded` derived from the current registry state.
+  /// `_pages` MUST already be in sync with the registry before calling.
+  void _emitMergedLoaded(R request) {
+    final aggregated = _applyListBuilder(
+      _pages.expand((page) => page).toList(),
+    );
+    final sortedItems = _applySorting(aggregated);
+    _onInsertionCallback?.call(sortedItems);
+
+    // Derive end-of-pagination per Clarifications Q2 / FR-019b/c.
+    // When pageSize is null we cannot compute "page is full"; mirror the
+    // existing `_computeHasNext` behaviour and assume more pages remain.
+    final pageSize = request.pageSize;
+    final endOfPagination = pageSize != null &&
+        _pageStreams.values.any((e) => e.latestValue.length < pageSize);
+    final highestPage = _pageStreams.keys.isEmpty
+        ? request.page
+        : _pageStreams.keys.reduce((a, b) => a > b ? a : b);
+    final lowestPage = _pageStreams.keys.isEmpty
+        ? request.page
+        : _pageStreams.keys.reduce((a, b) => a < b ? a : b);
+    final meta = PaginationMeta(
+      page: highestPage,
+      pageSize: pageSize,
+      hasNext: !endOfPagination,
+      hasPrevious: lowestPage > 1,
+    );
+    _currentMeta = meta;
+
+    emit(
+      SmartPaginationLoaded<T>(
+        items: List<T>.from(sortedItems),
+        allItems: sortedItems,
+        meta: meta,
+        hasReachedEnd: endOfPagination,
+        isLoadingMore: false,
+        loadMoreError: null,
+        fetchedAt: _lastFetchTime,
+        dataExpiredAt: _dataAge != null && _lastFetchTime != null
+            ? _lastFetchTime!.add(_dataAge)
+            : null,
+        activeOrderId: _orders?.activeOrderId,
+        lastOperation: const PaginationOperationReload(),
+        pageErrors: Map<int, Object>.unmodifiable(_pageErrors),
+      ),
+    );
+  }
+
+  /// Per-page error isolation per FR-017 / Clarifications Q1.
+  ///
+  /// Cancels the failing page's subscription, marks the entry's `error`
+  /// field, and records the error in `_pageErrors`. The entry itself is
+  /// **kept in the registry** so its `latestValue` continues to contribute
+  /// to the merged view — the user keeps seeing the page's last good slice
+  /// alongside the per-page error annotation. Sibling pages remain live.
+  void _isolatePageError(
+    int page,
+    Object error,
+    StackTrace stack,
+    R request,
+  ) {
+    final entry = _pageStreams[page];
+    if (entry == null) return;
+    entry.subscription.cancel();
+    entry.error = error;
+    _pageErrors[page] = error;
+    if (SmartPaginationCubit.enableLogging) {
+      _logger.e(
+        'Pagination per-page stream error on page $page',
+        error: error,
+        stackTrace: stack,
+      );
+    }
+    _rebuildPagesFromRegistry();
+    _emitMergedLoaded(request);
   }
 
   List<T> _applyListBuilder(List<T> items) {
@@ -961,6 +1168,16 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     if (_maxPagesInMemory <= 0) return;
     while (_pages.length > _maxPagesInMemory) {
       _pages.removeAt(0);
+      // Lifecycle propagation per Research R6: when the page-list cap drops
+      // the oldest page, cancel the corresponding registry entry so its
+      // stream subscription is not orphaned. `_pageStreams.keys` preserves
+      // insertion order; the lowest key is always the oldest page.
+      if (_pageStreams.isNotEmpty) {
+        final oldestPage = _pageStreams.keys.reduce((a, b) => a < b ? a : b);
+        final removed = _pageStreams.remove(oldestPage);
+        removed?.subscription.cancel();
+        _pageErrors.remove(oldestPage);
+      }
     }
   }
 
@@ -972,9 +1189,9 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
 
   @override
   void dispose() {
+    _bumpGeneration();
     cancelOngoingRequest();
-    _streamSubscription?.cancel();
-    _streamSubscription = null;
+    _cancelAllPageStreams();
     _connectivitySubscription?.cancel();
     _connectivitySubscription = null;
   }

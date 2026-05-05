@@ -314,6 +314,93 @@ class MockApiService {
     }
   }
 
+  /// Per-page accumulation demo stream.
+  ///
+  /// Embeds the page number in the product description and id so the UI can
+  /// colour-code items by their originating page subscription. Emits an
+  /// initial batch then updates every 4 seconds, letting the caller observe
+  /// that page 1 and page 2 live subscriptions run independently.
+  static Stream<List<Product>> accumulatingProductsStream(
+      PaginationRequest request) async* {
+    final page = request.page;
+    final pageSize = request.pageSize ?? 8;
+    final startIndex = (page - 1) * pageSize;
+
+    yield _buildPagedProducts(page, pageSize, startIndex, 'initial');
+
+    var tick = 1;
+    await for (final _ in Stream.periodic(const Duration(seconds: 4))) {
+      yield _buildPagedProducts(page, pageSize, startIndex, 'update #$tick');
+      tick++;
+    }
+  }
+
+  static List<Product> _buildPagedProducts(
+      int page, int pageSize, int startIndex, String label) {
+    return List.generate(pageSize, (index) {
+      final i = startIndex + index;
+      return Product(
+        id: 'product_p${page}_$i',
+        name: '${_productNames[i % _productNames.length]} #$i',
+        description:
+            'Page $page • $label • ${DateTime.now().toIso8601String().substring(11, 19)}',
+        price: (19.99 + (i % 100) * 5.0).clamp(10.0, 999.0),
+        category: _categories[i % _categories.length],
+        imageUrl: 'https://picsum.photos/200/200?random=$i',
+        createdAt: DateTime.now().subtract(Duration(days: i)),
+      );
+    });
+  }
+
+  /// Per-page error demo stream.
+  ///
+  /// All pages emit an initial batch and then update every 5 seconds.
+  /// Page 2 is deliberately unreliable: it emits one update then throws an
+  /// error after ~3 seconds, triggering `pageErrors[2]` in the cubit while
+  /// sibling pages remain unaffected.
+  static Stream<List<Product>> unreliablePageStream(
+      PaginationRequest request) async* {
+    final page = request.page;
+    final pageSize = request.pageSize ?? 8;
+    final startIndex = (page - 1) * pageSize;
+
+    yield List.generate(pageSize, (index) {
+      final i = startIndex + index;
+      return Product(
+        id: 'unreliable_${page}_$i',
+        name: '${_productNames[i % _productNames.length]} #$i',
+        description: 'Page $page • loaded OK',
+        price: (19.99 + (i % 100) * 5.0).clamp(10.0, 999.0),
+        category: _categories[i % _categories.length],
+        imageUrl: 'https://picsum.photos/200/200?random=$i',
+        createdAt: DateTime.now().subtract(Duration(days: i)),
+      );
+    });
+
+    if (page == 2) {
+      await Future.delayed(const Duration(seconds: 3));
+      throw Exception('Connection lost on page $page');
+    }
+
+    var tick = 1;
+    await for (final _ in Stream.periodic(const Duration(seconds: 5))) {
+      yield List.generate(pageSize, (index) {
+        final i = startIndex + index;
+        return Product(
+          id: 'unreliable_${page}_$i',
+          name: '${_productNames[i % _productNames.length]} #$i',
+          description:
+              'Page $page • update #$tick • ${DateTime.now().toIso8601String().substring(11, 19)}',
+          price: (19.99 + (i % 100) * 5.0).clamp(10.0, 999.0),
+          category: _categories[i % _categories.length],
+          imageUrl: 'https://picsum.photos/200/200?random=$i',
+          createdAt: DateTime.now().subtract(Duration(days: i)),
+        );
+      });
+      tick++;
+    }
+  }
+
   /// Stream 3: Sale/discounted products
   static Stream<List<Product>> saleProductsStream(PaginationRequest request) async* {
     final pageSize = request.pageSize ?? 10;

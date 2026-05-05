@@ -16,6 +16,9 @@ import '../screens/smart_pagination/retry_demo_screen.dart';
 import '../screens/smart_pagination/single_stream_screen.dart';
 import '../screens/smart_pagination/multi_stream_screen.dart';
 import '../screens/smart_pagination/merged_streams_screen.dart';
+import '../screens/smart_pagination/stream_accumulation_screen.dart';
+import '../screens/smart_pagination/per_page_error_screen.dart';
+import '../screens/smart_pagination/dynamic_end_of_pagination_screen.dart';
 
 // Advanced examples
 import '../screens/smart_pagination/cursor_pagination_screen.dart';
@@ -217,6 +220,9 @@ class RetryMechanismRoute extends GoRouteData with $RetryMechanismRoute {
     TypedGoRoute<SingleStreamRoute>(path: 'single'),
     TypedGoRoute<MultiStreamRoute>(path: 'multi'),
     TypedGoRoute<MergedStreamsRoute>(path: 'merged'),
+    TypedGoRoute<StreamAccumulationRoute>(path: 'stream-accumulation'),
+    TypedGoRoute<PerPageErrorRoute>(path: 'per-page-error'),
+    TypedGoRoute<DynamicEndOfPaginationRoute>(path: 'dynamic-end'),
   ],
 )
 class StreamRoute extends GoRouteData with $StreamRoute {
@@ -263,6 +269,46 @@ class MergedStreamsRoute extends GoRouteData with $MergedStreamsRoute {
       context: context,
       state: state,
       child: const MergedStreamsScreen(),
+    );
+  }
+}
+
+class StreamAccumulationRoute extends GoRouteData with $StreamAccumulationRoute {
+  const StreamAccumulationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const StreamAccumulationScreen(),
+    );
+  }
+}
+
+class PerPageErrorRoute extends GoRouteData with $PerPageErrorRoute {
+  const PerPageErrorRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const PerPageErrorScreen(),
+    );
+  }
+}
+
+class DynamicEndOfPaginationRoute extends GoRouteData
+    with $DynamicEndOfPaginationRoute {
+  const DynamicEndOfPaginationRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: const DynamicEndOfPaginationScreen(),
     );
   }
 }

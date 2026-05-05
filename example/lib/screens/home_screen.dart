@@ -130,6 +130,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           color: Color(0xFF7C3AED),
           route: const MergedStreamsRoute().location,
         ),
+        _ExampleItem(
+          title: 'Stream Accumulation',
+          description: 'Each page keeps its own live subscription',
+          icon: Icons.layers_rounded,
+          color: Color(0xFF0D9488),
+          route: const StreamAccumulationRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Per-Page Error',
+          description: 'state.pageErrors isolates failing streams',
+          icon: Icons.error_outline_rounded,
+          color: Color(0xFFEF4444),
+          route: const PerPageErrorRoute().location,
+        ),
+        _ExampleItem(
+          title: 'Dynamic End-of-Pagination',
+          description: 'End re-evaluated when page count changes',
+          icon: Icons.dynamic_form_rounded,
+          color: Color(0xFFF59E0B),
+          route: const DynamicEndOfPaginationRoute().location,
+        ),
       ],
     ),
     _ExampleCategory(

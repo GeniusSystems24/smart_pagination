@@ -248,6 +248,18 @@ RouteBase get $streamRoute => GoRouteData.$route(
           path: 'merged',
           factory: $MergedStreamsRoute._fromState,
         ),
+        GoRouteData.$route(
+          path: 'stream-accumulation',
+          factory: $StreamAccumulationRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'per-page-error',
+          factory: $PerPageErrorRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'dynamic-end',
+          factory: $DynamicEndOfPaginationRoute._fromState,
+        ),
       ],
     );
 
@@ -326,6 +338,75 @@ mixin $MergedStreamsRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
         '/streams/merged',
+      );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $StreamAccumulationRoute on GoRouteData {
+  static StreamAccumulationRoute _fromState(GoRouterState state) =>
+      const StreamAccumulationRoute();
+
+  @override
+  String get location => GoRouteData.$location(
+        '/streams/stream-accumulation',
+      );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $PerPageErrorRoute on GoRouteData {
+  static PerPageErrorRoute _fromState(GoRouterState state) =>
+      const PerPageErrorRoute();
+
+  @override
+  String get location => GoRouteData.$location(
+        '/streams/per-page-error',
+      );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DynamicEndOfPaginationRoute on GoRouteData {
+  static DynamicEndOfPaginationRoute _fromState(GoRouterState state) =>
+      const DynamicEndOfPaginationRoute();
+
+  @override
+  String get location => GoRouteData.$location(
+        '/streams/dynamic-end',
       );
 
   @override
