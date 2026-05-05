@@ -201,6 +201,11 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
   GlobalKey<SliverAnimatedListState> _animatedListKey =
       GlobalKey<SliverAnimatedListState>();
 
+  /// Last snapshot produced by the `ListViewObserver.onObserve` callback.
+  /// Refreshed on every scroll frame; read synchronously at each
+  /// load-more trigger site (spec 004-scroll-anchor-preservation §4.2, R9).
+  _PendingScrollAnchor? _lastObservedSnapshot;
+
   /// Key for SliverAnimatedGrid when itemKeyBuilder is provided for grids.
   GlobalKey<SliverAnimatedGridState> _animatedGridKey =
       GlobalKey<SliverAnimatedGridState>();
@@ -231,19 +236,12 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
   void _initializeObserver() {
     if (!widget.enableObserver) return;
 
-    // AUDIT 004 (insertion site): subscribe to the observer's `onObserve`
-    // callback here so `_lastObservedSnapshot` is refreshed continuously
-    // (per plan §4.1 and research R9). The snapshot is then read
-    // synchronously by the capture push at each load-more trigger site
-    // (annotated above in `_shouldLoadMore`).
-    // Create observer based on builder type
     switch (widget.itemBuilderType) {
       case PaginateBuilderType.listView:
       case PaginateBuilderType.reorderableListView:
         _listObserverController = ListObserverController(
           controller: _effectiveScrollController,
         );
-        // Attach to cubit if provided
         widget.cubit?.attachListObserverController(_listObserverController!);
         widget.onObserverCreated?.call(_listObserverController);
         break;
@@ -252,15 +250,94 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         _gridObserverController = GridObserverController(
           controller: _effectiveScrollController,
         );
-        // Attach to cubit if provided
         widget.cubit?.attachGridObserverController(_gridObserverController!);
         widget.onObserverCreated?.call(_gridObserverController);
         break;
 
       default:
-        // PageView, StaggeredGridView, custom don't need observer
         break;
     }
+  }
+
+  /// Called by [ListViewObserver.onObserve] on every scroll frame.
+  ///
+  /// Selects the best anchor item from [model.displayingChildModelList] and
+  /// writes it to [_lastObservedSnapshot]. The snapshot is then read
+  /// synchronously at each load-more trigger site (spec 004 §4.2, R9).
+  void _handleListObserve(ListViewObserveModel model) {
+    if (widget.cubit == null) return;
+
+    final displayingItems = model.displayingChildModelList;
+    final scrollController = _effectiveScrollController;
+    final double? pixelsBefore =
+        scrollController.hasClients ? scrollController.position.pixels : null;
+    final double? extentBefore = scrollController.hasClients
+        ? scrollController.position.maxScrollExtent
+        : null;
+
+    if (displayingItems.isEmpty) {
+      // Observer ready but no items visible — keep last snapshot rather than
+      // clearing, so a fast fling that empties the visible set does not lose
+      // the previously captured anchor.
+      return;
+    }
+
+    // Select the last fully-visible item (highest index, displayPercentage >= 1.0).
+    ListViewObserveDisplayingChildModel? anchorItem;
+    for (final item in displayingItems.reversed) {
+      if (item.index < _items.length && item.displayPercentage >= 1.0) {
+        anchorItem = item;
+        break;
+      }
+    }
+
+    // Fallback: topmost partially-visible item.
+    if (anchorItem == null) {
+      for (final item in displayingItems) {
+        if (item.index < _items.length && item.displayPercentage > 0.0) {
+          anchorItem = item;
+          break;
+        }
+      }
+    }
+
+    if (anchorItem == null) {
+      // No identifiable item — offset-only snapshot.
+      if (pixelsBefore != null) {
+        _lastObservedSnapshot = _PendingScrollAnchor(
+          strategy: AnchorStrategy.offset,
+          viewType: _AnchorViewType.listView,
+          reverse: widget.reverse,
+          generation: widget.cubit!.currentGeneration,
+          pixelsBefore: pixelsBefore,
+          extentBefore: extentBefore,
+        );
+      }
+      return;
+    }
+
+    final anchorIndex = anchorItem.index;
+    final AnchorStrategy strategy;
+    final Object? key;
+    if (widget.itemKeyBuilder != null) {
+      strategy = AnchorStrategy.key;
+      key = widget.itemKeyBuilder!(_items[anchorIndex], anchorIndex);
+    } else {
+      strategy = AnchorStrategy.itemIndex;
+      key = null;
+    }
+
+    _lastObservedSnapshot = _PendingScrollAnchor(
+      strategy: strategy,
+      viewType: _AnchorViewType.listView,
+      reverse: widget.reverse,
+      generation: widget.cubit!.currentGeneration,
+      key: key,
+      index: anchorIndex,
+      leadingEdgeOffset: anchorItem.leadingMarginToViewport,
+      pixelsBefore: pixelsBefore,
+      extentBefore: extentBefore,
+    );
   }
 
   @override
@@ -659,12 +736,14 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         initialItemCount: _items.length,
         itemBuilder: (context, index, animation) {
           if (_shouldLoadMore(index)) {
-            // Spec 003-load-more-guard §5.1: schedule the fetch for after the
-            // current frame so multiple item builders triggering during the
-            // same build pass collapse to a single call. The cubit's
-            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
-            // still slip through; this is defense in depth.
+            // Spec 003-load-more-guard §5.1 / 004 §4.2: schedule post-frame so
+            // duplicate builders in the same pass collapse to one call; push the
+            // observer anchor snapshot to the cubit BEFORE triggering the fetch.
             SchedulerBinding.instance.addPostFrameCallback((_) {
+              final snap = _lastObservedSnapshot;
+              if (snap != null && widget.cubit != null) {
+                widget.cubit!.captureAnchorBeforeLoadMore(snap);
+              }
               widget.fetchPaginatedList?.call();
             });
           }
@@ -699,14 +778,16 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
             final itemIndex = index ~/ 2;
             if (index.isEven) {
               if (_shouldLoadMore(itemIndex)) {
-                // Spec 003-load-more-guard §5.1: schedule the fetch for after the
-            // current frame so multiple item builders triggering during the
-            // same build pass collapse to a single call. The cubit's
-            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
-            // still slip through; this is defense in depth.
-            SchedulerBinding.instance.addPostFrameCallback((_) {
-              widget.fetchPaginatedList?.call();
-            });
+                // Spec 003-load-more-guard §5.1 / 004 §4.2: schedule post-frame so
+                // duplicate builders in the same pass collapse to one call; push the
+                // observer anchor snapshot to the cubit BEFORE triggering the fetch.
+                SchedulerBinding.instance.addPostFrameCallback((_) {
+                  final snap = _lastObservedSnapshot;
+                  if (snap != null && widget.cubit != null) {
+                    widget.cubit!.captureAnchorBeforeLoadMore(snap);
+                  }
+                  widget.fetchPaginatedList?.call();
+                });
               }
 
               final child = widget.itemBuilder(context, _items, itemIndex);
@@ -760,14 +841,39 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
     );
 
     // Wrap with ListViewObserver if enabled
+    final Widget observedView;
     if (widget.enableObserver && _listObserverController != null) {
-      return ListViewObserver(
+      observedView = ListViewObserver(
         controller: _listObserverController!,
+        onObserve: _handleListObserve,
         child: scrollView,
       );
+    } else {
+      observedView = scrollView;
     }
 
-    return scrollView;
+    // Spec 004-scroll-anchor-preservation §6 / FR-004b / T026:
+    // Outer NotificationListener detects user-initiated drag-scroll gestures
+    // and re-arms the cubit's post-append suppression flag via markUserScroll.
+    //
+    // Only ScrollStartNotification with non-null dragDetails qualifies as a
+    // real user gesture. Programmatic jumpTo/animateTo and layout-settle events
+    // produce notifications with dragDetails == null — those are ignored.
+    //
+    // `return false` is critical: this listener MUST NOT consume the
+    // notification, so parent scroll listeners and the existing scroll-trigger
+    // infrastructure continue to receive it.
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollStartNotification &&
+            notification.dragDetails != null &&
+            widget.cubit != null) {
+          widget.cubit!.markUserScroll();
+        }
+        return false; // never consume — let notifications propagate
+      },
+      child: observedView,
+    );
   }
 
   Widget _buildReorderableListView(BuildContext context) {

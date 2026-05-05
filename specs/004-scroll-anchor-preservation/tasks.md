@@ -138,7 +138,7 @@
 
 ### Tests for User Story 1 (TDD red baseline)
 
-- [ ] T015 [US1] Add the canonical regression `testWidgets` to `test/scroll_anchor_capture_test.dart`
+- [x] T015 [US1] Add the canonical regression `testWidgets` to `test/scroll_anchor_capture_test.dart`
   - **Files**: `test/scroll_anchor_capture_test.dart`
   - **Description**: Replace the appropriate stub with a `testWidgets('fast fling on ListView produces exactly one load-more', (tester) async { ... })` that builds a `SmartPaginationListView` backed by a mock provider returning 20 items per page, performs `tester.fling(find.byType(ListView), Offset(0, -2000), 5000)`, then `await tester.pumpAndSettle(Duration(milliseconds: 200))`. Assertions: `mockProvider.callCount == 2`. Without anchor preservation, `callCount` ≥ 3.
   - **Acceptance**: Test compiles; runs against current code; **fails** with `mockProvider.callCount` > 2. This is the regression anchor.
@@ -160,7 +160,7 @@
   - **Dependencies**: T010
   - **Parallel**: Yes — different file from T016, T018
 
-- [ ] T018 [P] [US1] Implement suppression test bodies in `test/scroll_anchor_suppression_test.dart` (T16–T22)
+- [x] T018 [P] [US1] Implement suppression test bodies in `test/scroll_anchor_suppression_test.dart` (T16–T22)
   - **Files**: `test/scroll_anchor_suppression_test.dart`
   - **Description**: Fill seven stubs: T16 reject second `fetchPaginatedList` immediately after append, T17 user-`ScrollStartNotification` clears suppression, T18 programmatic `controller.jumpTo` does NOT clear, T19 anchor-restore's own jumpTo does NOT clear, T20 late image-load layout settle does NOT trigger another fetch, T21 load-more error clears suppression, T22 refresh/filter clears.
   - **Acceptance**: Seven tests **fail** before implementation.
@@ -169,84 +169,84 @@
 
 ### Implementation for User Story 1
 
-- [ ] T019 [US1] Subscribe to observer's `onObserve` callback in `_PaginateApiViewState._initializeObserver` in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T019 [US1] Subscribe to observer's `onObserve` callback in `_PaginateApiViewState._initializeObserver` in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (around lines 234–258)
   - **Description**: Add a private method `_handleObserve(ObserveModel model)` that computes a fresh `_PendingScrollAnchor` snapshot per `contracts/anchor-strategy.md` §`findAnchorItem` (last fully-visible item). Wire it via `ListObserverController(controller: _effectiveScrollController, onObserve: _handleObserve)` and the equivalent for `GridObserverController`. Store the result in `_lastObservedSnapshot`. Add subscription cleanup in `dispose`.
   - **Acceptance**: `_lastObservedSnapshot` is non-null after the first observer fire on a populated list. No existing tests break.
   - **Dependencies**: T002, T003, T007, T008
   - **Parallel**: No — same file as T020, T021, T027
 
-- [ ] T020 [US1] Implement `_AnchorStrategySelector.compute(...)` policy in `_PaginateApiViewState` in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T020 [US1] Implement `_AnchorStrategySelector.compute(...)` policy in `_PaginateApiViewState` in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (new private method on state class)
   - **Description**: Implement the selection algorithm from `contracts/anchor-strategy.md` precisely: out-of-scope short-circuit → staggered → no-snapshot fallback → key vs. index → field population. Returns `_PendingScrollAnchor?` (null when `proceed: false`).
   - **Acceptance**: Unit-callable from tests via a package-internal export (`@internal` re-export from `pagination.dart`). Returns the right strategy for every input combination per the contract table.
   - **Dependencies**: T019
   - **Parallel**: No — same file
 
-- [ ] T021 [US1] Wire capture-before-fetch push from `_buildListView` trigger sites in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T021 [US1] Wire capture-before-fetch push from `_buildListView` trigger sites in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (lines 645–654 animated path, 685–694 sliver-list path)
   - **Description**: Inside each `addPostFrameCallback` block, before the existing `widget.fetchPaginatedList?.call()`, add: `if (widget.preserveScrollAnchorOnAppend && widget.cubit != null) { final snap = _AnchorStrategySelector.compute(...); if (snap != null) widget.cubit!.captureAnchorBeforeLoadMore(snap); }`. Note: `preserveScrollAnchorOnAppend` parameter does not exist yet (added in US3) — for US1 use a feature-flag boolean private constant `const _kCaptureEnabled = true;` and replace with the parameter in T046.
   - **Acceptance**: T01, T02, T04, T08 from T016 still fail because cubit-side consume + restore are not wired yet, but the snapshot now reaches `cubit._pendingAnchor`. Existing tests still pass.
   - **Dependencies**: T020
   - **Parallel**: No — same file
 
-- [ ] T022 [US1] Add `_suppressLoadMoreUntilUserScroll` guard step into `fetchPaginatedList` in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T022 [US1] Add `_suppressLoadMoreUntilUserScroll` guard step into `fetchPaginatedList` in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart` (lines ~801–820)
   - **Description**: Per `plan.md` §7.1, insert the new guard between the existing `_activeLoadMoreKey == loadMoreKey` check and the `currentState.isLoadingMore` check: `if (_suppressLoadMoreUntilUserScroll) { return; }`. Update the inline comment block enumerating the guard order.
   - **Acceptance**: T16 from T018 turns from generic-fail to "second call returns silently" (still fails because suppression flag is not yet set anywhere — that's T024).
   - **Dependencies**: T007, T021
   - **Parallel**: No — same file as T024–T030
 
-- [ ] T023 [US1] Set suppression flag and capture timing in `fetchPaginatedList` accept path in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T023 [US1] Set suppression flag and capture timing in `fetchPaginatedList` accept path in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart` (lines ~815–820, immediately before `emit(isLoadingMore: true)`)
   - **Description**: Per `plan.md` §7.1 step 11, add `_suppressLoadMoreUntilUserScroll = true;` immediately after `_activeLoadMoreKey = loadMoreKey;` and before `emit(...)`. The capture flag setting happens via the widget's `captureAnchorBeforeLoadMore` push earlier in the call chain (T021); ensure that when the cubit accepts this fetch, `_pendingAnchor` is already populated (or null, in which case no restore happens).
   - **Acceptance**: T16 now passes the "second call rejected" assertion. Other suppression tests still fail (they need user-scroll re-arm + restore).
   - **Dependencies**: T022
   - **Parallel**: No — same file
 
-- [ ] T024 [US1] Implement post-frame restore orchestration in `_fetch` success path in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T024 [US1] Implement post-frame restore orchestration in `_fetch` success path in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart` (after the `emit(SmartPaginationLoaded(... isLoadingMore: false ...))` for the load-more success branch)
   - **Description**: After the success emit, if `_pendingAnchor != null`, set `_anchorRestoreInFlight = true` and schedule `WidgetsBinding.instance.addPostFrameCallback((_) async { _performAnchorRestore(_pendingAnchor!); _pendingAnchor = null; await SchedulerBinding.instance.endOfFrame; _anchorRestoreInFlight = false; });`. The `_performAnchorRestore` private method dispatches by strategy per `contracts/anchor-strategy.md` "Restore mechanism by strategy".
   - **Acceptance**: T09, T10, T11, T15 turn green. T16 stays green.
   - **Dependencies**: T023
   - **Parallel**: No — same file
 
-- [ ] T025 [US1] Implement `_performAnchorRestore(_PendingScrollAnchor anchor)` dispatcher in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T025 [US1] Implement `_performAnchorRestore(_PendingScrollAnchor anchor)` dispatcher in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart`
   - **Description**: Implement the strategy-dispatch per `contracts/anchor-strategy.md` "Restore mechanism by strategy": generation check → `key` strategy looks up new index via the consumer-supplied key extractor exposed through the cubit, then calls `_listObserverController!.jumpTo(...)` (or grid). `index` strategy goes directly. `offset` falls back to the `_effectiveScrollController` reference. Defensive: every branch can no-op safely. The cubit holds a weak reference to the active controller via the existing observer integration; for the offset-only `StaggeredGridView` path, the widget pushes a controller-position-reading closure into the snapshot itself (the `pixelsBefore` field is already populated at capture time).
   - **Acceptance**: All paths execute without throwing; T11, T12 (when staggered lands in US2) pass for `ListView`.
   - **Dependencies**: T024
   - **Parallel**: No — same file
 
-- [ ] T026 [US1] Add outer `NotificationListener<ScrollNotification>` to `_buildListView` in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T026 [US1] Add outer `NotificationListener<ScrollNotification>` to `_buildListView` in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (around lines 727–744 — wrap the existing `CustomScrollView` and the optional `ListViewObserver`)
   - **Description**: Wrap the returned scroll view in `NotificationListener<ScrollNotification>(onNotification: (n) { if (n is ScrollStartNotification && n.dragDetails != null && widget.cubit != null) { widget.cubit!.markUserScroll(); } return false; }, child: <existing>)`. The `return false` is critical — it MUST NOT consume the notification.
   - **Acceptance**: T17 (user-scroll clears suppression) passes. Existing scroll-related tests still pass.
   - **Dependencies**: T025
   - **Parallel**: No — same file
 
-- [ ] T027 [US1] Implement full `markUserScroll()` body in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T027 [US1] Implement full `markUserScroll()` body in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart`
   - **Description**: Replace the T008 stub: `void markUserScroll() { _lastUserScrollGeneration++; if (!_anchorRestoreInFlight) { _suppressLoadMoreUntilUserScroll = false; } }`. Per `contracts/public-api-surface.md` §A4 and `data-model.md` §4 transitions.
   - **Acceptance**: T17 stays green. T19 (anchor-restore's own jumpTo does NOT clear) turns green because `_anchorRestoreInFlight` is true during the synthetic notification. T18 (programmatic `controller.jumpTo` does NOT clear) turns green because the synthetic notification has `dragDetails == null` so `markUserScroll` is never called.
   - **Dependencies**: T026
   - **Parallel**: No — same file as T024–T029
 
-- [ ] T028 [US1] Wire scope-reset clearing of new fields in `_resetToInitial`, `refreshPaginatedList`, and `dispose` in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T028 [US1] Wire scope-reset clearing of new fields in `_resetToInitial`, `refreshPaginatedList`, and `dispose` in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart` (around lines 555–568, 625–680, dispose site)
   - **Description**: At each scope-reset path identified in T005, clear all three flags: `_pendingAnchor = null; _suppressLoadMoreUntilUserScroll = false; _anchorRestoreInFlight = false;`. The existing scope-reset logic (e.g., bumping `_generation`, calling `_cancelAllPageStreams`) is unchanged.
   - **Acceptance**: T22 (refresh/filter clears suppression) passes.
   - **Dependencies**: T027
   - **Parallel**: No — same file
 
-- [ ] T029 [US1] Wire error-path clearing of suppression flag in `_fetch` finally branch in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T029 [US1] Wire error-path clearing of suppression flag in `_fetch` finally branch in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart` (near lines 1095–1096, the existing `_isFetching = false; _activeLoadMoreKey = null;` clearing block; specifically the load-more-error branch)
   - **Description**: In the error branch (where `loadMoreError` is emitted, NOT in the success branch), additionally do `_suppressLoadMoreUntilUserScroll = false; _pendingAnchor = null;` per `plan.md` §7.3. The success branch keeps the suppression flag set (only user-scroll clears it post-success).
   - **Acceptance**: T21 (error clears suppression) passes. T16, T17 stay green.
   - **Dependencies**: T028
   - **Parallel**: No — same file
 
-- [ ] T030 [US1] Implement late-layout-settle resilience: ensure `markUserScroll` filtering on `dragDetails != null` is correct in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T030 [US1] Implement late-layout-settle resilience: ensure `markUserScroll` filtering on `dragDetails != null` is correct in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (the new `NotificationListener` from T026)
   - **Description**: Verify in the test (T20) that synthetic `ScrollUpdateNotification` events caused by image-load layout settle (which have `dragDetails == null`) do NOT call `markUserScroll`. If T20 is failing because `ScrollUpdateNotification` is being mistakenly accepted, tighten the filter to `n is ScrollStartNotification && n.dragDetails != null`. (This is the stated rule in `plan.md` §6.3 and `research.md` R3, but it is worth a confirming edit if the initial T026 implementation was looser.)
   - **Acceptance**: T20 passes.
@@ -255,14 +255,14 @@
 
 ### Verification for User Story 1
 
-- [ ] T031 [US1] Run T01, T02, T04, T08 (capture), T09, T10, T11, T15 (restore), T16–T22 (suppression) — all pass
+- [x] T031 [US1] Run T01, T02, T04, T08 (capture), T09, T10, T11, T15 (restore), T16–T22 (suppression) — all pass
   - **Files**: `test/scroll_anchor_*_test.dart`
   - **Description**: `flutter test test/scroll_anchor_capture_test.dart test/scroll_anchor_restore_test.dart test/scroll_anchor_suppression_test.dart`. Confirm green.
   - **Acceptance**: All US1-relevant tests pass; the regression test T015 also passes.
   - **Dependencies**: T029, T030
   - **Parallel**: No
 
-- [ ] T032 [US1] Confirm no regressions in existing test suite after US1 lands
+- [x] T032 [US1] Confirm no regressions in existing test suite after US1 lands
   - **Files**: `test/`
   - **Description**: `flutter test` without filters. Compare against pre-US1 baseline.
   - **Acceptance**: Existing tests (load_more_guard, stream_guard, deduplication, end_of_list, scroll_trigger, etc.) all still pass.

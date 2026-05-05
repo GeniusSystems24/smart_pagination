@@ -205,6 +205,12 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _generation++;
   }
 
+  /// Spec 004-scroll-anchor-preservation §4 / data-model.md §1:
+  /// Exposes the current pagination generation so the widget layer can tag
+  /// anchor snapshots. Snapshots are validated against this value at restore
+  /// time to detect interleaved scope resets (refresh / filter change).
+  int get currentGeneration => _generation;
+
   /// Flag to prevent concurrent fetch operations.
   ///
   /// Spec 003-load-more-guard §4.2: This flag is now set in
@@ -248,12 +254,6 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   ///  - load-more error path (spec §7.3),
   ///  - scope reset ([_resetToInitial], [refreshPaginatedList], [dispose]).
   bool _suppressLoadMoreUntilUserScroll = false;
-
-  /// Monotonic counter of observed user-scroll events. Incremented by every
-  /// [markUserScroll] call (gated on [_anchorRestoreInFlight]). Used by
-  /// tests to assert "exactly one user gesture per allowed load-more".
-  /// Not consumed by production logic.
-  int _lastUserScrollGeneration = 0;
 
   /// When `true`, [markUserScroll] is a no-op. Set immediately before the
   /// post-frame restore is scheduled; cleared at the next frame boundary
@@ -606,11 +606,12 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _pages.clear();
     _currentMeta = null;
     _lastFetchTime = null;
-    // AUDIT 004 (insertion site): clear scroll-anchor state on scope reset:
-    //   _pendingAnchor = null;
-    //   _suppressLoadMoreUntilUserScroll = false;
-    //   _anchorRestoreInFlight = false;
-    // (per data-model.md §6 transitions, plan §7.4)
+    // Spec 004-scroll-anchor-preservation §7.4 / data-model.md §6 transitions:
+    // Scope reset discards any in-flight anchor and clears the suppression flag
+    // so the fresh scope can trigger load-more without requiring a user gesture.
+    _pendingAnchor = null;
+    _suppressLoadMoreUntilUserScroll = false;
+    _anchorRestoreInFlight = false;
     emit(SmartPaginationInitial<T>());
   }
 
@@ -679,11 +680,12 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _lastFetchWasError = false;
     _lastErrorWasNetwork = false;
     _lastError = null;
-    // AUDIT 004 (insertion site): clear scroll-anchor state on refresh:
-    //   _pendingAnchor = null;
-    //   _suppressLoadMoreUntilUserScroll = false;
-    //   _anchorRestoreInFlight = false;
-    // Refresh is a scope-reset path (per data-model.md §6 transitions).
+    // Spec 004-scroll-anchor-preservation §7.4 / data-model.md §6 transitions:
+    // Refresh is a scope-reset path — discard any in-flight anchor and clear
+    // the suppression flag so the fresh scope loads normally.
+    _pendingAnchor = null;
+    _suppressLoadMoreUntilUserScroll = false;
+    _anchorRestoreInFlight = false;
 
     final request = _buildRequest(
       reset: true,
@@ -834,23 +836,18 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
 
     if (_hasReachedEnd) return;
 
-    // Spec 003-load-more-guard §4.4 — guard order:
+    // Spec 003-load-more-guard §4.4 + spec 004-scroll-anchor-preservation §7.1
+    // Guard order (step numbers match plan §7.1):
     //   5. _hasReachedEnd  (above)
     //   6. compute loadMoreKey
-    //   7. _activeLoadMoreKey == loadMoreKey  → drop duplicate page request
-    // AUDIT 004 (insertion site): step 7b will be added here —
-    //                              `if (_suppressLoadMoreUntilUserScroll) return;`
-    //                              per plan.md §7.1 / FR-004b.
+    //   7. _activeLoadMoreKey == loadMoreKey  → drop duplicate in-flight page
+    //   7b. _suppressLoadMoreUntilUserScroll  → drop post-append auto-triggers
     //   8. currentState.isLoadingMore         → drop duplicate state-level
-    //   9. _isFetching = true                 → moved here from _fetch()
-    //   10. _activeLoadMoreKey = loadMoreKey  → set before any await
-    // AUDIT 004 (insertion site): step 11 will be added here —
-    //                              `_suppressLoadMoreUntilUserScroll = true;`
-    //                              and `_pendingAnchor` is consumed
-    //                              from the snapshot the widget pushed
-    //                              via `captureAnchorBeforeLoadMore`.
-    //   11. emit(isLoadingMore: true)
-    //   12. _fetch(...)
+    //   9. _isFetching = true
+    //   10. _activeLoadMoreKey = loadMoreKey
+    //   11. _suppressLoadMoreUntilUserScroll = true  (arms post-append guard)
+    //   12. emit(isLoadingMore: true)
+    //   13. _fetch(...)
     final request = _buildRequest(
       reset: false,
       override: requestOverride,
@@ -866,6 +863,13 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       return;
     }
 
+    // Spec 004-scroll-anchor-preservation §7.1 step 7b / FR-004b:
+    // Suppress automatic load-more calls that arrive after a successful append
+    // and before the user initiates a new drag-scroll gesture.
+    if (_suppressLoadMoreUntilUserScroll) {
+      return;
+    }
+
     // Set isLoadingMore = true when loading more items
     final currentState = state;
     if (currentState is SmartPaginationLoaded<T>) {
@@ -873,6 +877,11 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
 
       _isFetching = true;
       _activeLoadMoreKey = loadMoreKey;
+      // Spec 004-scroll-anchor-preservation §7.1 step 11 / FR-004b:
+      // Arm the post-append suppression flag before emitting isLoadingMore so
+      // any load-more call that arrives between emit and the next user scroll
+      // gesture is dropped. Cleared by markUserScroll, scope reset, or error.
+      _suppressLoadMoreUntilUserScroll = true;
       emit(
         currentState.copyWith(
           isLoadingMore: true,
@@ -1052,6 +1061,31 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         ),
       );
 
+      // Spec 004-scroll-anchor-preservation §5 / FR-002 / FR-004a / T024:
+      // After a successful load-more append (not a reset), schedule the
+      // viewport restore in a post-frame callback so it runs after the new
+      // items have been laid out by the framework. Synchronous restore would
+      // mis-read item positions before layout completes.
+      if (!reset && _pendingAnchor != null) {
+        final anchorToRestore = _pendingAnchor!;
+        _anchorRestoreInFlight = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          // Validate generation: discard if a scope reset interleaved.
+          if (anchorToRestore.generation != _generation) {
+            _pendingAnchor = null;
+            _anchorRestoreInFlight = false;
+            return;
+          }
+          _performAnchorRestore(anchorToRestore);
+          _pendingAnchor = null;
+          // Hold _anchorRestoreInFlight until the next frame boundary so any
+          // synthetic ScrollStartNotification from our own jumpTo is ignored
+          // by markUserScroll (spec §5, R5 / data-model.md §4).
+          await SchedulerBinding.instance.endOfFrame;
+          _anchorRestoreInFlight = false;
+        });
+      }
+
       // Register a per-page stream subscription for **every** page load
       // (initial AND load-more) per spec FR-010. This delivers stream
       // accumulation: page N's subscription is added to the registry without
@@ -1110,6 +1144,14 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       } else {
         emit(SmartPaginationError<T>(error: error));
       }
+      // Spec 004-scroll-anchor-preservation §7.3 / plan §7.3 (T029):
+      // Mirror the plain `catch` block below — clear suppression so the user
+      // can retry without a scroll gesture after a load-more error.
+      if (!reset) {
+        _suppressLoadMoreUntilUserScroll = false;
+        _pendingAnchor = null;
+        _anchorRestoreInFlight = false;
+      }
     } catch (error, stackTrace) {
       final exception = Exception(error.toString());
       if (SmartPaginationCubit.enableLogging) {
@@ -1143,6 +1185,16 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       } else {
         emit(SmartPaginationError<T>(error: exception));
       }
+      // Spec 004-scroll-anchor-preservation §7.3 / plan §7.3 (T029):
+      // Error path clears the suppression flag so the consumer can retry
+      // (by tapping a retry button or similar) without needing to perform
+      // a drag-scroll gesture first. The pending anchor is discarded because
+      // the list state is uncertain after an error.
+      if (!reset) {
+        _suppressLoadMoreUntilUserScroll = false;
+        _pendingAnchor = null;
+        _anchorRestoreInFlight = false;
+      }
     } finally {
       // Spec 003-load-more-guard §4.1, §4.2: always clear both the in-flight
       // flag and the per-page key. Runs on success, error, and stale-token
@@ -1150,15 +1202,11 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       // same page after an error to proceed.
       _isFetching = false;
       _activeLoadMoreKey = null;
-      // AUDIT 004 (insertion site): the ERROR branch above (lines ~1090-1097)
-      // must additionally clear:
-      //   _suppressLoadMoreUntilUserScroll = false;
-      //   _pendingAnchor = null;
-      // so retry can proceed without forcing a user-scroll gesture
-      // (plan §7.3). The SUCCESS branch must KEEP _suppressLoadMoreUntilUserScroll
-      // set to true (only a user-initiated scroll clears it post-success).
-      // The post-frame restore is also scheduled from the SUCCESS branch,
-      // not from this finally block.
+      // Note: _suppressLoadMoreUntilUserScroll is intentionally NOT cleared
+      // here on the success path — only markUserScroll() (user drag) clears
+      // it after a successful append. The error path clears it in the catch
+      // block above. Scope-reset paths clear it in _resetToInitial and
+      // refreshPaginatedList.
     }
   }
 
@@ -1493,9 +1541,8 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   /// **Internal**: this method is part of the package's internal contract.
   /// Direct external use is not supported. See spec
   /// `004-scroll-anchor-preservation` for context.
+  // ignore: library_private_types_in_public_api
   void captureAnchorBeforeLoadMore(_PendingScrollAnchor snapshot) {
-    // T008 stub: store only. Full integration with `fetchPaginatedList`
-    // and post-frame restore lands in T022–T025.
     _pendingAnchor = snapshot;
   }
 
@@ -1506,9 +1553,100 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   ///
   /// **Internal**: see [captureAnchorBeforeLoadMore].
   void markUserScroll() {
-    // T008 stub: monotonic counter increment only. Full clearing logic
-    // (gated on `_anchorRestoreInFlight`) lands in T027.
-    _lastUserScrollGeneration++;
+    // Guard: do NOT clear the suppression flag while the post-frame anchor
+    // restore is in progress. The restore's own jumpTo produces a synthetic
+    // ScrollStartNotification with non-null dragDetails in some physics
+    // implementations; we must not re-arm the flag from that notification.
+    if (!_anchorRestoreInFlight) {
+      _suppressLoadMoreUntilUserScroll = false;
+    }
+  }
+
+  // ==========================================================================
+  // Spec 004-scroll-anchor-preservation §5 — Restore dispatcher (T025).
+  // Called from the post-frame callback in `_fetch` (T024) after a successful
+  // load-more append. Dispatches to the appropriate restore mechanism based on
+  // the anchor's strategy and view type.
+  // All paths are defensive — no path throws.
+  // ==========================================================================
+
+  void _performAnchorRestore(_PendingScrollAnchor anchor) {
+    // Out-of-scope view types and reverse lists: no-op (spec FR-007 / C5).
+    if (anchor.reverse) return;
+    switch (anchor.viewType) {
+      case _AnchorViewType.pageView:
+      case _AnchorViewType.reorderableListView:
+      case _AnchorViewType.custom:
+        return;
+      case _AnchorViewType.listView:
+      case _AnchorViewType.customScrollView:
+        _performListViewRestore(anchor);
+      case _AnchorViewType.gridView:
+        _performGridViewRestore(anchor);
+      case _AnchorViewType.staggeredGridView:
+        _performOffsetRestore(anchor);
+    }
+  }
+
+  /// Restores the ListView/sliver viewport via the observer's `jumpTo`.
+  /// Falls back to offset-delta if the observer or index is unavailable.
+  void _performListViewRestore(_PendingScrollAnchor anchor) {
+    final controller = _listObserverController;
+    final targetIndex = anchor.index;
+    if (controller != null && targetIndex != null) {
+      try {
+        // alignment: 1.0 places the anchor item at the bottom of the viewport
+        // (where it was before the new items were appended below it).
+        controller.jumpTo(index: targetIndex, alignment: 1.0);
+        return;
+      } catch (_) {
+        // Defensive: fall through to offset restore
+      }
+    }
+    _performOffsetRestore(anchor);
+  }
+
+  /// Restores the GridView viewport via the observer's `jumpTo`.
+  void _performGridViewRestore(_PendingScrollAnchor anchor) {
+    final controller = _gridObserverController;
+    final targetIndex = anchor.index;
+    if (controller != null && targetIndex != null) {
+      try {
+        controller.jumpTo(index: targetIndex, alignment: 1.0);
+        return;
+      } catch (_) {
+        // Defensive: fall through to offset restore
+      }
+    }
+    _performOffsetRestore(anchor);
+  }
+
+  /// Restores the scroll position using the captured pixel offset.
+  /// Used for StaggeredGridView (no observer attached) and as a fallback
+  /// when index-based restore fails (e.g., index out of bounds after
+  /// a concurrent remove). Per spec FR-008 / contracts/anchor-strategy.md.
+  void _performOffsetRestore(_PendingScrollAnchor anchor) {
+    final pixelsBefore = anchor.pixelsBefore;
+    if (pixelsBefore == null) return;
+    // Prefer the list observer's attached controller; fall back to the grid
+    // observer's controller. Both point to the same scroll controller that
+    // the widget registered via attachListObserverController /
+    // attachGridObserverController.
+    final scrollController =
+        _listObserverController?.controller ??
+        _gridObserverController?.controller;
+    if (scrollController == null || !scrollController.hasClients) return;
+    try {
+      // Clamp to the current maxScrollExtent in case the list shrunk between
+      // capture and restore (edge case: concurrent remove + append).
+      final clamped = pixelsBefore.clamp(
+        0.0,
+        scrollController.position.maxScrollExtent,
+      );
+      scrollController.jumpTo(clamped);
+    } catch (_) {
+      // Defensive no-op — failing to restore scroll is non-fatal.
+    }
   }
 
   @override
@@ -1528,14 +1666,13 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _cancelAllPageStreams();
     _connectivitySubscription?.cancel();
     _connectivitySubscription = null;
-    // AUDIT 004 (insertion site): clear scroll-anchor state on dispose:
-    //   _pendingAnchor = null;
-    //   _suppressLoadMoreUntilUserScroll = false;
-    //   _anchorRestoreInFlight = false;
-    // (per data-model.md §6 transitions; defensive — the cubit object
-    // itself will be garbage-collected after dispose, but explicit
-    // clearing prevents any lingering callback from the post-frame
-    // restore from observing inconsistent state.)
+    // Spec 004-scroll-anchor-preservation §7.4 / data-model.md §6 transitions.
+    // Defensive clear: the cubit is garbage-collected after dispose, but a
+    // scheduled post-frame restore callback could still reference these fields
+    // after `close()` is called. Explicit clear prevents stale-state reads.
+    _pendingAnchor = null;
+    _suppressLoadMoreUntilUserScroll = false;
+    _anchorRestoreInFlight = false;
   }
 
   @override
