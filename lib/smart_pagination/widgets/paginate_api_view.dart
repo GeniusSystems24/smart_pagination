@@ -231,6 +231,11 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
   void _initializeObserver() {
     if (!widget.enableObserver) return;
 
+    // AUDIT 004 (insertion site): subscribe to the observer's `onObserve`
+    // callback here so `_lastObservedSnapshot` is refreshed continuously
+    // (per plan §4.1 and research R9). The snapshot is then read
+    // synchronously by the capture push at each load-more trigger site
+    // (annotated above in `_shouldLoadMore`).
     // Create observer based on builder type
     switch (widget.itemBuilderType) {
       case PaginateBuilderType.listView:
@@ -396,6 +401,17 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
     // Trigger when we're [invisibleItemsThreshold] items away from the end
     return currentIndex >= _items.length - widget.invisibleItemsThreshold;
   }
+
+  // AUDIT 004 (insertion sites): every `_shouldLoadMore == true` block
+  // below (in `_buildListView`, `_buildGridView`, animated and non-animated
+  // paths, plus `_buildPageView`'s overflow-index trigger and
+  // `_buildStaggeredGridView`'s 80% threshold) currently wraps
+  // `widget.fetchPaginatedList?.call()` in `addPostFrameCallback`. The new
+  // capture push (`cubit.captureAnchorBeforeLoadMore(snapshot)`) must be
+  // inserted INSIDE the same post-frame block, IMMEDIATELY BEFORE the
+  // existing `fetchPaginatedList` call, gated on
+  // `widget.preserveScrollAnchorOnAppend` (added in T047) AND on the
+  // `_AnchorStrategySelector` returning a non-null snapshot.
 
   @override
   Widget build(BuildContext context) {
@@ -862,6 +878,17 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
     final crossAxisSpacing = delegate.crossAxisSpacing;
 
     return NotificationListener<ScrollNotification>(
+      // AUDIT 004 (insertion site): this listener will be extended to:
+      //   (a) capture an offset-only anchor snapshot
+      //       (strategy=AnchorStrategy.offset, pixelsBefore, extentBefore)
+      //       and push it via `cubit.captureAnchorBeforeLoadMore` immediately
+      //       before the existing `addPostFrameCallback(fetchPaginatedList)`,
+      //   (b) detect user-initiated scroll on
+      //       `notification is ScrollStartNotification && notification.dragDetails != null`
+      //       and call `cubit.markUserScroll()`.
+      // The package-internal observer is NOT attached to StaggeredGridView,
+      // so this listener is the only capture surface for that view type
+      // (per plan §5.1, §6.4, contracts/view-type-matrix.md).
       onNotification: (notification) {
         // Check if we should load more when scrolling near the end
         if (notification is ScrollUpdateNotification) {

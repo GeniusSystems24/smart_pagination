@@ -191,3 +191,121 @@ class SmartPaginationLoaded<T> extends SmartPaginationState<T>
     Object.hashAllUnordered(pageErrors.entries.map((e) => Object.hash(e.key, e.value))),
   );
 }
+
+// ============================================================================
+// Spec 004-scroll-anchor-preservation — anchor data model.
+// ============================================================================
+// These private types support the scroll-anchor preservation feature: the
+// cubit captures a snapshot of the visible viewport before each load-more
+// fetch (`_pendingAnchor`) and restores the viewport relative to that anchor
+// in a post-frame callback after the new page is appended.
+//
+// See specs/004-scroll-anchor-preservation/data-model.md and
+// specs/004-scroll-anchor-preservation/contracts/anchor-strategy.md.
+// ============================================================================
+
+/// The strategy used to identify and restore a scroll anchor.
+/// Selected at capture time based on the available inputs (per the hybrid
+/// policy in spec Q1):
+///   - [key] when the consumer supplies `itemKeyBuilder`,
+///   - [itemIndex] for finite-item builders without `itemKeyBuilder`,
+///   - [offset] as a fallback for `StaggeredGridView` and any view without
+///     a `scrollview_observer` integration.
+///
+/// Spec 004-scroll-anchor-preservation §4 (Anchor Capture Strategy).
+///
+/// Note: this enum value is named [itemIndex] (not `index`) because Dart's
+/// built-in `Enum.index` getter occupies that name on every enum value.
+enum AnchorStrategy {
+  /// Anchor identified by the consumer-supplied `itemKeyBuilder` value.
+  /// Highest fidelity. Used when `itemKeyBuilder != null`.
+  key,
+
+  /// Anchor identified by item index in the items list.
+  /// Used for finite-item builders (`ListView` / `GridView`) when no
+  /// `itemKeyBuilder` is supplied. Safe under append-only scope (FR-001a).
+  itemIndex,
+
+  /// Anchor identified by scroll-controller pixel offset and extent delta.
+  /// Used as a fallback for `StaggeredGridView` and any view without a
+  /// `scrollview_observer` integration.
+  offset,
+}
+
+/// View type the anchor snapshot was captured against. Not exposed publicly.
+/// Out-of-scope view types (`pageView`, `reorderableListView`, `custom`)
+/// cause the cubit to short-circuit anchor capture and restore as a no-op.
+///
+/// Spec 004-scroll-anchor-preservation §8 (View-Type Support Plan), Q5.
+enum _AnchorViewType {
+  listView,
+  gridView,
+  customScrollView,
+  staggeredGridView,
+  pageView, // out of scope (v1) — short-circuit
+  reorderableListView, // out of scope (v1) — short-circuit
+  custom, // unknown view type — short-circuit
+}
+
+/// Snapshot of the visible viewport at the moment a load-more fetch is
+/// initiated. Captured by the widget layer (via the `scrollview_observer`
+/// integration) and passed to the cubit via
+/// [SmartPaginationCubit.captureAnchorBeforeLoadMore]. Consumed in a
+/// post-frame callback after the new page is appended.
+///
+/// Spec 004-scroll-anchor-preservation §4.3, data-model.md §1.
+class _PendingScrollAnchor {
+  _PendingScrollAnchor({
+    required this.strategy,
+    required this.viewType,
+    required this.reverse,
+    required this.generation,
+    this.key,
+    this.index,
+    this.leadingEdgeOffset,
+    this.pixelsBefore,
+    this.extentBefore,
+  });
+
+  /// Selected strategy for this snapshot. Determines which fields are
+  /// populated and which restore mechanism is used.
+  final AnchorStrategy strategy;
+
+  /// View type the snapshot was captured against. Used to gate restore
+  /// (no-op for out-of-scope view types).
+  final _AnchorViewType viewType;
+
+  /// Whether the source scrollable was `reverse: true`. v1 treats reverse
+  /// lists as out of scope; restore is a no-op when this is true.
+  final bool reverse;
+
+  /// Cubit `_generation` value at capture time. The restore is discarded
+  /// if the cubit's `_generation` no longer matches at restore time, which
+  /// is the signal that a scope reset (refresh / filter / search)
+  /// interleaved with the in-flight fetch.
+  final int generation;
+
+  /// Anchor item's identity key, computed via the consumer's
+  /// `itemKeyBuilder`. Populated only when [strategy] is
+  /// [AnchorStrategy.key].
+  final Object? key;
+
+  /// Anchor item's index in the items list at capture time.
+  /// Populated when [strategy] is in {[AnchorStrategy.key],
+  /// [AnchorStrategy.index]}.
+  final int? index;
+
+  /// Pixels from the viewport top to the anchor item's leading edge at
+  /// capture time. Diagnostic / fidelity-validation field; not required
+  /// for the standard restore path.
+  final double? leadingEdgeOffset;
+
+  /// `controller.position.pixels` at capture time. Required when [strategy]
+  /// is [AnchorStrategy.offset]; also captured for the other strategies as
+  /// a fallback for the anchor-not-found edge case (FR-008).
+  final double? pixelsBefore;
+
+  /// `controller.position.maxScrollExtent` at capture time. Diagnostic /
+  /// future-use field.
+  final double? extentBefore;
+}

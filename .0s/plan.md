@@ -1,198 +1,220 @@
 /speckit.plan
 
-Create a technical implementation plan for a new stability feature in `smart_pagination`: prevent infinite duplicate page fetching during rapid repeated scrolling.
+Create a technical implementation plan for a new scroll stability feature in `smart_pagination`: preserve the user's scroll anchor after appending new paginated items.
 
 ## Technical Context
 
-The package is a Flutter/Dart pagination library that uses `SmartPaginationCubit`, provider-based data sources, and UI widgets such as ListView, GridView, PageView, StaggeredGridView, and other pagination views.
+The package supports multiple paginated Flutter views and triggers load-more when the user scrolls near the end of the list.
 
-The bug appears when scroll notifications repeatedly trigger load-more near the end of the list. Because fast scrolling can fire multiple threshold events, the cubit/provider pipeline may start repeated next-page requests without waiting for the active request to finish or without respecting the final end state.
+A bug remains because after new items are appended, the scroll position may still be near the end threshold. This causes immediate chained load-more requests without a new intentional scroll gesture from the user.
+
+The fix must combine load-more guarding with viewport anchor preservation.
 
 ## Required Plan Sections
 
 ### 1. Executive Summary
 
-Explain the bug, its impact, and the proposed high-level fix.
+Explain why request guards alone are not enough and why scroll anchor preservation is required.
 
-### 2. Current Load-More Flow Review
+### 2. Current Scroll Behavior Review
 
 Inspect and document:
 
-- Where scroll threshold detection happens.
-- Where `fetchPaginatedList()` or load-more is triggered.
-- How `isFetching` is used.
-- How `isLoadingMore` is emitted.
-- How `_currentRequest` is advanced.
-- How `hasReachedEnd` is calculated.
-- How `PaginationMeta.hasNext` is calculated.
-- How stale request tokens are used.
-- How first-page loading differs from load-more loading.
+- Where scroll notifications are handled.
+- How the invisible items threshold is calculated.
+- How load-more is triggered.
+- How appended items affect scroll metrics.
+- How the scroll controller is managed.
+- How external scroll controllers are supported.
+- How custom slivers and animated list updates affect scroll position.
 
 ### 3. Root Cause Analysis
 
-Identify possible causes:
+Identify why the issue happens:
 
-- Scroll threshold fires repeatedly before state changes.
-- `isFetching` is not checked early enough.
-- `isLoadingMore` is updated after multiple calls already entered.
-- Same page request is built multiple times.
-- End-of-list state is not committed before new threshold events.
-- Empty page is appended or ignored incorrectly.
-- Stale response modifies current state.
-- Race condition between scroll notifications and cubit state emission.
-- Stream provider may register new page streams repeatedly.
+- The viewport remains near the bottom after append.
+- The threshold condition remains true after new items are inserted.
+- Scroll notifications or rebuilds trigger load-more again.
+- New content does not shift the user's visual focus away from the trigger area.
+- The list does not preserve the item the user was viewing before append.
 
-### 4. Load-More Guard Design
+### 4. Anchor Capture Strategy
 
-Design a robust guard that prevents duplicate fetching.
-
-The plan must cover:
-
-- A per-scope `isLoadMoreInFlight` guard.
-- A request generation token.
-- A unique request/page/cursor key.
-- A set of active request keys.
-- A set of completed/end request keys if needed.
-- Blocking provider calls when `hasReachedEnd == true`.
-- Blocking provider calls when the same request key is already active.
-- Ignoring stale responses from old generations.
-
-### 5. Scroll Trigger Protection
-
-Define how UI scroll events should be handled.
+Define how to capture the scroll anchor before load-more starts.
 
 Evaluate:
 
-- State-based guard only.
-- Throttle scroll-triggered load-more calls.
-- Debounce scroll-triggered load-more calls.
-- Post-frame scheduling to avoid repeated same-frame triggers.
-- Threshold hysteresis so the same viewport position does not repeatedly trigger load more.
+- First visible item as anchor.
+- Last visible item before loading indicator as anchor.
+- Center visible item as anchor.
+- Item at current scroll focus point.
+- Index-based anchor.
+- Key-based anchor using `itemKeyBuilder`.
+- Offset-based anchor using scroll pixel delta.
 
-Important:
-The main fix should be in the cubit/request guard, not only in the widget layer. Widget throttling may be added as a secondary protection.
+The plan must recommend the safest default strategy.
 
-### 6. End-of-List Stop Logic
+### 5. Anchor Restore Strategy
 
-Define exactly when loading must stop.
+Define how to restore or preserve position after new items are appended.
+
+Evaluate:
+
+- Using `ScrollController.jumpTo(...)` with offset delta.
+- Using item position observers if available.
+- Using `findChildIndexCallback` where supported.
+- Using post-frame correction after rebuild.
+- Using sliver-aware correction for custom slivers.
+- Avoiding visible jump or flicker.
+
+### 6. Trigger Re-entry Prevention
+
+Define how to prevent immediate load-more re-trigger after append.
 
 Cover:
 
-- `returnedItems.length < pageSize` means end for offset/page-size pagination.
-- `returnedItems.isEmpty` on load-more means end and must not append an empty page.
-- `hasNext == false` means end when server metadata exists.
-- `nextCursor == null` means end for cursor pagination.
-- Error does not mean end.
-- Stale empty response does not mean end.
-- Refresh/reload/search/filter resets end state.
+- Temporary suppression until the next user scroll event.
+- Suppression until scroll metrics change meaningfully.
+- Requiring the user to leave and re-enter threshold area.
+- Using a `lastLoadMoreAnchorKey` or `lastLoadMoreScrollOffset`.
+- Avoiding repeated load-more from rebuild-only notifications.
 
-### 7. Future Provider Behavior
+Important:
+The feature should not permanently disable load-more. It should only prevent automatic chained triggers caused by append/rebuild stabilization.
 
-Plan behavior for `PaginationProvider.future(...)`:
+### 7. Interaction with Request Guard
 
-- Prevent duplicate active future requests.
-- Do not fetch same page twice concurrently.
-- Ignore stale future responses.
-- Do not call provider after end state.
-- Preserve load-more error state without marking end.
+Explain how this feature works with the existing load-more guard.
 
-### 8. Stream Provider Behavior
+The final behavior should include:
 
-Plan behavior for `PaginationProvider.stream(...)`:
+- Request guard prevents concurrent duplicate requests.
+- End-of-list logic stops loading after the final page.
+- Anchor preservation prevents viewport from staying inside the trigger zone after append.
+- Trigger re-entry guard prevents rebuild-caused fetch loops.
 
-- Do not register duplicate page streams for the same request key.
-- If stream accumulation is enabled, page 1 stream remains active and page 2 stream is added only once.
-- Once end is reached, do not register more page streams.
-- Existing active streams remain active until reset, eviction, completion policy, or dispose.
-- Stale scope stream emissions are ignored.
+### 8. View-Type Support Plan
 
-### 9. Merged Stream Provider Behavior
+Plan behavior for:
 
-Plan behavior for `PaginationProvider.mergeStreams(...)`:
+- ListView
+- GridView
+- SliverList
+- SliverGrid
+- CustomScrollView
+- StaggeredGridView
+- PageView
+- ReorderableListView
 
-- Prevent repeated registration from fast scroll events.
-- Respect end-of-list state.
-- Cancel and cleanup on reset/dispose.
-- Avoid duplicate subscriptions for identical stream keys.
+For each view type, define:
 
-### 10. State Model Updates
+- Supported.
+- Partially supported.
+- Not supported yet.
+- Required fallback behavior.
 
-Determine whether new internal state is needed:
+### 9. Reverse List Support
 
-- `activeLoadMoreRequestKey`
-- `activeRequestKeys`
-- `lastCompletedRequestKey`
-- `requestGeneration`
-- `paginationScopeId`
-- `hasReachedEnd`
-- `lastLoadMoreTriggeredAt`
-- `isLoadMoreInFlight`
+If the package supports reverse scrolling, define how anchor preservation works when:
 
-Do not expose internal fields publicly unless necessary.
+- Newer items are at bottom.
+- Older items are loaded at top.
+- `reverse == true`.
+- Chat-like lists append or prepend items.
 
-### 11. Error Handling Plan
+### 10. Variable Height Items
 
-Define:
+Define behavior when item heights are not fixed.
 
-- First-page error behavior.
-- Load-more error behavior.
-- Retry after load-more error.
-- Whether retry can use the same request key after failure.
-- Whether failed request key should be removed from active keys.
-- How to prevent immediate repeated failure loops during fast scrolling.
+Cover:
 
-### 12. Tests Required
+- Why index-based offset is unsafe with variable heights.
+- Whether key-based anchors are required.
+- Whether observer-based item position tracking is needed.
+- How to avoid visible jumps.
+
+### 11. Public API Design
+
+Decide whether new options are needed.
+
+Possible options:
+
+- `preserveScrollAnchorOnAppend`
+- `scrollAnchorStrategy`
+- `loadMoreTriggerPolicy`
+- `suppressLoadMoreUntilUserScrolls`
+- `itemKeyBuilder` requirement or recommendation
+
+Avoid adding public API unless necessary.
+
+### 12. Internal State Model
+
+Determine whether internal state is needed:
+
+- `lastAnchorKey`
+- `lastAnchorIndex`
+- `lastAnchorScrollOffset`
+- `lastLoadMoreTriggerOffset`
+- `isRestoringScrollAnchor`
+- `suppressLoadMoreUntilUserScroll`
+- `lastUserScrollGeneration`
+- `lastAppendOperationId`
+
+### 13. Tests Required
 
 Add tests for:
 
-- Fast repeated scroll calls trigger only one provider call.
-- Multiple immediate `fetchPaginatedList()` calls trigger only one load-more request.
-- Same page is not fetched twice while in flight.
-- Load-more success clears the in-flight guard.
-- Load-more error clears the in-flight guard but does not mark end.
-- Retry after error is possible only through valid retry path.
-- Empty load-more response marks end.
-- Short load-more response marks end for page-size pagination.
-- After end, additional scroll triggers do not call provider.
-- Refresh resets end and in-flight guards.
-- Reload resets end and in-flight guards.
-- Filter/search reset clears old request keys.
-- Stale response from old generation is ignored.
-- Stale empty response does not mark current scope ended.
-- Stream provider does not register duplicate page stream for same request.
-- Accumulated stream provider stops registering new streams after confirmed end.
-- Widget-level scroll simulation reproduces the original bug and verifies the fix.
+- Fast scrolling to bottom triggers one load-more.
+- After append, scroll anchor remains stable.
+- After append, load-more is not triggered again without user scroll.
+- User scrolls again near new end and load-more can trigger correctly.
+- Variable-height items do not cause repeated chained fetches.
+- External `ScrollController` still works.
+- Internal `ScrollController` still works.
+- End-of-list still stops loading.
+- Error state does not break anchor restoration.
+- Refresh resets anchor state.
+- Reload resets anchor state.
+- Filter/search reset clears anchor state.
+- Custom sliver case if supported.
+- Reverse list behavior if supported.
 
-### 13. Documentation Plan
+### 14. Documentation Plan
 
 Update:
 
-- README.md with load-more safety behavior.
-- CHANGELOG.md with bug fix / stability feature.
-- Provider documentation.
-- End-of-list documentation.
-- Fast scrolling behavior notes.
-- Retry behavior notes.
+- README.md
+- CHANGELOG.md
+- Load-more behavior docs
+- Scroll anchor preservation docs
+- Known limitations for view types
+- Recommended use of `itemKeyBuilder`
+- Troubleshooting section for fast scroll repeated fetching
 
-### 14. Implementation Phases
+### 15. Implementation Phases
 
 Break implementation into phases:
 
-1. Add failing tests reproducing fast-scroll infinite fetching.
-2. Add request key and in-flight guard tests.
-3. Implement cubit-level load-more guard.
-4. Add stale generation protection where missing.
-5. Fix end-of-list state transitions.
-6. Add stream registration guard.
-7. Add widget-level throttle/hysteresis only if cubit guard is not enough.
+1. Add failing widget test reproducing repeated chained load-more after append.
+2. Add tests for anchor capture and restoration.
+3. Add internal anchor capture model.
+4. Add post-append anchor restoration.
+5. Add trigger re-entry suppression.
+6. Integrate with request guard and end-of-list guard.
+7. Add support/fallback per view type.
 8. Update docs and changelog.
 9. Run analysis and tests.
 
-### 15. Acceptance Criteria
+### 16. Acceptance Criteria
 
-The plan is accepted only if it prevents infinite fetching at the cubit/provider level, not only visually in the UI.
+The implementation is accepted only if:
 
-The final implementation must prove that rapid repeated scrolling cannot create duplicate page fetches, cannot bypass end-of-list state, and cannot leave the cubit stuck in loading state.
+- The user's viewport remains stable after appending new items.
+- Appending a page does not automatically trigger the next page unless the user scrolls again.
+- The feature works with the load-more request guard.
+- The feature works with end-of-list logic.
+- No visible infinite fetch loop remains during fast scroll testing.
+- Behavior is tested and documented.
 
 Do not implement code yet.
 Produce the plan only.

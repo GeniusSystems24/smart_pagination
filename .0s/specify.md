@@ -1,69 +1,87 @@
-
 /speckit.specify
 
-Add a new stability feature to the existing Flutter/Dart package `smart_pagination` to prevent infinite duplicate page fetching during rapid repeated scrolling.
+Add a new scroll stability feature to the existing Flutter/Dart package `smart_pagination`: preserve the user's scroll anchor after appending new paginated items.
 
 ## Problem
 
-When the user scrolls quickly and repeatedly near the end of a paginated list, the package may trigger `load more` many times before the previous request finishes or before pagination state is updated correctly.
+The infinite load-more issue can still happen even after adding request guards because the scroll position remains near the bottom after new items are appended.
 
-This causes uncontrolled repeated fetching of next pages. The list may keep requesting pages indefinitely, even when the end should have been reached. It may also fetch the same page multiple times, append duplicate data, skip correct stop conditions, or keep network/API calls running without a valid need.
+When the user scrolls quickly to the end of the list, the load-more threshold is triggered. The next page is fetched and appended. However, after the new items are inserted, the scroll viewport may still remain inside or near the load-more trigger area. This immediately triggers another load-more request, then another one, creating a chain of repeated page fetches.
 
-The issue is visible when fast scroll gestures repeatedly hit the invisible-items threshold near the bottom of the list. The pagination trigger fires again and again while the previous load-more operation is still pending or while the cubit has not yet committed the next-page state.
+The core issue is that the package does not preserve focus on the item where the user stopped scrolling. After appending items, the list should keep the user's visual position stable relative to a known anchor item.
 
 ## Goal
 
-Implement robust load-more guarding so the package never starts duplicate, overlapping, stale, or unnecessary page requests during fast scrolling.
+Implement scroll anchor preservation so that when new paginated items are appended, the user's viewport remains focused on the item that was visible before the append operation.
 
-The package must correctly stop fetching when it reaches the end of available data.
+The package should prevent the scroll position from staying stuck in the load-more trigger zone after new items are added.
 
-## Core Requirements
+## Core Requirement
 
-1. Only one load-more request may be active per pagination scope at a time.
-2. Repeated scroll notifications while `isLoadingMore == true` must not start another fetch.
-3. The same page/request/cursor must not be fetched multiple times concurrently.
-4. The cubit must ignore stale load-more responses from old request generations.
-5. `hasReachedEnd` must reliably prevent additional load-more calls.
-6. Empty or short page responses must mark the list as ended when appropriate.
-7. Errors must not mark the list as ended incorrectly.
-8. Refresh, reload, search change, and filter change must reset the load-more guard and end state safely.
-9. Fast scrolling must not create an infinite fetch loop.
-10. The UI must remain responsive and must not repeatedly append loading indicators.
+Before starting a load-more operation, capture a scroll anchor from the current viewport.
 
-## Expected User Behavior
+After the new page is appended and the list is rebuilt, restore or preserve the scroll position relative to that anchor.
 
-When the user scrolls fast near the end:
+The anchor may be based on:
 
-- The first valid load-more request starts.
-- Additional scroll threshold events are ignored while that request is active.
-- When the request succeeds, the next page is appended once.
-- If the returned page indicates there is no more data, loading stops permanently for that scope.
-- If there is more data, a future load-more may happen only after the current request completes and the user reaches the threshold again.
+- item key
+- item index
+- first visible item
+- last visible item before the loading indicator
+- nearest stable visible item
+- viewport offset delta
+
+The implementation must choose the safest strategy for Flutter scrollable widgets.
+
+## Expected Behavior
+
+When the user reaches the bottom and load-more starts:
+
+1. The package captures the current visible anchor item.
+2. The next page is fetched once.
+3. New items are appended to the list.
+4. The package preserves the viewport position relative to the captured anchor.
+5. The same anchor item remains visually stable after insertion.
+6. The scroll position no longer remains artificially stuck inside the load-more threshold.
+7. Load-more is not triggered again unless the user scrolls again toward the new end.
+
+## Supported Views
+
+The feature should be evaluated for all supported paginated views:
+
+- ListView
+- GridView
+- CustomScrollView / Sliver variants
+- StaggeredGridView
+- PageView if applicable
+- ReorderableListView if applicable
+
+If exact anchor preservation cannot be implemented for all views, document the supported behavior and limitations.
 
 ## Non-Goals
 
 Do not:
 
-- Rewrite the whole package.
-- Replace the Cubit architecture.
-- Remove `.withProvider(...)` or `.withCubit(...)`.
-- Break existing public API usage.
-- Hide duplicate items silently without explicit identity rules.
-- Treat API errors as end-of-list.
-- Disable pagination entirely.
+- Disable pagination.
+- Hide the load-more indicator without fixing scroll behavior.
+- Depend only on throttling or debouncing.
+- Force users to manually manage scroll correction.
+- Break existing `ScrollController` support.
+- Break `.withProvider(...)` or `.withCubit(...)` constructors.
+- Rewrite the full rendering system.
 
 ## Acceptance Criteria
 
 The feature is accepted only if:
 
-1. Fast repeated scrolling cannot trigger multiple simultaneous load-more requests.
-2. The same page is not fetched twice concurrently.
-3. The provider is not called again after `hasReachedEnd == true`.
-4. Empty load-more response stops further loading for the current scope.
-5. Short page response stops further loading when using page-size based pagination.
-6. Errors do not set `hasReachedEnd` to true.
-7. Refresh/reload resets the guards correctly.
-8. Search/filter changes reset the guards correctly.
-9. Stale responses cannot append items or change end state.
-10. Unit/widget tests reproduce the fast-scroll issue and prove it is fixed.
-11. README and CHANGELOG document the behavior.
+1. When new items are appended, the visible anchor item remains stable.
+2. The scroll position does not remain stuck inside the load-more trigger zone after append.
+3. Fast repeated scrolling no longer causes automatic chained load-more calls after each append.
+4. The next load-more can happen only after the user intentionally scrolls near the new end again.
+5. The behavior works with externally provided `ScrollController`.
+6. The behavior works with internal scroll controllers.
+7. The behavior is tested for normal lists.
+8. The behavior is tested for variable-height items if possible.
+9. The behavior is tested with custom slivers if supported.
+10. Existing API compatibility is preserved.
+11. README and CHANGELOG document the new scroll anchor preservation behavior.

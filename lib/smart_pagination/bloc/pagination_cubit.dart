@@ -224,6 +224,44 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   /// [cancelOngoingRequest], [dispose]).
   String? _activeLoadMoreKey;
 
+  // ==========================================================================
+  // Spec 004-scroll-anchor-preservation — anchor state.
+  // See specs/004-scroll-anchor-preservation/data-model.md §4.
+  // Behavior is wired up in subsequent tasks (T021–T029); these fields are
+  // declared here so the test scaffolds in Phase 2 can compile.
+  // ==========================================================================
+
+  /// Pending anchor snapshot pushed by the widget layer's
+  /// [captureAnchorBeforeLoadMore] before a load-more fetch starts.
+  /// Consumed in the post-frame restore after a successful append; cleared
+  /// on error, scope reset, or generation mismatch.
+  _PendingScrollAnchor? _pendingAnchor;
+
+  /// When `true`, [fetchPaginatedList] rejects load-more calls until a
+  /// user-initiated `ScrollStartNotification` (with non-null `dragDetails`)
+  /// is observed via [markUserScroll].
+  ///
+  /// Set to `true` immediately before `emit(isLoadingMore: true)` in
+  /// [fetchPaginatedList] (spec 004-scroll-anchor-preservation §6, §7.1).
+  /// Cleared by:
+  ///  - [markUserScroll] (canonical clear path),
+  ///  - load-more error path (spec §7.3),
+  ///  - scope reset ([_resetToInitial], [refreshPaginatedList], [dispose]).
+  bool _suppressLoadMoreUntilUserScroll = false;
+
+  /// Monotonic counter of observed user-scroll events. Incremented by every
+  /// [markUserScroll] call (gated on [_anchorRestoreInFlight]). Used by
+  /// tests to assert "exactly one user gesture per allowed load-more".
+  /// Not consumed by production logic.
+  int _lastUserScrollGeneration = 0;
+
+  /// When `true`, [markUserScroll] is a no-op. Set immediately before the
+  /// post-frame restore is scheduled; cleared at the next frame boundary
+  /// (`SchedulerBinding.instance.endOfFrame`). Defends against the
+  /// unlikely case of a synthetic `ScrollStartNotification` with non-null
+  /// `dragDetails` arriving during the restore (spec §5, R5).
+  bool _anchorRestoreInFlight = false;
+
   /// Builds the per-page load-more key for [_activeLoadMoreKey].
   String _buildLoadMoreKey(R request) =>
       '${request.page}:${request.pageSize ?? 'null'}';
@@ -568,6 +606,11 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _pages.clear();
     _currentMeta = null;
     _lastFetchTime = null;
+    // AUDIT 004 (insertion site): clear scroll-anchor state on scope reset:
+    //   _pendingAnchor = null;
+    //   _suppressLoadMoreUntilUserScroll = false;
+    //   _anchorRestoreInFlight = false;
+    // (per data-model.md §6 transitions, plan §7.4)
     emit(SmartPaginationInitial<T>());
   }
 
@@ -636,6 +679,11 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _lastFetchWasError = false;
     _lastErrorWasNetwork = false;
     _lastError = null;
+    // AUDIT 004 (insertion site): clear scroll-anchor state on refresh:
+    //   _pendingAnchor = null;
+    //   _suppressLoadMoreUntilUserScroll = false;
+    //   _anchorRestoreInFlight = false;
+    // Refresh is a scope-reset path (per data-model.md §6 transitions).
 
     final request = _buildRequest(
       reset: true,
@@ -790,9 +838,17 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     //   5. _hasReachedEnd  (above)
     //   6. compute loadMoreKey
     //   7. _activeLoadMoreKey == loadMoreKey  → drop duplicate page request
+    // AUDIT 004 (insertion site): step 7b will be added here —
+    //                              `if (_suppressLoadMoreUntilUserScroll) return;`
+    //                              per plan.md §7.1 / FR-004b.
     //   8. currentState.isLoadingMore         → drop duplicate state-level
     //   9. _isFetching = true                 → moved here from _fetch()
     //   10. _activeLoadMoreKey = loadMoreKey  → set before any await
+    // AUDIT 004 (insertion site): step 11 will be added here —
+    //                              `_suppressLoadMoreUntilUserScroll = true;`
+    //                              and `_pendingAnchor` is consumed
+    //                              from the snapshot the widget pushed
+    //                              via `captureAnchorBeforeLoadMore`.
     //   11. emit(isLoadingMore: true)
     //   12. _fetch(...)
     final request = _buildRequest(
@@ -1094,6 +1150,15 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       // same page after an error to proceed.
       _isFetching = false;
       _activeLoadMoreKey = null;
+      // AUDIT 004 (insertion site): the ERROR branch above (lines ~1090-1097)
+      // must additionally clear:
+      //   _suppressLoadMoreUntilUserScroll = false;
+      //   _pendingAnchor = null;
+      // so retry can proceed without forcing a user-scroll gesture
+      // (plan §7.3). The SUCCESS branch must KEEP _suppressLoadMoreUntilUserScroll
+      // set to true (only a user-initiated scroll clears it post-success).
+      // The post-frame restore is also scheduled from the SUCCESS branch,
+      // not from this finally block.
     }
   }
 
@@ -1400,6 +1465,52 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     }
   }
 
+  // ==========================================================================
+  // Spec 004-scroll-anchor-preservation — widget→cubit anchor hooks.
+  // ==========================================================================
+  //
+  // These two methods are part of the package's INTERNAL contract: the
+  // widget layer (`PaginateApiView`) calls them at specific lifecycle
+  // moments to feed the cubit anchor information. They are public on the
+  // cubit class so the widget can reach them, but external consumers
+  // should not call them directly — there is no scenario where doing so
+  // produces correct anchor behavior outside the package's own widget
+  // layer wiring.
+  //
+  // Implementation: stubs only at this point (T008). Full bodies land in
+  // T022 (`captureAnchorBeforeLoadMore` consume in `fetchPaginatedList`),
+  // T023 (suppression-flag set), T024–T025 (post-frame restore), and T027
+  // (`markUserScroll` clearing logic).
+  // ==========================================================================
+
+  /// Internal — called by `PaginateApiView` immediately before a load-more
+  /// fetch starts. Captures the visible-viewport anchor snapshot for use
+  /// during the post-fetch restore.
+  ///
+  /// Idempotent within a single in-flight fetch: subsequent calls during
+  /// the same fetch overwrite (the latest snapshot wins).
+  ///
+  /// **Internal**: this method is part of the package's internal contract.
+  /// Direct external use is not supported. See spec
+  /// `004-scroll-anchor-preservation` for context.
+  void captureAnchorBeforeLoadMore(_PendingScrollAnchor snapshot) {
+    // T008 stub: store only. Full integration with `fetchPaginatedList`
+    // and post-frame restore lands in T022–T025.
+    _pendingAnchor = snapshot;
+  }
+
+  /// Internal — called by `PaginateApiView`'s outer
+  /// `NotificationListener<ScrollNotification>` whenever a user-initiated
+  /// drag-scroll starts. Clears the post-append load-more suppression flag
+  /// if set, allowing the next threshold cross to fire a load-more.
+  ///
+  /// **Internal**: see [captureAnchorBeforeLoadMore].
+  void markUserScroll() {
+    // T008 stub: monotonic counter increment only. Full clearing logic
+    // (gated on `_anchorRestoreInFlight`) lands in T027.
+    _lastUserScrollGeneration++;
+  }
+
   @override
   void cancelOngoingRequest() {
     _fetchToken++;
@@ -1417,6 +1528,14 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _cancelAllPageStreams();
     _connectivitySubscription?.cancel();
     _connectivitySubscription = null;
+    // AUDIT 004 (insertion site): clear scroll-anchor state on dispose:
+    //   _pendingAnchor = null;
+    //   _suppressLoadMoreUntilUserScroll = false;
+    //   _anchorRestoreInFlight = false;
+    // (per data-model.md §6 transitions; defensive — the cubit object
+    // itself will be garbage-collected after dispose, but explicit
+    // clearing prevents any lingering callback from the post-frame
+    // restore from observing inconsistent state.)
   }
 
   @override
