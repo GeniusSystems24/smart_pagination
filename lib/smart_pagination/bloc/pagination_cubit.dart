@@ -15,6 +15,7 @@ class _PageStreamEntry<T> {
     required this.generation,
     required this.latestValue,
     this.error,
+    this.isComplete = false,
   });
 
   final StreamSubscription<List<T>> subscription;
@@ -26,6 +27,12 @@ class _PageStreamEntry<T> {
   /// contribute to the merged view) but its [subscription] is cancelled, so
   /// no further emissions will arrive for this page.
   Object? error;
+
+  /// Spec 003-load-more-guard §6.7: Set to `true` once this page's stream has
+  /// produced at least one full emission (i.e., `.first` has resolved). Used
+  /// by `_emitMergedLoaded` to guard the short-page end-of-list heuristic so
+  /// pages still warming up cannot prematurely trigger `hasReachedEnd`.
+  bool isComplete;
 }
 
 // =============================================================================
@@ -86,6 +93,7 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     SortOrderCollection<T>? orders,
     this.errorRetryStrategy = ErrorRetryStrategy.none,
     Stream<bool>? connectivityStream,
+    this.identityKey,
   }) : _provider = provider,
        _listBuilder = listBuilder,
        _onInsertionCallback = onInsertionCallback,
@@ -124,6 +132,28 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   /// Set to [ErrorRetryStrategy.automatic] to allow automatic retries, or
   /// [ErrorRetryStrategy.manual] to require explicit [retryAfterError] calls.
   final ErrorRetryStrategy errorRetryStrategy;
+
+  /// Optional identity-key extractor for cross-page item deduplication.
+  ///
+  /// Spec 003-load-more-guard §FR-012. When non-null, the cubit drops items
+  /// from a newly fetched page whose `identityKey(item)` already appears in
+  /// any earlier accumulated page. Equality is on the extracted key, not the
+  /// item itself, so consumers can dedupe by `id`, composite tuple, or any
+  /// stable hashable value.
+  ///
+  /// When `null` (default) no deduplication occurs — items are appended
+  /// exactly as the provider returned them. Deduplication is opt-in: the
+  /// library never silently drops items.
+  ///
+  /// Example:
+  /// ```dart
+  /// SmartPaginationCubit<Product, PaginationRequest>(
+  ///   request: PaginationRequest(page: 1, pageSize: 20),
+  ///   provider: PaginationProvider.future(api.fetchProducts),
+  ///   identityKey: (product) => product.id,
+  /// );
+  /// ```
+  final Object? Function(T item)? identityKey;
 
   @override
   final R initialRequest;
@@ -176,7 +206,52 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   }
 
   /// Flag to prevent concurrent fetch operations.
+  ///
+  /// Spec 003-load-more-guard §4.2: This flag is now set in
+  /// [fetchPaginatedList] **before** the `emit(isLoadingMore: true)` call,
+  /// not inside [_fetch]. This closes the synchronous gap between guard
+  /// check and flag set. The flag is cleared in [_fetch]'s `finally` block
+  /// (success and error paths) and in [cancelOngoingRequest].
   bool _isFetching = false;
+
+  /// Per-page request key of the currently in-flight load-more.
+  ///
+  /// Spec 003-load-more-guard §4.1: Independent second-layer guard against
+  /// duplicate fetches for the same page. Format is `"page:pageSize"`.
+  /// Set in [fetchPaginatedList] alongside `_isFetching = true`; cleared on
+  /// completion (success or error) in [_fetch]'s `finally` block, and on
+  /// every scope-reset path ([_resetToInitial], [refreshPaginatedList],
+  /// [cancelOngoingRequest], [dispose]).
+  String? _activeLoadMoreKey;
+
+  /// Builds the per-page load-more key for [_activeLoadMoreKey].
+  String _buildLoadMoreKey(R request) =>
+      '${request.page}:${request.pageSize ?? 'null'}';
+
+  /// Removes items from [pageItems] whose [identityKey] already appears in
+  /// [existingPages]. No-op when [identityKey] is null or [pageItems] is
+  /// empty. Spec 003-load-more-guard §FR-012.
+  List<T> _dedupeWithIdentityKey(
+    List<T> pageItems,
+    List<List<T>> existingPages,
+  ) {
+    final extractor = identityKey;
+    if (extractor == null) return pageItems;
+    if (pageItems.isEmpty) return pageItems;
+    final seen = <Object?>{};
+    for (final page in existingPages) {
+      for (final item in page) {
+        seen.add(extractor(item));
+      }
+    }
+    final out = <T>[];
+    for (final item in pageItems) {
+      if (seen.add(extractor(item))) {
+        out.add(item);
+      }
+    }
+    return out;
+  }
 
   /// Flag to track if the last fetch resulted in an error.
   /// Used by [errorRetryStrategy] to prevent automatic retries.
@@ -711,11 +786,37 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
 
     if (_hasReachedEnd) return;
 
+    // Spec 003-load-more-guard §4.4 — guard order:
+    //   5. _hasReachedEnd  (above)
+    //   6. compute loadMoreKey
+    //   7. _activeLoadMoreKey == loadMoreKey  → drop duplicate page request
+    //   8. currentState.isLoadingMore         → drop duplicate state-level
+    //   9. _isFetching = true                 → moved here from _fetch()
+    //   10. _activeLoadMoreKey = loadMoreKey  → set before any await
+    //   11. emit(isLoadingMore: true)
+    //   12. _fetch(...)
+    final request = _buildRequest(
+      reset: false,
+      override: requestOverride,
+      limit: limit,
+    );
+    final loadMoreKey = _buildLoadMoreKey(request);
+    if (_activeLoadMoreKey == loadMoreKey) {
+      if (SmartPaginationCubit.enableLogging) {
+        _logger.d(
+          'Duplicate load-more for key=$loadMoreKey already in flight; skipping',
+        );
+      }
+      return;
+    }
+
     // Set isLoadingMore = true when loading more items
     final currentState = state;
     if (currentState is SmartPaginationLoaded<T>) {
       if (currentState.isLoadingMore) return; // Already loading
 
+      _isFetching = true;
+      _activeLoadMoreKey = loadMoreKey;
       emit(
         currentState.copyWith(
           isLoadingMore: true,
@@ -724,11 +825,6 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       );
     }
 
-    final request = _buildRequest(
-      reset: false,
-      override: requestOverride,
-      limit: limit,
-    );
     _fetch(request: request, reset: false);
   }
 
@@ -736,9 +832,20 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     required R request,
     required bool reset,
   }) async {
-    // Set fetching flag to prevent concurrent requests
-    _isFetching = true;
+    // Spec 003-load-more-guard §4.2: `_isFetching` is now set in
+    // `fetchPaginatedList` BEFORE this method is called. For initial-load
+    // paths that bypass `fetchPaginatedList` (refresh/reset) we still need
+    // the flag here to prevent concurrent fetches.
+    if (!_isFetching) {
+      _isFetching = true;
+    }
     final token = ++_fetchToken;
+
+    // Spec 003-load-more-guard §8.1, §9: capture the stream factory call
+    // exactly once per page. The same instance is awaited for `.first`
+    // (snapshot) and passed to `_attachStream` for the persistent
+    // subscription, eliminating the previous double factory call.
+    Stream<List<T>>? capturedStream;
 
     try {
       // Fetch data based on provider type
@@ -755,20 +862,18 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
                 )
               : dataProvider(request),
         StreamPaginationProvider<T, R> provider =>
-          provider.streamProvider(request).first,
+          (capturedStream = provider.streamProvider(request)).first,
         MergedStreamPaginationProvider<T, R> provider =>
-          provider.getMergedStream(request).first,
+          (capturedStream = provider.getMergedStream(request)).first,
       };
 
       // Check if request was cancelled
       if (token != _fetchToken) {
-        _isFetching = false;
         return;
       }
       // Per FR-005: do not mutate state after the cubit has been closed
       // (e.g., a slow page response that resolves after `dispose()`).
       if (isClosed) {
-        _isFetching = false;
         return;
       }
 
@@ -783,12 +888,51 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       // Refresh on initial load and on load more (any successful fetch)
       _lastFetchTime = DateTime.now();
 
+      // Spec 003-load-more-guard §6.1, FR-005: empty load-more response
+      // signals end-of-list. Mark `hasReachedEnd` and DO NOT append the
+      // empty page. (Empty initial-load is handled below — it produces an
+      // empty Loaded state with `hasReachedEnd = true`.)
+      if (!reset && pageItems.isEmpty) {
+        final meta = PaginationMeta(
+          page: request.page,
+          pageSize: request.pageSize,
+          hasNext: false,
+          hasPrevious: request.page > 1,
+        );
+        _currentMeta = meta;
+        final currentState = state;
+        if (currentState is SmartPaginationLoaded<T>) {
+          emit(
+            currentState.copyWith(
+              meta: meta,
+              hasReachedEnd: true,
+              isLoadingMore: false,
+              loadMoreError: null,
+              fetchedAt: _lastFetchTime,
+              dataExpiredAt: _dataAge != null && _lastFetchTime != null
+                  ? _lastFetchTime!.add(_dataAge)
+                  : null,
+              lastOperation: const PaginationOperationNone(),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Spec 003-load-more-guard §FR-012: cross-page identity-key
+      // deduplication (opt-in). On load-more, drop items already present in
+      // earlier pages. On reset/initial load `_pages` is empty so dedup is
+      // a no-op and items pass through unchanged.
+      final dedupedPageItems = reset
+          ? pageItems
+          : _dedupeWithIdentityKey(pageItems, _pages);
+
       if (reset) {
         _pages
           ..clear()
-          ..add(pageItems);
+          ..add(dedupedPageItems);
       } else {
-        _pages.add(pageItems);
+        _pages.add(dedupedPageItems);
       }
 
       _trimCachedPages();
@@ -856,12 +1000,29 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       // (initial AND load-more) per spec FR-010. This delivers stream
       // accumulation: page N's subscription is added to the registry without
       // cancelling pages 1..N-1.
-      if (_provider is StreamPaginationProvider<T, R>) {
-        final streamProvider = _provider;
-        _attachStream(streamProvider.streamProvider(request), request);
-      } else if (_provider is MergedStreamPaginationProvider<T, R>) {
-        final mergedProvider = _provider;
-        _attachStream(mergedProvider.getMergedStream(request), request);
+      //
+      // Spec 003-load-more-guard §8.1, §9: when the captured stream is a
+      // broadcast stream, reuse it for the persistent subscription — the
+      // `.first` consumer above and the `_attachStream` listener can both
+      // co-exist. For single-subscription streams the `.first` await has
+      // already consumed the only allowed listener slot; we fall back to a
+      // second factory call so `_attachStream` gets a fresh subscription.
+      // RC-3 (eliminate double factory call) applies to broadcast streams,
+      // which is the real-world common case (Firestore, broadcast
+      // controllers, RxDart subjects).
+      if (capturedStream != null) {
+        final Stream<List<T>> persistent;
+        final provider = _provider;
+        if (capturedStream.isBroadcast) {
+          persistent = capturedStream;
+        } else if (provider is StreamPaginationProvider<T, R>) {
+          persistent = provider.streamProvider(request);
+        } else if (provider is MergedStreamPaginationProvider<T, R>) {
+          persistent = provider.getMergedStream(request);
+        } else {
+          persistent = capturedStream;
+        }
+        _attachStream(persistent, request);
       }
     } on Exception catch (error, stackTrace) {
       if (SmartPaginationCubit.enableLogging) {
@@ -927,8 +1088,12 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         emit(SmartPaginationError<T>(error: exception));
       }
     } finally {
-      // Always clear the fetching flag
+      // Spec 003-load-more-guard §4.1, §4.2: always clear both the in-flight
+      // flag and the per-page key. Runs on success, error, and stale-token
+      // early returns. Clearing the key allows a subsequent retry for the
+      // same page after an error to proceed.
       _isFetching = false;
+      _activeLoadMoreKey = null;
     }
   }
 
@@ -947,7 +1112,22 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     return base.copyWith(page: nextPage, pageSize: pageSize) as R;
   }
 
-  bool _computeHasNext(List<T> items, int? pageSize) {
+  /// Computes whether more pages may exist after the current one.
+  ///
+  /// Spec 003-load-more-guard §6.3: When the provider knows the answer
+  /// (cursor-null or explicit `hasMore: false`), it can pass [serverHasNext]
+  /// to override the item-count heuristic. The override is consulted first
+  /// — if it is non-null, its value is returned verbatim.
+  ///
+  /// Without [serverHasNext], end-of-list is inferred from the page size:
+  /// a short page (`items.length < pageSize`) signals end. When [pageSize]
+  /// is null, a non-empty page is treated as "more may exist".
+  bool _computeHasNext(
+    List<T> items,
+    int? pageSize, {
+    bool? serverHasNext,
+  }) {
+    if (serverHasNext != null) return serverHasNext;
     if (pageSize == null) {
       return items.isNotEmpty;
     }
@@ -1005,8 +1185,17 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     final page = request.page;
     final generation = _generation;
 
-    // Defensive: cancel any existing entry for this page (should not happen
-    // under correct usage, but eviction + re-load could in theory create one).
+    // Spec 003-load-more-guard §4.6, §8.2: duplicate-registration guard.
+    // If this exact page is already registered under the current generation,
+    // skip silently — the existing subscription is the authoritative one and
+    // re-registering would either double-subscribe (cold stream) or destroy
+    // accumulated `latestValue` for no reason.
+    final existing = _pageStreams[page];
+    if (existing != null && existing.generation == generation) {
+      return;
+    }
+
+    // Defensive: cancel any stale entry from a prior generation for this page.
     _pageStreams.remove(page)?.subscription.cancel();
 
     // Seed the registry with whatever `_pages` currently has for this page.
@@ -1025,6 +1214,11 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         final entry = _pageStreams[page];
         if (entry == null) return; // entry already cancelled by reset/eviction
         entry.latestValue = items;
+        // Spec 003-load-more-guard §6.7: mark the page complete once it has
+        // delivered its first emission. The merged-stream end-of-list check
+        // in `_emitMergedLoaded` only consults pages flagged complete, so
+        // pages still warming up cannot prematurely set `hasReachedEnd`.
+        entry.isComplete = true;
         _pageErrors.remove(page); // a fresh successful emission clears prior error
         _rebuildPagesFromRegistry();
         _emitMergedLoaded(request);
@@ -1036,10 +1230,13 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       },
     );
 
+    // The page's `.first` snapshot has already been awaited and appended to
+    // `_pages` by `_fetch`, so the entry is born complete.
     _pageStreams[page] = _PageStreamEntry<T>(
       subscription: sub,
       generation: generation,
       latestValue: seededValue,
+      isComplete: true,
     );
   }
 
@@ -1068,18 +1265,40 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   /// Emits a `SmartPaginationLoaded` derived from the current registry state.
   /// `_pages` MUST already be in sync with the registry before calling.
   void _emitMergedLoaded(R request) {
-    final aggregated = _applyListBuilder(
-      _pages.expand((page) => page).toList(),
-    );
+    // Spec 003-load-more-guard §FR-012: apply identity-key deduplication to
+    // the merged view. `_rebuildPagesFromRegistry` rebuilds `_pages` from the
+    // per-page registry in ascending order — we deduplicate across that
+    // ordered view so the first occurrence (in the lowest page) wins.
+    final mergedRaw = _pages.expand((page) => page).toList();
+    final extractor = identityKey;
+    final merged = extractor == null
+        ? mergedRaw
+        : (() {
+            final seen = <Object?>{};
+            final out = <T>[];
+            for (final item in mergedRaw) {
+              if (seen.add(extractor(item))) {
+                out.add(item);
+              }
+            }
+            return out;
+          })();
+
+    final aggregated = _applyListBuilder(merged);
     final sortedItems = _applySorting(aggregated);
     _onInsertionCallback?.call(sortedItems);
 
     // Derive end-of-pagination per Clarifications Q2 / FR-019b/c.
     // When pageSize is null we cannot compute "page is full"; mirror the
     // existing `_computeHasNext` behaviour and assume more pages remain.
+    //
+    // Spec 003-load-more-guard §6.7 (RC-7): only pages that have completed
+    // their initial emission contribute to the short-page end-of-list
+    // signal. Pages still warming up cannot prematurely set `hasReachedEnd`.
     final pageSize = request.pageSize;
     final endOfPagination = pageSize != null &&
-        _pageStreams.values.any((e) => e.latestValue.length < pageSize);
+        _pageStreams.values
+            .any((e) => e.isComplete && e.latestValue.length < pageSize);
     final highestPage = _pageStreams.keys.isEmpty
         ? request.page
         : _pageStreams.keys.reduce((a, b) => a > b ? a : b);
@@ -1185,6 +1404,10 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   void cancelOngoingRequest() {
     _fetchToken++;
     _isFetching = false;
+    // Spec 003-load-more-guard §4.1: external cancellation must also clear
+    // the per-page key so a subsequent fetch for the same page is not
+    // blocked by a stale active key.
+    _activeLoadMoreKey = null;
   }
 
   @override

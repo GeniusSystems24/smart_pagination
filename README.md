@@ -25,6 +25,38 @@ SmartPaginationListView.withProvider(
 - **Stream Support** - Future, Stream, and merged streams
 - **Data Operations** - Insert, remove, update, replace, and refresh items with first/last/at targeting
 - **Auto Expiration** - Configurable data age for global cubits
+- **Load-More Safety** - Rapid scrolling can never trigger duplicate concurrent page requests; optional cross-page deduplication via `identityKey`
+
+## Load-More Safety Behaviour
+
+Spec 003 (`specs/003-load-more-guard/`) hardens load-more against duplicate concurrent fetches. The behaviour is **state-guard only** — there is no debounce or throttle timer.
+
+- **Exactly one load-more is active per cubit at any time.** Additional `fetchPaginatedList()` calls while a request is in flight are silently dropped at the cubit level. The widget layer additionally schedules the trigger via `SchedulerBinding.addPostFrameCallback` so multiple item builders firing in the same build pass collapse to a single callback.
+- **Empty load-more responses end the list without appending.** A short page (fewer items than `pageSize`) IS appended and ends the list. A non-empty load-more page leaves the list open for further fetches.
+- **Errors never end the list.** A failed load-more sets `loadMoreError` on the loaded state; `hasReachedEnd` is unchanged. A subsequent `fetchPaginatedList()` (or `retryAfterError()` under `errorRetryStrategy.manual`) is allowed.
+- **Refresh / search / filter changes reset every guard.** `refreshPaginatedList()` clears `_isFetching`, the in-flight per-page key, `hasReachedEnd`, and bumps the generation counter so any stale future or stream emission is discarded.
+
+### Optional: cross-page item deduplication
+
+Configure `identityKey` to drop items whose key already appears in an earlier accumulated page. The library never deduplicates silently — without `identityKey`, items are appended exactly as the provider returned them.
+
+```dart
+SmartPaginationCubit<Product, PaginationRequest>(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(api.fetchProducts),
+  identityKey: (product) => product.id,
+);
+```
+
+### Error retry behaviour
+
+After a load-more error, the `errorRetryStrategy` parameter controls the next attempt:
+
+| Strategy | Effect |
+| --- | --- |
+| `none` (default) | Errors persist; only `refreshPaginatedList()` clears them |
+| `manual` | `retryAfterError()` must be called explicitly |
+| `automatic` | The next `fetchPaginatedList()` retries the failed page |
 
 ## Installation
 

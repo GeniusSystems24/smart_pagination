@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-05-05
+
+### Added
+
+- **Optional `identityKey` parameter on `SmartPaginationCubit`** for opt-in cross-page item deduplication. When configured, the cubit drops items whose identity-key already appears in an earlier accumulated page before they are appended to the merged list. Default behaviour is unchanged — without `identityKey`, items are appended exactly as the provider returned them.
+  ```dart
+  SmartPaginationCubit<Product, PaginationRequest>(
+    request: PaginationRequest(page: 1, pageSize: 20),
+    provider: PaginationProvider.future(api.fetchProducts),
+    identityKey: (product) => product.id,
+  );
+  ```
+- **Per-page in-flight key tracking (`_activeLoadMoreKey`).** Independent second-layer guard against duplicate concurrent fetches for the same page key (`"page:pageSize"`). Set in `fetchPaginatedList` before the first `await`; cleared on completion, error, cancellation, and reset.
+- **`isComplete` flag on `_PageStreamEntry`.** Pages that have not yet delivered their first emission no longer contribute to the short-page end-of-list heuristic, eliminating premature `hasReachedEnd` during stream warm-up.
+
+### Fixed
+
+- **Rapid scroll could trigger duplicate concurrent load-more requests.** `SmartPaginationCubit._isFetching` is now set in `fetchPaginatedList` **before** `emit(isLoadingMore: true)` (previously inside `_fetch`, after a synchronous gap). Combined with the new `_activeLoadMoreKey` guard, ten rapid `fetchPaginatedList()` calls now produce exactly one provider call.
+- **Stream providers double-called the factory function per page load.** `_fetch` now captures the stream instance once and reuses it for both the `.first` snapshot and the persistent `_attachStream` subscription when the stream is broadcast. Single-subscription streams still receive a second factory call (backwards-compatible fallback).
+- **`_attachStream` could double-register the same page in the same generation.** A new generation-aware guard at the top of `_attachStream` skips re-registration when an entry for the page already exists at the current generation.
+- **Empty load-more responses appended an empty page before end-of-list detection.** `_fetch` now early-returns on `pageItems.isEmpty` for load-more, sets `hasReachedEnd: true`, and does not append.
+- **`_emitMergedLoaded` could prematurely set `hasReachedEnd` during stream warm-up.** The short-page heuristic now consults only pages flagged complete (`isComplete == true`).
+- **External `cancelOngoingRequest()` left `_activeLoadMoreKey` set.** Cancellation now clears the per-page key so subsequent fetches for the same page are not blocked by a stale active key.
+
+### Changed
+
+- **Widget-level scroll trigger is wrapped in `SchedulerBinding.addPostFrameCallback`.** Multiple item builders calling `widget.fetchPaginatedList?.call()` during the same build pass now collapse to a single post-frame callback (defense in depth — the cubit-level guard is still authoritative).
+- **`_computeHasNext` accepts an optional `serverHasNext` override.** Forward-compatible plumbing for cursor-aware providers; existing call sites are unchanged. Wiring `serverHasNext` through a public `PaginationResponse` wrapper is deferred to a future enhancement.
+
 ## [3.3.0] - 2026-05-05
 
 ### Added

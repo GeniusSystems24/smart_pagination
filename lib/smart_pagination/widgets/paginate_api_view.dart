@@ -441,7 +441,14 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         initialItemCount: _items.length,
         itemBuilder: (context, index, animation) {
           if (_shouldLoadMore(index)) {
-            widget.fetchPaginatedList?.call();
+            // Spec 003-load-more-guard §5.1: schedule the fetch for after the
+            // current frame so multiple item builders triggering during the
+            // same build pass collapse to a single call. The cubit's
+            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
+            // still slip through; this is defense in depth.
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              widget.fetchPaginatedList?.call();
+            });
           }
           if (index >= _items.length) {
             return const SizedBox.shrink();
@@ -465,7 +472,14 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             if (_shouldLoadMore(index)) {
+              // Spec 003-load-more-guard §5.1: schedule the fetch for after the
+            // current frame so multiple item builders triggering during the
+            // same build pass collapse to a single call. The cubit's
+            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
+            // still slip through; this is defense in depth.
+            SchedulerBinding.instance.addPostFrameCallback((_) {
               widget.fetchPaginatedList?.call();
+            });
             }
 
             final child = widget.itemBuilder(context, _items, index);
@@ -629,7 +643,14 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         initialItemCount: _items.length,
         itemBuilder: (context, index, animation) {
           if (_shouldLoadMore(index)) {
-            widget.fetchPaginatedList?.call();
+            // Spec 003-load-more-guard §5.1: schedule the fetch for after the
+            // current frame so multiple item builders triggering during the
+            // same build pass collapse to a single call. The cubit's
+            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
+            // still slip through; this is defense in depth.
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              widget.fetchPaginatedList?.call();
+            });
           }
 
           if (index >= _items.length) {
@@ -662,7 +683,14 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
             final itemIndex = index ~/ 2;
             if (index.isEven) {
               if (_shouldLoadMore(itemIndex)) {
-                widget.fetchPaginatedList?.call();
+                // Spec 003-load-more-guard §5.1: schedule the fetch for after the
+            // current frame so multiple item builders triggering during the
+            // same build pass collapse to a single call. The cubit's
+            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
+            // still slip through; this is defense in depth.
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              widget.fetchPaginatedList?.call();
+            });
               }
 
               final child = widget.itemBuilder(context, _items, itemIndex);
@@ -803,7 +831,14 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         childrenDelegate: SliverChildBuilderDelegate(
           (context, index) {
             if (index >= _items.length) {
+              // Spec 003-load-more-guard §5.1: schedule the fetch for after the
+            // current frame so multiple item builders triggering during the
+            // same build pass collapse to a single call. The cubit's
+            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
+            // still slip through; this is defense in depth.
+            SchedulerBinding.instance.addPostFrameCallback((_) {
               widget.fetchPaginatedList?.call();
+            });
               return widget.bottomLoader ?? const SizedBox.shrink();
             }
             final child = widget.itemBuilder(context, _items, index);
@@ -836,7 +871,14 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
           if (pixels >= maxScrollExtent * 0.8 &&
               !widget.loadedState.hasReachedEnd &&
               !widget.loadedState.isLoadingMore) {
-            widget.fetchPaginatedList?.call();
+            // Spec 003-load-more-guard §5.1: schedule the fetch for after the
+            // current frame so multiple item builders triggering during the
+            // same build pass collapse to a single call. The cubit's
+            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
+            // still slip through; this is defense in depth.
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              widget.fetchPaginatedList?.call();
+            });
           }
         }
         return false;
