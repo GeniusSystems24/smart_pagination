@@ -100,6 +100,9 @@ void main() {
       await h.seedPage(1);
       h.cubit.fetchPaginatedList();
       await h.seedPage(2);
+      // Spec 004: clear post-append suppression between direct fetch calls
+      // (no widget present to deliver a real user-scroll signal).
+      h.cubit.markUserScroll();
       h.cubit.fetchPaginatedList();
       await h.seedPage(3);
 
@@ -193,6 +196,7 @@ void main() {
       await h.seedPage(1);
       h.cubit.fetchPaginatedList();
       await h.seedPage(2);
+      h.cubit.markUserScroll();
       h.cubit.fetchPaginatedList();
       await h.seedPage(3);
 
@@ -269,6 +273,7 @@ void main() {
       await seed(1);
       cubit.fetchPaginatedList();
       await seed(2);
+      cubit.markUserScroll();
       cubit.fetchPaginatedList();
       await seed(3);
 

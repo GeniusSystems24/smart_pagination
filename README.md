@@ -58,11 +58,75 @@ After a load-more error, the `errorRetryStrategy` parameter controls the next at
 | `manual` | `retryAfterError()` must be called explicitly |
 | `automatic` | The next `fetchPaginatedList()` retries the failed page |
 
+## Scroll Anchor Preservation
+
+Spec 004 (`specs/004-scroll-anchor-preservation/`) preserves the user's
+viewport position across load-more appends and prevents chain-triggered
+auto-fetches caused by fast flings. Cross-references the load-more guard
+above (spec 003) — the two features compose.
+
+### How it works
+
+1. **Capture (pre-fetch)**: just before each accepted load-more, the
+   widget records a viewport anchor — the last fully-visible item's key
+   (or its index, or a raw scroll offset, depending on what's available).
+2. **Append**: the cubit emits the new state with appended items as
+   before; nothing is rendered out of order.
+3. **Restore (post-frame)**: after the framework lays out the appended
+   items, the package jumps the scroll back to the captured anchor so
+   the on-screen content is visually stable.
+4. **Suppression**: the cubit ignores additional automatic load-more
+   triggers until the user initiates a new drag-scroll gesture. This
+   prevents a fast fling from chain-triggering page 3, 4, 5… in a single
+   gesture.
+
+### Anchor strategy by view type
+
+| View type                 | Strategy            | Backed by                                  |
+| ------------------------- | ------------------- | ------------------------------------------ |
+| `ListView`                | `key` → `itemIndex` | `scrollview_observer` `ListObserver`       |
+| `GridView`                | `key` → `itemIndex` | `scrollview_observer` `GridObserver`       |
+| `CustomScrollView`/sliver | `key` → `itemIndex` | same observer (mounted on the items sliver)|
+| `StaggeredGridView`       | `offset`            | `controller.position.pixels` snapshot      |
+| `PageView`                | _no-op_             | out of scope (page-based, not scroll-based)|
+| `ReorderableListView`     | _no-op_             | out of scope                               |
+| `reverse: true` (any view)| _no-op_             | out of scope                               |
+
+### Opt-out: `preserveScrollAnchorOnAppend`
+
+Every public wrapper (`SmartPaginationListView`, `SmartPaginationGridView`,
+…) accepts `preserveScrollAnchorOnAppend` (default `true`). Setting it to
+`false` reverts to pre-3.5.0 behaviour — anchor capture, restore, and the
+post-append suppression flag are all disabled.
+
+```dart
+SmartPaginationListView<Product, PaginationRequest>.withProvider(
+  request: PaginationRequest(page: 1, pageSize: 20),
+  provider: PaginationProvider.future(api.fetchProducts),
+  itemBuilder: (context, items, index) => ProductTile(items[index]),
+  preserveScrollAnchorOnAppend: false, // legacy "stick to bottom" behavior
+);
+```
+
+### Troubleshooting
+
+- **The viewport jumps a half-row.** Anchor restore aligns the captured
+  item's trailing edge with the viewport bottom. Variable-height items
+  near the threshold may cause sub-row jumps; consider providing
+  `itemKeyBuilder` so the package uses the more precise `key` strategy.
+- **Load-more never re-fires after restore.** The post-append suppression
+  is cleared by the user's next drag-scroll. Programmatic
+  `controller.jumpTo(...)` does NOT clear it — call
+  `cubit.markUserScroll()` explicitly if you want to bypass.
+- **No anchor on PageView / ReorderableListView.** These view types are
+  out of scope by design — their scroll model is page-based or
+  reorder-based, not append-based.
+
 ## Installation
 
 ```yaml
 dependencies:
-  smart_pagination: ^3.1.0
+  smart_pagination: ^3.5.0
 ```
 
 ```dart

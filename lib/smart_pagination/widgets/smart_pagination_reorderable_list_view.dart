@@ -70,6 +70,7 @@ class SmartPaginationReorderableListView<T, R extends PaginationRequest> extends
     super.insertItemAnimationBuilder,
     super.removeItemAnimationBuilder,
     super.animationDuration,
+    super.preserveScrollAnchorOnAppend,
     super.refreshListener,
     super.filterListeners,
     super.onInsertionCallback,
@@ -125,6 +126,7 @@ class SmartPaginationReorderableListView<T, R extends PaginationRequest> extends
     super.insertItemAnimationBuilder,
     super.removeItemAnimationBuilder,
     super.animationDuration,
+    super.preserveScrollAnchorOnAppend,
     super.refreshListener,
     super.filterListeners,
   }) : super.reorderableListViewWithCubit();

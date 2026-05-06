@@ -62,6 +62,7 @@ class SmartPaginationRow<T, R extends PaginationRequest> extends SmartPagination
     super.insertItemAnimationBuilder,
     super.removeItemAnimationBuilder,
     super.animationDuration,
+    super.preserveScrollAnchorOnAppend,
     super.refreshListener,
     super.filterListeners,
     super.onInsertionCallback,
@@ -113,6 +114,7 @@ class SmartPaginationRow<T, R extends PaginationRequest> extends SmartPagination
     super.insertItemAnimationBuilder,
     super.removeItemAnimationBuilder,
     super.animationDuration,
+    super.preserveScrollAnchorOnAppend,
     super.refreshListener,
     super.filterListeners,
   }) : super.rowWithCubit();

@@ -139,6 +139,15 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
   /// Duration of insert/remove animations. Defaults to 300ms.
   final Duration animationDuration;
 
+  /// Whether the package should preserve the user's scroll position when new
+  /// items are appended via load-more (Spec 004-scroll-anchor-preservation).
+  ///
+  /// Defaults to `true`. When `false`, anchor capture, restore, and the
+  /// post-append load-more suppression are disabled — behavior reverts to
+  /// the pre-3.5.0 framework default. No effect on out-of-scope view types
+  /// (`reverse: true`, `pageView`, `reorderableListView`, `custom`).
+  final bool preserveScrollAnchorOnAppend;
+
   SmartPagination.withProvider({
     super.key,
     required R request,
@@ -190,6 +199,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
     OnInsertionCallback<T>? onInsertionCallback,
     VoidCallback? onClear,
     Logger? logger,
@@ -264,6 +274,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : internalCubit = false,
@@ -317,6 +328,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -387,6 +399,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -462,6 +475,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.gridView,
        separator = separator ?? SizedBox(height: spacing),
        staggeredAxisDirection = null,
@@ -532,6 +546,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.gridView,
        separator = separator ?? SizedBox(height: spacing),
        staggeredAxisDirection = null,
@@ -590,6 +605,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
     // Cubit params
@@ -672,6 +688,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : itemBuilderType = PaginateBuilderType.listView,
@@ -739,6 +756,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
     // Cubit params
@@ -821,6 +839,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
     SmartPaginationRefreshedChangeListener? refreshListener,
     List<SmartPaginationFilterChangeListener<T>>? filterListeners,
   }) : itemBuilderType = PaginateBuilderType.reorderableListView,
@@ -894,6 +913,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.pageView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -968,6 +988,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.pageView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -1047,6 +1068,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.staggeredGridView,
        gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: crossAxisCount,
@@ -1127,6 +1149,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.staggeredGridView,
        gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: crossAxisCount,
@@ -1192,6 +1215,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -1262,6 +1286,7 @@ class SmartPagination<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    this.preserveScrollAnchorOnAppend = true,
   }) : itemBuilderType = PaginateBuilderType.listView,
        gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(
          crossAxisCount: 2,
@@ -1466,6 +1491,7 @@ class _SmartPaginationState<T, R extends PaginationRequest>
           insertItemAnimationBuilder: widget.insertItemAnimationBuilder,
           removeItemAnimationBuilder: widget.removeItemAnimationBuilder,
           animationDuration: widget.animationDuration,
+          preserveScrollAnchorOnAppend: widget.preserveScrollAnchorOnAppend,
         );
 
         Widget content = view;

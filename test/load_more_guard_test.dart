@@ -129,6 +129,12 @@ void main() {
       await Future<void>.delayed(_settle);
       final beforePage3 = providerCallCount;
 
+      // Spec 004-scroll-anchor-preservation: a successful load-more arms
+      // `_suppressLoadMoreUntilUserScroll`. Subsequent automatic triggers
+      // are dropped until the user initiates a drag-scroll. For direct
+      // cubit usage (no widget), simulate the user scroll explicitly.
+      cubit.markUserScroll();
+
       cubit.fetchPaginatedList(); // page 3
       await Future<void>.delayed(_settle);
 

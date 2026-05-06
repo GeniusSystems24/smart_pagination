@@ -332,28 +332,28 @@
   - **Dependencies**: T037
   - **Parallel**: No — same file
 
-- [ ] T040 [US2] Add reverse-direction short-circuit to `_AnchorStrategySelector.compute(...)` in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T040 [US2] Add reverse-direction short-circuit to `_AnchorStrategySelector.compute(...)` in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart`
   - **Description**: Per `contracts/anchor-strategy.md` §"Selection algorithm" step 2: when `widget.reverse == true`, return `proceed: false` regardless of view type. The cubit's `captureAnchorBeforeLoadMore` simply does not get called from the widget, so the suppression flag is never armed for reverse lists. Existing trigger paths fire unchanged.
   - **Acceptance**: T07, T29, T36 pass.
   - **Dependencies**: T039
   - **Parallel**: No — same file
 
-- [ ] T041 [US2] Add view-type short-circuit for `pageView`, `reorderableListView`, `custom` to `_AnchorStrategySelector.compute(...)` in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T041 [US2] Add view-type short-circuit for `pageView`, `reorderableListView`, `custom` to `_AnchorStrategySelector.compute(...)` in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart`
   - **Description**: Per `contracts/anchor-strategy.md` §"Selection algorithm" step 2: when `viewType in {pageView, reorderableListView, custom}`, return `proceed: false`. Confirm `_buildPageView` (line 833 `addPostFrameCallback`) and `_buildCustomView` continue to call `widget.fetchPaginatedList` directly without an upstream capture push. Also: do NOT add the outer `NotificationListener<ScrollNotification>` to these builders (no need to listen for user-scroll on out-of-scope views — the cubit's flag is never armed for them).
   - **Acceptance**: T27, T28, T37, T38 pass.
   - **Dependencies**: T040
   - **Parallel**: No — same file
 
-- [ ] T042 [US2] Implement variable-height test (T13) in `test/scroll_anchor_restore_test.dart`
+- [x] T042 [US2] Implement variable-height test (T13) in `test/scroll_anchor_restore_test.dart`
   - **Files**: `test/scroll_anchor_restore_test.dart`
   - **Description**: Fill the T13 stub: build a `ListView` whose `itemBuilder` returns `SizedBox(height: index.isEven ? 50 : 200, child: ...)`. Fling, await settle. Assert the anchor row's index in the post-append observer snapshot equals the captured anchor row's index ±1.
   - **Acceptance**: T13 passes. The `_listObserverController.jumpTo(index, alignment: 1.0)` correctly handles variable heights because it queries live render-tree state.
   - **Dependencies**: T010, T031
   - **Parallel**: No — sequence after the implementation lands so the green→red→green cycle matters
 
-- [ ] T043 [US2] Implement T14 anchor-not-found fallback in `test/scroll_anchor_restore_test.dart`
+- [x] T043 [US2] Implement T14 anchor-not-found fallback in `test/scroll_anchor_restore_test.dart`
   - **Files**: `test/scroll_anchor_restore_test.dart`
   - **Description**: Fill the T14 stub: capture an anchor with `strategy: AnchorStrategy.key` whose `key` value is removed from the items list before restore (e.g., consumer-driven mid-list delete simulated in the test). Assert restore falls through to offset-delta path and does NOT throw.
   - **Acceptance**: T14 passes; `_performAnchorRestore` correctly cascades key→index→offset→no-op.
@@ -362,7 +362,7 @@
 
 ### Verification for User Story 2
 
-- [ ] T044 [US2] Run all view-type matrix and fall-through tests — all pass
+- [x] T044 [US2] Run all view-type matrix and fall-through tests — all pass
   - **Files**: `test/scroll_anchor_view_type_matrix_test.dart`, `test/scroll_anchor_fallthrough_test.dart`, full capture/restore suite
   - **Description**: `flutter test test/scroll_anchor_view_type_matrix_test.dart test/scroll_anchor_fallthrough_test.dart`. Plus T03, T05, T06, T07, T13, T14 in capture/restore.
   - **Acceptance**: All US2-related tests green. T015 regression still green. No regressions in existing suite.
@@ -381,14 +381,14 @@
 
 ### Tests for User Story 3
 
-- [ ] T045 [P] [US3] Implement compatibility test bodies (T30, T31, T32, T33)
+- [x] T045 [P] [US3] Implement compatibility test bodies (T30, T31, T32, T33)
   - **Files**: `test/scroll_anchor_compatibility_test.dart`
   - **Description**: Fill four stubs: T30 `.withProvider(...)` with internal controller — anchor preservation works. T31 `.withCubit(...)` with external `ScrollController` — works. T32 external controller's `addListener` callback fires during anchor capture and during the post-frame restore. T33 external controller is not disposed when the paginated view is unmounted (verified by reusing it in a subsequent widget tree).
   - **Acceptance**: T30, T31, T32 may already pass (US1/US2 work); T33 passes since the existing `dispose` only disposes `_internalScrollController`.
   - **Dependencies**: T013, T044
   - **Parallel**: Yes — different file from T046, T047
 
-- [ ] T046 [P] [US3] Implement disable-flag test (T34) and README-example compat test (T35)
+- [x] T046 [P] [US3] Implement disable-flag test (T34) and README-example compat test (T35)
   - **Files**: `test/scroll_anchor_compatibility_test.dart`
   - **Description**: T34: build a `SmartPaginationListView` with `preserveScrollAnchorOnAppend: false`; assert no capture, no suppression flag set, behavior matches pre-feature (chained-load-more reproduces). T35: copy the existing `.withProvider` and `.withCubit` README examples verbatim into the test; assert they compile and run; instrument them with the same regression pattern.
   - **Acceptance**: T34 passes after T048 lands. T35 passes immediately if no breaking changes were introduced.
@@ -397,28 +397,28 @@
 
 ### Implementation for User Story 3
 
-- [ ] T047 [US3] Add `preserveScrollAnchorOnAppend` parameter to `PaginateApiView` in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T047 [US3] Add `preserveScrollAnchorOnAppend` parameter to `PaginateApiView` in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (constructor and field declarations)
   - **Description**: Per `contracts/public-api-surface.md` §A1: add `final bool preserveScrollAnchorOnAppend;` field with `this.preserveScrollAnchorOnAppend = true` in the constructor. Add full dartdoc per the contract. Replace the temporary `_kCaptureEnabled = true` constant from T021 with `widget.preserveScrollAnchorOnAppend`.
   - **Acceptance**: All capture-push sites now read the parameter; default behavior is unchanged.
   - **Dependencies**: T044
   - **Parallel**: No — same file as T048
 
-- [ ] T048 [US3] Honor `preserveScrollAnchorOnAppend == false` end-to-end in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T048 [US3] Honor `preserveScrollAnchorOnAppend == false` end-to-end in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart`
   - **Description**: When the flag is `false`: (a) `_AnchorStrategySelector.compute` returns `proceed: false`, (b) the outer `NotificationListener<ScrollNotification>` from T026 still wraps but its `onNotification` is a no-op (or alternatively, the `NotificationListener` is omitted entirely — pick the cleaner path). The cubit-side flags are never armed because no `captureAnchorBeforeLoadMore` is called.
   - **Acceptance**: T34 passes — pre-feature chained-load-more behavior is reproducible.
   - **Dependencies**: T047
   - **Parallel**: No — same file
 
-- [ ] T049 [US3] Forward `preserveScrollAnchorOnAppend` through public wrappers in `lib/smart_pagination/widgets/smart_pagination_list_view.dart`, `smart_pagination_grid_view.dart`, `smart_pagination_staggered_grid_view.dart`, and any other public wrapper composing `PaginateApiView`
+- [x] T049 [US3] Forward `preserveScrollAnchorOnAppend` through public wrappers in `lib/smart_pagination/widgets/smart_pagination_list_view.dart`, `smart_pagination_grid_view.dart`, `smart_pagination_staggered_grid_view.dart`, and any other public wrapper composing `PaginateApiView`
   - **Files**: `smart_pagination_list_view.dart`, `smart_pagination_grid_view.dart`, `smart_pagination_staggered_grid_view.dart` (and others that wrap `PaginateApiView`)
   - **Description**: Per `contracts/public-api-surface.md` §A2: each public wrapper adds the same `bool preserveScrollAnchorOnAppend = true` parameter and forwards it to its inner `PaginateApiView`. No other API changes.
   - **Acceptance**: All public wrappers expose the parameter; existing call sites compile unchanged. T35 passes.
   - **Dependencies**: T047
   - **Parallel**: Yes — these are different files from T047/T048 if the wrappers don't import each other (they don't); can be edited concurrently
 
-- [ ] T050 [US3] Confirm external `ScrollController` listeners continue to fire by adding an explicit assertion test
+- [x] T050 [US3] Confirm external `ScrollController` listeners continue to fire by adding an explicit assertion test
   - **Files**: `test/scroll_anchor_compatibility_test.dart`
   - **Description**: T32's body should already verify this; if not, beef it up: attach a listener via `externalController.addListener(onTick)`, perform fling, count `onTick` invocations, assert the count matches the package's internal observed scroll events 1:1. The new outer `NotificationListener<ScrollNotification>` MUST return `false` (does not consume) — verified indirectly by the listener firing.
   - **Acceptance**: T32 passes with strict 1:1 invocation count.
@@ -427,7 +427,7 @@
 
 ### Verification for User Story 3
 
-- [ ] T051 [US3] Run all compatibility tests — all pass
+- [x] T051 [US3] Run all compatibility tests — all pass
   - **Files**: `test/scroll_anchor_compatibility_test.dart`
   - **Description**: `flutter test test/scroll_anchor_compatibility_test.dart`.
   - **Acceptance**: T30–T35 all green.
@@ -442,56 +442,56 @@
 
 **Purpose**: Documentation, version bump, full-suite verification. No functional changes.
 
-- [ ] T052 [P] Update `README.md` with the "Scroll Anchor Preservation" section
+- [x] T052 [P] Update `README.md` with the "Scroll Anchor Preservation" section
   - **Files**: `README.md`
   - **Description**: Add the section template from `plan.md` §14, including: overview, how-it-works numbered list, anchor-strategy table, view-type support matrix, `preserveScrollAnchorOnAppend` opt-out, troubleshooting block. Cross-reference the existing load-more guard section (added by feature `003`).
   - **Acceptance**: README contains a clear support-matrix table. SC-004 satisfied.
   - **Dependencies**: T051
   - **Parallel**: Yes — different file from T053, T054, T055, T056
 
-- [ ] T053 [P] Update `CHANGELOG.md` with the 3.5.0 entry
+- [x] T053 [P] Update `CHANGELOG.md` with the 3.5.0 entry
   - **Files**: `CHANGELOG.md`
   - **Description**: Add the entry from `plan.md` §14 under a new `## [3.5.0] - YYYY-MM-DD` heading. Sections: Added, Changed, Compatibility. Mecca time zone for the date per `CLAUDE.md` "Documentation comments use Flutter-style `///`; changelog entries use Mecca time zone".
   - **Acceptance**: CHANGELOG entry is in Keep-a-Changelog format with no breaking-change note.
   - **Dependencies**: T051
   - **Parallel**: Yes
 
-- [ ] T054 [P] Update inline dartdoc in `lib/smart_pagination/bloc/pagination_cubit.dart`
+- [x] T054 [P] Update inline dartdoc in `lib/smart_pagination/bloc/pagination_cubit.dart`
   - **Files**: `pagination_cubit.dart`
   - **Description**: Document the four new private fields (`_pendingAnchor`, `_suppressLoadMoreUntilUserScroll`, `_lastUserScrollGeneration`, `_anchorRestoreInFlight`), the two `@internal` methods (`captureAnchorBeforeLoadMore`, `markUserScroll`), and update the `fetchPaginatedList` guard-order comment block to include the new step.
   - **Acceptance**: `dart doc` (or IDE hover) shows the documented surface; no warnings.
   - **Dependencies**: T051
   - **Parallel**: Yes — different file from T055
 
-- [ ] T055 [P] Update inline dartdoc in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T055 [P] Update inline dartdoc in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart`
   - **Description**: Document the new `preserveScrollAnchorOnAppend` parameter per `contracts/public-api-surface.md` §A1 (already drafted). Document the new outer `NotificationListener<ScrollNotification>` and what it triggers.
   - **Acceptance**: Public parameter is fully documented; private `NotificationListener` purpose is annotated.
   - **Dependencies**: T051
   - **Parallel**: Yes
 
-- [ ] T056 Bump `pubspec.yaml` version from 3.4.0 to 3.5.0
+- [x] T056 Bump `pubspec.yaml` version from 3.4.0 to 3.5.0
   - **Files**: `pubspec.yaml`
   - **Description**: Increment `version: 3.4.0` to `version: 3.5.0`. Minor bump (additive feature, no breaking change).
   - **Acceptance**: pubspec parses; `flutter pub get` succeeds.
   - **Dependencies**: T052, T053
   - **Parallel**: No — coordinates with the changelog entry
 
-- [ ] T057 Run `flutter analyze` and verify no new issues
+- [x] T057 Run `flutter analyze` and verify no new issues
   - **Files**: (whole package)
   - **Description**: `flutter analyze`. Compare against pre-feature baseline. The known ~49 pre-existing warnings (per root `CLAUDE.md`) are acceptable; no NEW issues may be introduced.
   - **Acceptance**: Zero new analyze findings.
   - **Dependencies**: T056
   - **Parallel**: No
 
-- [ ] T058 Run full `flutter test` and verify entire suite passes
+- [x] T058 Run full `flutter test` and verify entire suite passes
   - **Files**: `test/`
   - **Description**: `flutter test` without filters. Includes the 38 new tests plus all existing test files.
   - **Acceptance**: 100% pass rate. No flaky tests.
   - **Dependencies**: T057
   - **Parallel**: No
 
-- [ ] T059 Walk through `quickstart.md` consumer snippets and verify they compile and run
+- [x] T059 Walk through `quickstart.md` consumer snippets and verify they compile and run
   - **Files**: `specs/004-scroll-anchor-preservation/quickstart.md`
   - **Description**: Copy the consumer-facing code snippets from `quickstart.md` (the `SmartPaginationListView<Product, ProductRequest>.withProvider(...)` example) into a temporary widget test or example file. Confirm they compile against the published API and produce the expected behavior.
   - **Acceptance**: Quickstart code is current and accurate.

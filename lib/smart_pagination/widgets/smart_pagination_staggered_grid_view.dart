@@ -72,6 +72,7 @@ class SmartPaginationStaggeredGridView<T, R extends PaginationRequest> extends S
     super.insertItemAnimationBuilder,
     super.removeItemAnimationBuilder,
     super.animationDuration,
+    super.preserveScrollAnchorOnAppend,
     super.refreshListener,
     super.filterListeners,
     super.onInsertionCallback,
@@ -130,6 +131,7 @@ class SmartPaginationStaggeredGridView<T, R extends PaginationRequest> extends S
     super.insertItemAnimationBuilder,
     super.removeItemAnimationBuilder,
     super.animationDuration,
+    super.preserveScrollAnchorOnAppend,
     super.refreshListener,
     super.filterListeners,
   }) : super.staggeredGridViewWithCubit();

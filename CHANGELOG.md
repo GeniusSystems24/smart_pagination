@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-05-06
+
+### Added
+
+- **Scroll Anchor Preservation** (spec 004). The package now preserves the
+  user's viewport position across load-more appends and prevents
+  chain-triggered auto-fetches from a single fast fling. Before each
+  accepted load-more, a viewport anchor is captured (key → itemIndex →
+  offset, depending on availability); after the appended items are laid
+  out, the scroll is jumped back to the anchor in a post-frame callback.
+  An internal suppression flag drops further automatic load-more triggers
+  until the user initiates a new drag-scroll gesture.
+- **`preserveScrollAnchorOnAppend` parameter** on every public wrapper
+  (`SmartPaginationListView`, `SmartPaginationGridView`,
+  `SmartPaginationStaggeredGridView`, …) and on `PaginateApiView`.
+  Defaults to `true`; setting it to `false` reverts to pre-3.5.0
+  framework default ("stick to the bottom" via maintainExtent) — capture,
+  restore, and the suppression flag are all disabled.
+- **Internal cubit hooks** `captureAnchorBeforeLoadMore`, `markUserScroll`,
+  `setLoadMoreSuppressionEnabled`, and `skipLoadMoreSuppressionOnce` —
+  marked `@internal` and consumed exclusively by `PaginateApiView`.
+- **`scrollview_observer` integration** for `ListView`, `GridView`, and
+  sliver-based `CustomScrollView` builds — used to read the
+  last-fully-visible item synchronously at trigger time.
+
+### Changed
+
+- **Out-of-scope view types are master-switched at attach time.** When the
+  widget mounts a `PageView`, `ReorderableListView`, custom builder, or
+  any view with `reverse: true`, it calls
+  `cubit.setLoadMoreSuppressionEnabled(false)` once so chain-triggered
+  fetches fire freely (matching the pre-feature behavior for those
+  views). The selection logic does not need to re-evaluate per fetch.
+- **`StaggeredGridView` 80% threshold guard.** The widget's notification
+  listener now requires `maxScrollExtent > 0` before firing — previously
+  a layout where content fits the viewport (`maxScrollExtent == 0`)
+  could trigger a load-more loop.
+- **`StaggeredGridView` bottom widget rendering.** The bottom slot is now
+  rendered only when actively loading more, on error, or at end-of-list
+  with a `loadMoreNoMoreItemsBuilder` — previously the perpetual
+  `BottomLoader` spinner could prevent `pumpAndSettle` from completing.
+
+### Compatibility
+
+No breaking changes. Existing `.withProvider(...)` and `.withCubit(...)`
+call sites — including those passing an external `ScrollController` —
+work unchanged. External controller listeners continue to fire; the
+package never disposes a controller it did not allocate. The new
+`preserveScrollAnchorOnAppend` parameter is purely additive.
+
 ## [3.4.0] - 2026-05-05
 
 ### Added
