@@ -7,48 +7,328 @@ part of 'app_router.dart';
 // **************************************************************************
 
 List<RouteBase> get $appRoutes => [
-      $basicRoute,
-      $streamRoute,
-      $advancedRoute,
-      $searchRoute,
-      $errorRoute,
-      $firebaseRoute,
+      $homeShellRouteData,
     ];
 
-RouteBase get $basicRoute => GoRouteData.$route(
-      path: '/basic',
-      factory: $BasicRoute._fromState,
+RouteBase get $homeShellRouteData => ShellRouteData.$route(
+      navigatorKey: HomeShellRouteData.$navigatorKey,
+      factory: $HomeShellRouteDataExtension._fromState,
       routes: [
         GoRouteData.$route(
-          path: 'list-view',
-          factory: $BasicListViewRoute._fromState,
+          path: '/basic',
+          factory: $BasicRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'list-view',
+              parentNavigatorKey: BasicListViewRoute.$parentNavigatorKey,
+              factory: $BasicListViewRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'grid-view',
+              parentNavigatorKey: GridViewRoute.$parentNavigatorKey,
+              factory: $GridViewRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'column',
+              parentNavigatorKey: ColumnLayoutRoute.$parentNavigatorKey,
+              factory: $ColumnLayoutRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'row',
+              parentNavigatorKey: RowLayoutRoute.$parentNavigatorKey,
+              factory: $RowLayoutRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'pull-to-refresh',
+              parentNavigatorKey: PullToRefreshRoute.$parentNavigatorKey,
+              factory: $PullToRefreshRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'filter-search',
+              parentNavigatorKey: FilterSearchRoute.$parentNavigatorKey,
+              factory: $FilterSearchRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'retry',
+              parentNavigatorKey: RetryMechanismRoute.$parentNavigatorKey,
+              factory: $RetryMechanismRoute._fromState,
+            ),
+          ],
         ),
         GoRouteData.$route(
-          path: 'grid-view',
-          factory: $GridViewRoute._fromState,
+          path: '/streams',
+          factory: $StreamRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'single',
+              parentNavigatorKey: SingleStreamRoute.$parentNavigatorKey,
+              factory: $SingleStreamRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'multi',
+              parentNavigatorKey: MultiStreamRoute.$parentNavigatorKey,
+              factory: $MultiStreamRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'merged',
+              parentNavigatorKey: MergedStreamsRoute.$parentNavigatorKey,
+              factory: $MergedStreamsRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'stream-accumulation',
+              parentNavigatorKey: StreamAccumulationRoute.$parentNavigatorKey,
+              factory: $StreamAccumulationRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'per-page-error',
+              parentNavigatorKey: PerPageErrorRoute.$parentNavigatorKey,
+              factory: $PerPageErrorRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'dynamic-end',
+              parentNavigatorKey:
+                  DynamicEndOfPaginationRoute.$parentNavigatorKey,
+              factory: $DynamicEndOfPaginationRoute._fromState,
+            ),
+          ],
         ),
         GoRouteData.$route(
-          path: 'column',
-          factory: $ColumnLayoutRoute._fromState,
+          path: '/advanced',
+          factory: $AdvancedRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'cursor',
+              parentNavigatorKey: CursorPaginationRoute.$parentNavigatorKey,
+              factory: $CursorPaginationRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'horizontal',
+              parentNavigatorKey: HorizontalScrollRoute.$parentNavigatorKey,
+              factory: $HorizontalScrollRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'page-view',
+              parentNavigatorKey: PageViewRoute.$parentNavigatorKey,
+              factory: $PageViewRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'staggered-grid',
+              parentNavigatorKey: StaggeredGridRoute.$parentNavigatorKey,
+              factory: $StaggeredGridRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'custom-states',
+              parentNavigatorKey: CustomStatesRoute.$parentNavigatorKey,
+              factory: $CustomStatesRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'scroll-control',
+              parentNavigatorKey: ScrollControlRoute.$parentNavigatorKey,
+              factory: $ScrollControlRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'before-build',
+              parentNavigatorKey: BeforeBuildHookRoute.$parentNavigatorKey,
+              factory: $BeforeBuildHookRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'reached-end',
+              parentNavigatorKey: HasReachedEndRoute.$parentNavigatorKey,
+              factory: $HasReachedEndRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'custom-builder',
+              parentNavigatorKey: CustomViewBuilderRoute.$parentNavigatorKey,
+              factory: $CustomViewBuilderRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'reorderable',
+              parentNavigatorKey: ReorderableListRoute.$parentNavigatorKey,
+              factory: $ReorderableListRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'state-separation',
+              parentNavigatorKey: StateSeparationRoute.$parentNavigatorKey,
+              factory: $StateSeparationRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'preloading',
+              parentNavigatorKey: SmartPreloadingRoute.$parentNavigatorKey,
+              factory: $SmartPreloadingRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'data-operations',
+              parentNavigatorKey: DataOperationsRoute.$parentNavigatorKey,
+              factory: $DataOperationsRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'data-age',
+              parentNavigatorKey: DataAgeRoute.$parentNavigatorKey,
+              factory: $DataAgeRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'sorting',
+              parentNavigatorKey: SortingRoute.$parentNavigatorKey,
+              factory: $SortingRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'chat',
+              parentNavigatorKey: ChatRoute.$parentNavigatorKey,
+              factory: $ChatRoute._fromState,
+            ),
+          ],
         ),
         GoRouteData.$route(
-          path: 'row',
-          factory: $RowLayoutRoute._fromState,
+          path: '/search',
+          factory: $SearchRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'dropdown',
+              parentNavigatorKey: SearchDropdownRoute.$parentNavigatorKey,
+              factory: $SearchDropdownRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'multi-select',
+              parentNavigatorKey: MultiSelectSearchRoute.$parentNavigatorKey,
+              factory: $MultiSelectSearchRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'bottom-sheet',
+              parentNavigatorKey: BottomSheetSearchRoute.$parentNavigatorKey,
+              factory: $BottomSheetSearchRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'form-validation',
+              parentNavigatorKey: FormValidationRoute.$parentNavigatorKey,
+              factory: $FormValidationRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'keyboard',
+              parentNavigatorKey: KeyboardNavigationRoute.$parentNavigatorKey,
+              factory: $KeyboardNavigationRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'theming',
+              parentNavigatorKey: SearchThemingRoute.$parentNavigatorKey,
+              factory: $SearchThemingRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'async-states',
+              parentNavigatorKey: AsyncStatesRoute.$parentNavigatorKey,
+              factory: $AsyncStatesRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'overlay-animations',
+              parentNavigatorKey: OverlayAnimationsRoute.$parentNavigatorKey,
+              factory: $OverlayAnimationsRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'key-based-selection',
+              parentNavigatorKey: KeyBasedSelectionRoute.$parentNavigatorKey,
+              factory: $KeyBasedSelectionRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'initial-selection',
+              parentNavigatorKey: InitialSelectionRoute.$parentNavigatorKey,
+              factory: $InitialSelectionRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'realistic-examples',
+              parentNavigatorKey:
+                  RealisticSearchExamplesRoute.$parentNavigatorKey,
+              factory: $RealisticSearchExamplesRoute._fromState,
+            ),
+          ],
         ),
         GoRouteData.$route(
-          path: 'pull-to-refresh',
-          factory: $PullToRefreshRoute._fromState,
+          path: '/errors',
+          factory: $ErrorRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'basic',
+              parentNavigatorKey: BasicErrorRoute.$parentNavigatorKey,
+              factory: $BasicErrorRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'network',
+              parentNavigatorKey: NetworkErrorsRoute.$parentNavigatorKey,
+              factory: $NetworkErrorsRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'retry-patterns',
+              parentNavigatorKey: RetryPatternsRoute.$parentNavigatorKey,
+              factory: $RetryPatternsRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'custom-widgets',
+              parentNavigatorKey: CustomErrorWidgetsRoute.$parentNavigatorKey,
+              factory: $CustomErrorWidgetsRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'recovery',
+              parentNavigatorKey: ErrorRecoveryRoute.$parentNavigatorKey,
+              factory: $ErrorRecoveryRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'graceful',
+              parentNavigatorKey: GracefulDegradationRoute.$parentNavigatorKey,
+              factory: $GracefulDegradationRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'load-more',
+              parentNavigatorKey: LoadMoreErrorsRoute.$parentNavigatorKey,
+              factory: $LoadMoreErrorsRoute._fromState,
+            ),
+          ],
         ),
         GoRouteData.$route(
-          path: 'filter-search',
-          factory: $FilterSearchRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'retry',
-          factory: $RetryMechanismRoute._fromState,
+          path: '/firebase',
+          factory: $FirebaseRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'firestore-pagination',
+              parentNavigatorKey: FirestorePaginationRoute.$parentNavigatorKey,
+              factory: $FirestorePaginationRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'firestore-realtime',
+              parentNavigatorKey: FirestoreRealtimeRoute.$parentNavigatorKey,
+              factory: $FirestoreRealtimeRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'firestore-search',
+              parentNavigatorKey: FirestoreSearchRoute.$parentNavigatorKey,
+              factory: $FirestoreSearchRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'realtime-database',
+              parentNavigatorKey: RealtimeDatabaseRoute.$parentNavigatorKey,
+              factory: $RealtimeDatabaseRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'firestore-filters',
+              parentNavigatorKey: FirestoreFiltersRoute.$parentNavigatorKey,
+              factory: $FirestoreFiltersRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'offline-support',
+              parentNavigatorKey: OfflineSupportRoute.$parentNavigatorKey,
+              factory: $OfflineSupportRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'seed-data',
+              parentNavigatorKey: SeedDataRoute.$parentNavigatorKey,
+              factory: $SeedDataRoute._fromState,
+            ),
+          ],
         ),
       ],
     );
+
+extension $HomeShellRouteDataExtension on HomeShellRouteData {
+  static HomeShellRouteData _fromState(GoRouterState state) =>
+      const HomeShellRouteData();
+}
 
 mixin $BasicRoute on GoRouteData {
   static BasicRoute _fromState(GoRouterState state) => const BasicRoute();
@@ -232,37 +512,6 @@ mixin $RetryMechanismRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $streamRoute => GoRouteData.$route(
-      path: '/streams',
-      factory: $StreamRoute._fromState,
-      routes: [
-        GoRouteData.$route(
-          path: 'single',
-          factory: $SingleStreamRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'multi',
-          factory: $MultiStreamRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'merged',
-          factory: $MergedStreamsRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'stream-accumulation',
-          factory: $StreamAccumulationRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'per-page-error',
-          factory: $PerPageErrorRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'dynamic-end',
-          factory: $DynamicEndOfPaginationRoute._fromState,
-        ),
-      ],
-    );
-
 mixin $StreamRoute on GoRouteData {
   static StreamRoute _fromState(GoRouterState state) => const StreamRoute();
 
@@ -422,77 +671,6 @@ mixin $DynamicEndOfPaginationRoute on GoRouteData {
   @override
   void replace(BuildContext context) => context.replace(location);
 }
-
-RouteBase get $advancedRoute => GoRouteData.$route(
-      path: '/advanced',
-      factory: $AdvancedRoute._fromState,
-      routes: [
-        GoRouteData.$route(
-          path: 'cursor',
-          factory: $CursorPaginationRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'horizontal',
-          factory: $HorizontalScrollRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'page-view',
-          factory: $PageViewRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'staggered-grid',
-          factory: $StaggeredGridRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'custom-states',
-          factory: $CustomStatesRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'scroll-control',
-          factory: $ScrollControlRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'before-build',
-          factory: $BeforeBuildHookRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'reached-end',
-          factory: $HasReachedEndRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'custom-builder',
-          factory: $CustomViewBuilderRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'reorderable',
-          factory: $ReorderableListRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'state-separation',
-          factory: $StateSeparationRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'preloading',
-          factory: $SmartPreloadingRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'data-operations',
-          factory: $DataOperationsRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'data-age',
-          factory: $DataAgeRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'sorting',
-          factory: $SortingRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'chat',
-          factory: $ChatRoute._fromState,
-        ),
-      ],
-    );
 
 mixin $AdvancedRoute on GoRouteData {
   static AdvancedRoute _fromState(GoRouterState state) => const AdvancedRoute();
@@ -880,57 +1058,6 @@ mixin $ChatRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $searchRoute => GoRouteData.$route(
-      path: '/search',
-      factory: $SearchRoute._fromState,
-      routes: [
-        GoRouteData.$route(
-          path: 'dropdown',
-          factory: $SearchDropdownRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'multi-select',
-          factory: $MultiSelectSearchRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'bottom-sheet',
-          factory: $BottomSheetSearchRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'form-validation',
-          factory: $FormValidationRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'keyboard',
-          factory: $KeyboardNavigationRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'theming',
-          factory: $SearchThemingRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'async-states',
-          factory: $AsyncStatesRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'overlay-animations',
-          factory: $OverlayAnimationsRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'key-based-selection',
-          factory: $KeyBasedSelectionRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'initial-selection',
-          factory: $InitialSelectionRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'realistic-examples',
-          factory: $RealisticSearchExamplesRoute._fromState,
-        ),
-      ],
-    );
-
 mixin $SearchRoute on GoRouteData {
   static SearchRoute _fromState(GoRouterState state) => const SearchRoute();
 
@@ -1206,41 +1333,6 @@ mixin $RealisticSearchExamplesRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $errorRoute => GoRouteData.$route(
-      path: '/errors',
-      factory: $ErrorRoute._fromState,
-      routes: [
-        GoRouteData.$route(
-          path: 'basic',
-          factory: $BasicErrorRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'network',
-          factory: $NetworkErrorsRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'retry-patterns',
-          factory: $RetryPatternsRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'custom-widgets',
-          factory: $CustomErrorWidgetsRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'recovery',
-          factory: $ErrorRecoveryRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'graceful',
-          factory: $GracefulDegradationRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'load-more',
-          factory: $LoadMoreErrorsRoute._fromState,
-        ),
-      ],
-    );
-
 mixin $ErrorRoute on GoRouteData {
   static ErrorRoute _fromState(GoRouterState state) => const ErrorRoute();
 
@@ -1423,41 +1515,6 @@ mixin $LoadMoreErrorsRoute on GoRouteData {
   @override
   void replace(BuildContext context) => context.replace(location);
 }
-
-RouteBase get $firebaseRoute => GoRouteData.$route(
-      path: '/firebase',
-      factory: $FirebaseRoute._fromState,
-      routes: [
-        GoRouteData.$route(
-          path: 'firestore-pagination',
-          factory: $FirestorePaginationRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'firestore-realtime',
-          factory: $FirestoreRealtimeRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'firestore-search',
-          factory: $FirestoreSearchRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'realtime-database',
-          factory: $RealtimeDatabaseRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'firestore-filters',
-          factory: $FirestoreFiltersRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'offline-support',
-          factory: $OfflineSupportRoute._fromState,
-        ),
-        GoRouteData.$route(
-          path: 'seed-data',
-          factory: $SeedDataRoute._fromState,
-        ),
-      ],
-    );
 
 mixin $FirebaseRoute on GoRouteData {
   static FirebaseRoute _fromState(GoRouterState state) => const FirebaseRoute();

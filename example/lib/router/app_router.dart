@@ -71,7 +71,19 @@ import '../screens/firebase/seed_data_screen.dart';
 
 part 'app_router.g.dart';
 
-/// Custom page transition for smooth navigation
+// ============================================================================
+// Navigator Keys
+// ============================================================================
+
+final GlobalKey<NavigatorState> _rootNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'root');
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shell');
+
+// ============================================================================
+// Page transition helper
+// ============================================================================
+
 CustomTransitionPage<void> _buildPageWithTransition({
   required BuildContext context,
   required GoRouterState state,
@@ -92,24 +104,118 @@ CustomTransitionPage<void> _buildPageWithTransition({
 }
 
 // ============================================================================
-// Route Data Classes
+// Shell Route — wraps all section routes so HomeScreen persists across tabs
 // ============================================================================
 
-// ============================================================================
-// Basic Routes
-// ============================================================================
-@TypedGoRoute<BasicRoute>(
-  path: '/basic',
-  routes: [
-    TypedGoRoute<BasicListViewRoute>(path: 'list-view'),
-    TypedGoRoute<GridViewRoute>(path: 'grid-view'),
-    TypedGoRoute<ColumnLayoutRoute>(path: 'column'),
-    TypedGoRoute<RowLayoutRoute>(path: 'row'),
-    TypedGoRoute<PullToRefreshRoute>(path: 'pull-to-refresh'),
-    TypedGoRoute<FilterSearchRoute>(path: 'filter-search'),
-    TypedGoRoute<RetryMechanismRoute>(path: 'retry'),
+@TypedShellRoute<HomeShellRouteData>(
+  routes: <TypedRoute<RouteData>>[
+    // ---- Basic ----
+    TypedGoRoute<BasicRoute>(
+      path: '/basic',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<BasicListViewRoute>(path: 'list-view'),
+        TypedGoRoute<GridViewRoute>(path: 'grid-view'),
+        TypedGoRoute<ColumnLayoutRoute>(path: 'column'),
+        TypedGoRoute<RowLayoutRoute>(path: 'row'),
+        TypedGoRoute<PullToRefreshRoute>(path: 'pull-to-refresh'),
+        TypedGoRoute<FilterSearchRoute>(path: 'filter-search'),
+        TypedGoRoute<RetryMechanismRoute>(path: 'retry'),
+      ],
+    ),
+    // ---- Streams ----
+    TypedGoRoute<StreamRoute>(
+      path: '/streams',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<SingleStreamRoute>(path: 'single'),
+        TypedGoRoute<MultiStreamRoute>(path: 'multi'),
+        TypedGoRoute<MergedStreamsRoute>(path: 'merged'),
+        TypedGoRoute<StreamAccumulationRoute>(path: 'stream-accumulation'),
+        TypedGoRoute<PerPageErrorRoute>(path: 'per-page-error'),
+        TypedGoRoute<DynamicEndOfPaginationRoute>(path: 'dynamic-end'),
+      ],
+    ),
+    // ---- Advanced ----
+    TypedGoRoute<AdvancedRoute>(
+      path: '/advanced',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<CursorPaginationRoute>(path: 'cursor'),
+        TypedGoRoute<HorizontalScrollRoute>(path: 'horizontal'),
+        TypedGoRoute<PageViewRoute>(path: 'page-view'),
+        TypedGoRoute<StaggeredGridRoute>(path: 'staggered-grid'),
+        TypedGoRoute<CustomStatesRoute>(path: 'custom-states'),
+        TypedGoRoute<ScrollControlRoute>(path: 'scroll-control'),
+        TypedGoRoute<BeforeBuildHookRoute>(path: 'before-build'),
+        TypedGoRoute<HasReachedEndRoute>(path: 'reached-end'),
+        TypedGoRoute<CustomViewBuilderRoute>(path: 'custom-builder'),
+        TypedGoRoute<ReorderableListRoute>(path: 'reorderable'),
+        TypedGoRoute<StateSeparationRoute>(path: 'state-separation'),
+        TypedGoRoute<SmartPreloadingRoute>(path: 'preloading'),
+        TypedGoRoute<DataOperationsRoute>(path: 'data-operations'),
+        TypedGoRoute<DataAgeRoute>(path: 'data-age'),
+        TypedGoRoute<SortingRoute>(path: 'sorting'),
+        TypedGoRoute<ChatRoute>(path: 'chat'),
+      ],
+    ),
+    // ---- Search ----
+    TypedGoRoute<SearchRoute>(
+      path: '/search',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<SearchDropdownRoute>(path: 'dropdown'),
+        TypedGoRoute<MultiSelectSearchRoute>(path: 'multi-select'),
+        TypedGoRoute<BottomSheetSearchRoute>(path: 'bottom-sheet'),
+        TypedGoRoute<FormValidationRoute>(path: 'form-validation'),
+        TypedGoRoute<KeyboardNavigationRoute>(path: 'keyboard'),
+        TypedGoRoute<SearchThemingRoute>(path: 'theming'),
+        TypedGoRoute<AsyncStatesRoute>(path: 'async-states'),
+        TypedGoRoute<OverlayAnimationsRoute>(path: 'overlay-animations'),
+        TypedGoRoute<KeyBasedSelectionRoute>(path: 'key-based-selection'),
+        TypedGoRoute<InitialSelectionRoute>(path: 'initial-selection'),
+        TypedGoRoute<RealisticSearchExamplesRoute>(path: 'realistic-examples'),
+      ],
+    ),
+    // ---- Errors ----
+    TypedGoRoute<ErrorRoute>(
+      path: '/errors',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<BasicErrorRoute>(path: 'basic'),
+        TypedGoRoute<NetworkErrorsRoute>(path: 'network'),
+        TypedGoRoute<RetryPatternsRoute>(path: 'retry-patterns'),
+        TypedGoRoute<CustomErrorWidgetsRoute>(path: 'custom-widgets'),
+        TypedGoRoute<ErrorRecoveryRoute>(path: 'recovery'),
+        TypedGoRoute<GracefulDegradationRoute>(path: 'graceful'),
+        TypedGoRoute<LoadMoreErrorsRoute>(path: 'load-more'),
+      ],
+    ),
+    // ---- Firebase ----
+    TypedGoRoute<FirebaseRoute>(
+      path: '/firebase',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<FirestorePaginationRoute>(path: 'firestore-pagination'),
+        TypedGoRoute<FirestoreRealtimeRoute>(path: 'firestore-realtime'),
+        TypedGoRoute<FirestoreSearchRoute>(path: 'firestore-search'),
+        TypedGoRoute<RealtimeDatabaseRoute>(path: 'realtime-database'),
+        TypedGoRoute<FirestoreFiltersRoute>(path: 'firestore-filters'),
+        TypedGoRoute<OfflineSupportRoute>(path: 'offline-support'),
+        TypedGoRoute<SeedDataRoute>(path: 'seed-data'),
+      ],
+    ),
   ],
 )
+class HomeShellRouteData extends ShellRouteData {
+  const HomeShellRouteData();
+
+  static final GlobalKey<NavigatorState> $navigatorKey = _shellNavigatorKey;
+
+  @override
+  Widget builder(BuildContext context, GoRouterState state, Widget navigator) {
+    return navigator;
+  }
+}
+
+// ============================================================================
+// Section parent routes — render HomeScreen on the shell navigator
+// ============================================================================
+
 class BasicRoute extends GoRouteData with $BasicRoute {
   const BasicRoute();
 
@@ -119,8 +225,62 @@ class BasicRoute extends GoRouteData with $BasicRoute {
   }
 }
 
+class StreamRoute extends GoRouteData with $StreamRoute {
+  const StreamRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 1);
+  }
+}
+
+class AdvancedRoute extends GoRouteData with $AdvancedRoute {
+  const AdvancedRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 2);
+  }
+}
+
+class SearchRoute extends GoRouteData with $SearchRoute {
+  const SearchRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 3);
+  }
+}
+
+class ErrorRoute extends GoRouteData with $ErrorRoute {
+  const ErrorRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 4);
+  }
+}
+
+class FirebaseRoute extends GoRouteData with $FirebaseRoute {
+  const FirebaseRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return HomeScreen(initialIndex: 5);
+  }
+}
+
+// ============================================================================
+// Detail routes — break out to root navigator via $parentNavigatorKey
+// ============================================================================
+
+// ---- Basic detail routes ----
+
 class BasicListViewRoute extends GoRouteData with $BasicListViewRoute {
   const BasicListViewRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -135,6 +295,9 @@ class BasicListViewRoute extends GoRouteData with $BasicListViewRoute {
 class GridViewRoute extends GoRouteData with $GridViewRoute {
   const GridViewRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -147,6 +310,9 @@ class GridViewRoute extends GoRouteData with $GridViewRoute {
 
 class ColumnLayoutRoute extends GoRouteData with $ColumnLayoutRoute {
   const ColumnLayoutRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -161,6 +327,9 @@ class ColumnLayoutRoute extends GoRouteData with $ColumnLayoutRoute {
 class RowLayoutRoute extends GoRouteData with $RowLayoutRoute {
   const RowLayoutRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -173,6 +342,9 @@ class RowLayoutRoute extends GoRouteData with $RowLayoutRoute {
 
 class PullToRefreshRoute extends GoRouteData with $PullToRefreshRoute {
   const PullToRefreshRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -187,6 +359,9 @@ class PullToRefreshRoute extends GoRouteData with $PullToRefreshRoute {
 class FilterSearchRoute extends GoRouteData with $FilterSearchRoute {
   const FilterSearchRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -200,6 +375,9 @@ class FilterSearchRoute extends GoRouteData with $FilterSearchRoute {
 class RetryMechanismRoute extends GoRouteData with $RetryMechanismRoute {
   const RetryMechanismRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -210,32 +388,13 @@ class RetryMechanismRoute extends GoRouteData with $RetryMechanismRoute {
   }
 }
 
-// ============================================================================
-// Streams Routes
-// ============================================================================
-
-@TypedGoRoute<StreamRoute>(
-  path: '/streams',
-  routes: [
-    TypedGoRoute<SingleStreamRoute>(path: 'single'),
-    TypedGoRoute<MultiStreamRoute>(path: 'multi'),
-    TypedGoRoute<MergedStreamsRoute>(path: 'merged'),
-    TypedGoRoute<StreamAccumulationRoute>(path: 'stream-accumulation'),
-    TypedGoRoute<PerPageErrorRoute>(path: 'per-page-error'),
-    TypedGoRoute<DynamicEndOfPaginationRoute>(path: 'dynamic-end'),
-  ],
-)
-class StreamRoute extends GoRouteData with $StreamRoute {
-  const StreamRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return HomeScreen(initialIndex: 1);
-  }
-}
+// ---- Streams detail routes ----
 
 class SingleStreamRoute extends GoRouteData with $SingleStreamRoute {
   const SingleStreamRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -250,6 +409,9 @@ class SingleStreamRoute extends GoRouteData with $SingleStreamRoute {
 class MultiStreamRoute extends GoRouteData with $MultiStreamRoute {
   const MultiStreamRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -262,6 +424,9 @@ class MultiStreamRoute extends GoRouteData with $MultiStreamRoute {
 
 class MergedStreamsRoute extends GoRouteData with $MergedStreamsRoute {
   const MergedStreamsRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -276,6 +441,9 @@ class MergedStreamsRoute extends GoRouteData with $MergedStreamsRoute {
 class StreamAccumulationRoute extends GoRouteData with $StreamAccumulationRoute {
   const StreamAccumulationRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -288,6 +456,9 @@ class StreamAccumulationRoute extends GoRouteData with $StreamAccumulationRoute 
 
 class PerPageErrorRoute extends GoRouteData with $PerPageErrorRoute {
   const PerPageErrorRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -303,6 +474,9 @@ class DynamicEndOfPaginationRoute extends GoRouteData
     with $DynamicEndOfPaginationRoute {
   const DynamicEndOfPaginationRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -313,41 +487,13 @@ class DynamicEndOfPaginationRoute extends GoRouteData
   }
 }
 
-// ============================================================================
-// Advanced Routes
-// ============================================================================
-@TypedGoRoute<AdvancedRoute>(
-  path: '/advanced',
-  routes: [
-    TypedGoRoute<CursorPaginationRoute>(path: 'cursor'),
-    TypedGoRoute<HorizontalScrollRoute>(path: 'horizontal'),
-    TypedGoRoute<PageViewRoute>(path: 'page-view'),
-    TypedGoRoute<StaggeredGridRoute>(path: 'staggered-grid'),
-    TypedGoRoute<CustomStatesRoute>(path: 'custom-states'),
-    TypedGoRoute<ScrollControlRoute>(path: 'scroll-control'),
-    TypedGoRoute<BeforeBuildHookRoute>(path: 'before-build'),
-    TypedGoRoute<HasReachedEndRoute>(path: 'reached-end'),
-    TypedGoRoute<CustomViewBuilderRoute>(path: 'custom-builder'),
-    TypedGoRoute<ReorderableListRoute>(path: 'reorderable'),
-    TypedGoRoute<StateSeparationRoute>(path: 'state-separation'),
-    TypedGoRoute<SmartPreloadingRoute>(path: 'preloading'),
-    TypedGoRoute<DataOperationsRoute>(path: 'data-operations'),
-    TypedGoRoute<DataAgeRoute>(path: 'data-age'),
-    TypedGoRoute<SortingRoute>(path: 'sorting'),
-    TypedGoRoute<ChatRoute>(path: 'chat'),
-  ],
-)
-class AdvancedRoute extends GoRouteData with $AdvancedRoute {
-  const AdvancedRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return HomeScreen(initialIndex: 2);
-  }
-}
+// ---- Advanced detail routes ----
 
 class CursorPaginationRoute extends GoRouteData with $CursorPaginationRoute {
   const CursorPaginationRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -362,6 +508,9 @@ class CursorPaginationRoute extends GoRouteData with $CursorPaginationRoute {
 class HorizontalScrollRoute extends GoRouteData with $HorizontalScrollRoute {
   const HorizontalScrollRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -374,6 +523,9 @@ class HorizontalScrollRoute extends GoRouteData with $HorizontalScrollRoute {
 
 class PageViewRoute extends GoRouteData with $PageViewRoute {
   const PageViewRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -388,6 +540,9 @@ class PageViewRoute extends GoRouteData with $PageViewRoute {
 class StaggeredGridRoute extends GoRouteData with $StaggeredGridRoute {
   const StaggeredGridRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -400,6 +555,9 @@ class StaggeredGridRoute extends GoRouteData with $StaggeredGridRoute {
 
 class CustomStatesRoute extends GoRouteData with $CustomStatesRoute {
   const CustomStatesRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -414,6 +572,9 @@ class CustomStatesRoute extends GoRouteData with $CustomStatesRoute {
 class ScrollControlRoute extends GoRouteData with $ScrollControlRoute {
   const ScrollControlRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -426,6 +587,9 @@ class ScrollControlRoute extends GoRouteData with $ScrollControlRoute {
 
 class BeforeBuildHookRoute extends GoRouteData with $BeforeBuildHookRoute {
   const BeforeBuildHookRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -440,6 +604,9 @@ class BeforeBuildHookRoute extends GoRouteData with $BeforeBuildHookRoute {
 class HasReachedEndRoute extends GoRouteData with $HasReachedEndRoute {
   const HasReachedEndRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -452,6 +619,9 @@ class HasReachedEndRoute extends GoRouteData with $HasReachedEndRoute {
 
 class CustomViewBuilderRoute extends GoRouteData with $CustomViewBuilderRoute {
   const CustomViewBuilderRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -466,6 +636,9 @@ class CustomViewBuilderRoute extends GoRouteData with $CustomViewBuilderRoute {
 class ReorderableListRoute extends GoRouteData with $ReorderableListRoute {
   const ReorderableListRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -478,6 +651,9 @@ class ReorderableListRoute extends GoRouteData with $ReorderableListRoute {
 
 class StateSeparationRoute extends GoRouteData with $StateSeparationRoute {
   const StateSeparationRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -492,6 +668,9 @@ class StateSeparationRoute extends GoRouteData with $StateSeparationRoute {
 class SmartPreloadingRoute extends GoRouteData with $SmartPreloadingRoute {
   const SmartPreloadingRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -504,6 +683,9 @@ class SmartPreloadingRoute extends GoRouteData with $SmartPreloadingRoute {
 
 class DataOperationsRoute extends GoRouteData with $DataOperationsRoute {
   const DataOperationsRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -518,6 +700,9 @@ class DataOperationsRoute extends GoRouteData with $DataOperationsRoute {
 class DataAgeRoute extends GoRouteData with $DataAgeRoute {
   const DataAgeRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -530,6 +715,9 @@ class DataAgeRoute extends GoRouteData with $DataAgeRoute {
 
 class SortingRoute extends GoRouteData with $SortingRoute {
   const SortingRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -544,6 +732,9 @@ class SortingRoute extends GoRouteData with $SortingRoute {
 class ChatRoute extends GoRouteData with $ChatRoute {
   const ChatRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -554,37 +745,13 @@ class ChatRoute extends GoRouteData with $ChatRoute {
   }
 }
 
-// ============================================================================
-// Search Routes
-// ============================================================================
-
-@TypedGoRoute<SearchRoute>(
-  path: '/search',
-  routes: [
-    TypedGoRoute<SearchDropdownRoute>(path: 'dropdown'),
-    TypedGoRoute<MultiSelectSearchRoute>(path: 'multi-select'),
-    TypedGoRoute<BottomSheetSearchRoute>(path: 'bottom-sheet'),
-    TypedGoRoute<FormValidationRoute>(path: 'form-validation'),
-    TypedGoRoute<KeyboardNavigationRoute>(path: 'keyboard'),
-    TypedGoRoute<SearchThemingRoute>(path: 'theming'),
-    TypedGoRoute<AsyncStatesRoute>(path: 'async-states'),
-    TypedGoRoute<OverlayAnimationsRoute>(path: 'overlay-animations'),
-    TypedGoRoute<KeyBasedSelectionRoute>(path: 'key-based-selection'),
-    TypedGoRoute<InitialSelectionRoute>(path: 'initial-selection'),
-    TypedGoRoute<RealisticSearchExamplesRoute>(path: 'realistic-examples'),
-  ],
-)
-class SearchRoute extends GoRouteData with $SearchRoute {
-  const SearchRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return HomeScreen(initialIndex: 3);
-  }
-}
+// ---- Search detail routes ----
 
 class SearchDropdownRoute extends GoRouteData with $SearchDropdownRoute {
   const SearchDropdownRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -599,6 +766,9 @@ class SearchDropdownRoute extends GoRouteData with $SearchDropdownRoute {
 class MultiSelectSearchRoute extends GoRouteData with $MultiSelectSearchRoute {
   const MultiSelectSearchRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -612,6 +782,9 @@ class MultiSelectSearchRoute extends GoRouteData with $MultiSelectSearchRoute {
 class BottomSheetSearchRoute extends GoRouteData with $BottomSheetSearchRoute {
   const BottomSheetSearchRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -624,6 +797,9 @@ class BottomSheetSearchRoute extends GoRouteData with $BottomSheetSearchRoute {
 
 class FormValidationRoute extends GoRouteData with $FormValidationRoute {
   const FormValidationRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -639,6 +815,9 @@ class KeyboardNavigationRoute extends GoRouteData
     with $KeyboardNavigationRoute {
   const KeyboardNavigationRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -651,6 +830,9 @@ class KeyboardNavigationRoute extends GoRouteData
 
 class SearchThemingRoute extends GoRouteData with $SearchThemingRoute {
   const SearchThemingRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -665,6 +847,9 @@ class SearchThemingRoute extends GoRouteData with $SearchThemingRoute {
 class AsyncStatesRoute extends GoRouteData with $AsyncStatesRoute {
   const AsyncStatesRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -677,6 +862,9 @@ class AsyncStatesRoute extends GoRouteData with $AsyncStatesRoute {
 
 class OverlayAnimationsRoute extends GoRouteData with $OverlayAnimationsRoute {
   const OverlayAnimationsRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -691,6 +879,9 @@ class OverlayAnimationsRoute extends GoRouteData with $OverlayAnimationsRoute {
 class KeyBasedSelectionRoute extends GoRouteData with $KeyBasedSelectionRoute {
   const KeyBasedSelectionRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -703,6 +894,9 @@ class KeyBasedSelectionRoute extends GoRouteData with $KeyBasedSelectionRoute {
 
 class InitialSelectionRoute extends GoRouteData with $InitialSelectionRoute {
   const InitialSelectionRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -718,6 +912,9 @@ class RealisticSearchExamplesRoute extends GoRouteData
     with $RealisticSearchExamplesRoute {
   const RealisticSearchExamplesRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -728,33 +925,13 @@ class RealisticSearchExamplesRoute extends GoRouteData
   }
 }
 
-// ============================================================================
-// Error Routes
-// ============================================================================
-
-@TypedGoRoute<ErrorRoute>(
-  path: '/errors',
-  routes: [
-    TypedGoRoute<BasicErrorRoute>(path: 'basic'),
-    TypedGoRoute<NetworkErrorsRoute>(path: 'network'),
-    TypedGoRoute<RetryPatternsRoute>(path: 'retry-patterns'),
-    TypedGoRoute<CustomErrorWidgetsRoute>(path: 'custom-widgets'),
-    TypedGoRoute<ErrorRecoveryRoute>(path: 'recovery'),
-    TypedGoRoute<GracefulDegradationRoute>(path: 'graceful'),
-    TypedGoRoute<LoadMoreErrorsRoute>(path: 'load-more'),
-  ],
-)
-class ErrorRoute extends GoRouteData with $ErrorRoute {
-  const ErrorRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return HomeScreen(initialIndex: 4);
-  }
-}
+// ---- Error detail routes ----
 
 class BasicErrorRoute extends GoRouteData with $BasicErrorRoute {
   const BasicErrorRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -769,6 +946,9 @@ class BasicErrorRoute extends GoRouteData with $BasicErrorRoute {
 class NetworkErrorsRoute extends GoRouteData with $NetworkErrorsRoute {
   const NetworkErrorsRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -781,6 +961,9 @@ class NetworkErrorsRoute extends GoRouteData with $NetworkErrorsRoute {
 
 class RetryPatternsRoute extends GoRouteData with $RetryPatternsRoute {
   const RetryPatternsRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -796,6 +979,9 @@ class CustomErrorWidgetsRoute extends GoRouteData
     with $CustomErrorWidgetsRoute {
   const CustomErrorWidgetsRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -808,6 +994,9 @@ class CustomErrorWidgetsRoute extends GoRouteData
 
 class ErrorRecoveryRoute extends GoRouteData with $ErrorRecoveryRoute {
   const ErrorRecoveryRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -823,6 +1012,9 @@ class GracefulDegradationRoute extends GoRouteData
     with $GracefulDegradationRoute {
   const GracefulDegradationRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -836,6 +1028,9 @@ class GracefulDegradationRoute extends GoRouteData
 class LoadMoreErrorsRoute extends GoRouteData with $LoadMoreErrorsRoute {
   const LoadMoreErrorsRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -846,34 +1041,14 @@ class LoadMoreErrorsRoute extends GoRouteData with $LoadMoreErrorsRoute {
   }
 }
 
-// ============================================================================
-// Firebase Routes
-// ============================================================================
-
-@TypedGoRoute<FirebaseRoute>(
-  path: '/firebase',
-  routes: [
-    TypedGoRoute<FirestorePaginationRoute>(path: 'firestore-pagination'),
-    TypedGoRoute<FirestoreRealtimeRoute>(path: 'firestore-realtime'),
-    TypedGoRoute<FirestoreSearchRoute>(path: 'firestore-search'),
-    TypedGoRoute<RealtimeDatabaseRoute>(path: 'realtime-database'),
-    TypedGoRoute<FirestoreFiltersRoute>(path: 'firestore-filters'),
-    TypedGoRoute<OfflineSupportRoute>(path: 'offline-support'),
-    TypedGoRoute<SeedDataRoute>(path: 'seed-data'),
-  ],
-)
-class FirebaseRoute extends GoRouteData with $FirebaseRoute {
-  const FirebaseRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return HomeScreen(initialIndex: 5);
-  }
-}
+// ---- Firebase detail routes ----
 
 class FirestorePaginationRoute extends GoRouteData
     with $FirestorePaginationRoute {
   const FirestorePaginationRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -888,6 +1063,9 @@ class FirestorePaginationRoute extends GoRouteData
 class FirestoreRealtimeRoute extends GoRouteData with $FirestoreRealtimeRoute {
   const FirestoreRealtimeRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -900,6 +1078,9 @@ class FirestoreRealtimeRoute extends GoRouteData with $FirestoreRealtimeRoute {
 
 class FirestoreSearchRoute extends GoRouteData with $FirestoreSearchRoute {
   const FirestoreSearchRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -914,6 +1095,9 @@ class FirestoreSearchRoute extends GoRouteData with $FirestoreSearchRoute {
 class RealtimeDatabaseRoute extends GoRouteData with $RealtimeDatabaseRoute {
   const RealtimeDatabaseRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -926,6 +1110,9 @@ class RealtimeDatabaseRoute extends GoRouteData with $RealtimeDatabaseRoute {
 
 class FirestoreFiltersRoute extends GoRouteData with $FirestoreFiltersRoute {
   const FirestoreFiltersRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -940,6 +1127,9 @@ class FirestoreFiltersRoute extends GoRouteData with $FirestoreFiltersRoute {
 class OfflineSupportRoute extends GoRouteData with $OfflineSupportRoute {
   const OfflineSupportRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -953,6 +1143,9 @@ class OfflineSupportRoute extends GoRouteData with $OfflineSupportRoute {
 class SeedDataRoute extends GoRouteData with $SeedDataRoute {
   const SeedDataRoute();
 
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return _buildPageWithTransition(
@@ -964,12 +1157,11 @@ class SeedDataRoute extends GoRouteData with $SeedDataRoute {
 }
 
 // ============================================================================
-// Router Configuration (Generated - will be created by go_router_builder)
+// Router configuration
 // ============================================================================
 
-/// App router configuration using go_router_builder
-/// The $appRoutes is generated by go_router_builder
 final GoRouter appRouter = GoRouter(
-  initialLocation: BasicRoute().location,
+  navigatorKey: _rootNavigatorKey,
+  initialLocation: const BasicRoute().location,
   routes: $appRoutes,
 );
