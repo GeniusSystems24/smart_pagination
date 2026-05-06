@@ -281,28 +281,28 @@
 
 ### Tests for User Story 2
 
-- [ ] T033 [P] [US2] Implement view-matrix test bodies for in-scope views (T23, T24, T25, T26)
+- [x] T033 [P] [US2] Implement view-matrix test bodies for in-scope views (T23, T24, T25, T26)
   - **Files**: `test/scroll_anchor_view_type_matrix_test.dart`
   - **Description**: Fill four stubs: T23 ListView (with and without `itemKeyBuilder`), T24 GridView (same), T25 CustomScrollView with consumer header/footer slivers, T26 StaggeredGridView via offset-delta. Each test mirrors the regression pattern: build → fling → assert one fetch + anchor stable.
   - **Acceptance**: T23 already passes (US1). T24, T25, T26 fail until T037–T039 land.
   - **Dependencies**: T012, T031
   - **Parallel**: Yes — different file from T034, T035, T036
 
-- [ ] T034 [P] [US2] Implement out-of-scope view-matrix test bodies (T27, T28, T29)
+- [x] T034 [P] [US2] Implement out-of-scope view-matrix test bodies (T27, T28, T29)
   - **Files**: `test/scroll_anchor_view_type_matrix_test.dart`
   - **Description**: Fill three stubs: T27 PageView (capture is no-op, suppression flag stays false, existing overflow-index trigger fires unchanged), T28 ReorderableListView (no auto-load-more trigger today; verify nothing changes), T29 reverse-direction ListView (`reverse: true`) — capture short-circuits.
   - **Acceptance**: All three fail until T040, T041 land.
   - **Dependencies**: T012, T031
   - **Parallel**: Yes — same file but distinct test bodies; can be implemented concurrently with T033 if developers split the file
 
-- [ ] T035 [P] [US2] Implement fall-through test bodies (T36, T37, T38)
+- [x] T035 [P] [US2] Implement fall-through test bodies (T36, T37, T38)
   - **Files**: `test/scroll_anchor_fallthrough_test.dart`
   - **Description**: Fill three stubs: T36 reverse list still fires existing `_shouldLoadMore` triggers; T37 PageView's overflow-index trigger continues to call `fetchPaginatedList`; T38 ReorderableListView behavior is byte-identical.
   - **Acceptance**: T37, T38 likely already pass (no behavior change). T36 may fail if the reverse short-circuit isn't yet wired.
   - **Dependencies**: T014, T031
   - **Parallel**: Yes
 
-- [ ] T036 [P] [US2] Implement remaining capture edge-case tests (T03 staggered offset; T05 partial-visible fallback; T06 no-item fallback; T07 reverse no-op)
+- [x] T036 [P] [US2] Implement remaining capture edge-case tests (T03 staggered offset; T05 partial-visible fallback; T06 no-item fallback; T07 reverse no-op)
   - **Files**: `test/scroll_anchor_capture_test.dart`
   - **Description**: Fill four remaining stubs in the capture file. T03: StaggeredGridView path returns `strategy: AnchorStrategy.offset` with `pixelsBefore` populated. T05: viewport shorter than any item → fallback to topmost partially-visible. T06: no item identifiable → strategy=offset. T07: capture is no-op for reverse.
   - **Acceptance**: All four fail until T039–T040 land.
@@ -311,21 +311,21 @@
 
 ### Implementation for User Story 2
 
-- [ ] T037 [US2] Wire capture-before-fetch push from `_buildGridView` trigger sites in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T037 [US2] Wire capture-before-fetch push from `_buildGridView` trigger sites in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (lines 443–452 animated, 474–483 sliver-grid)
   - **Description**: Mirror T021 for the grid paths: insert the same `_AnchorStrategySelector.compute(...)` + `cubit.captureAnchorBeforeLoadMore(snap)` block before each existing `addPostFrameCallback(fetchPaginatedList)`. Also wrap the returned `CustomScrollView` in the outer `NotificationListener<ScrollNotification>` from T026.
   - **Acceptance**: T24 passes. T17, T20 still pass on grids.
   - **Dependencies**: T032
   - **Parallel**: No — same file as T038, T039
 
-- [ ] T038 [US2] Confirm `CustomScrollView`/sliver path is covered by the existing `_buildListView` and `_buildGridView` branches in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T038 [US2] Confirm `CustomScrollView`/sliver path is covered by the existing `_buildListView` and `_buildGridView` branches in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart`
   - **Description**: The package's `_buildListView` and `_buildGridView` already build their items inside a `CustomScrollView` (lines 507, 727). Verify that consumer-supplied `header` and `footer` slivers (which are added to the same `CustomScrollView`) do not interfere with the observer or the `NotificationListener`. If T25 fails, identify the cause and fix; otherwise this task is verification-only.
   - **Acceptance**: T25 passes; consumer-supplied slivers don't break capture or restore.
   - **Dependencies**: T037
   - **Parallel**: No — same file
 
-- [ ] T039 [US2] Wire offset-delta capture and restore for `_buildStaggeredGridView` in `lib/smart_pagination/widgets/paginate_api_view.dart`
+- [x] T039 [US2] Wire offset-delta capture and restore for `_buildStaggeredGridView` in `lib/smart_pagination/widgets/paginate_api_view.dart`
   - **Files**: `paginate_api_view.dart` (lines 864–917)
   - **Description**: In the existing `NotificationListener<ScrollNotification>` block, when the load-more threshold is crossed, before the existing `addPostFrameCallback(fetchPaginatedList)` call, build a `_PendingScrollAnchor` with `strategy: AnchorStrategy.offset`, `pixelsBefore: notification.metrics.pixels`, `extentBefore: notification.metrics.maxScrollExtent`, and push it via `cubit.captureAnchorBeforeLoadMore`. Also extend the same listener's `onNotification` to call `markUserScroll` on `ScrollStartNotification && dragDetails != null`. The cubit's `_performAnchorRestore` already handles the offset case (T025); the staggered controller is `_effectiveScrollController` which the cubit can reach via its own observer-integration (already attached) — but for staggered specifically, the observer is NOT attached, so the cubit must use the controller passed via the snapshot. Update `_performAnchorRestore` to accept a controller closure or to read the snapshot's `pixelsBefore` and call `controller.jumpTo` via a registered fallback path.
   - **Acceptance**: T03, T26 pass. T36 (reverse fall-through) confirms the staggered listener's user-scroll detection works on reverse staggered too.

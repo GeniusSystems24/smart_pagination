@@ -265,6 +265,7 @@ class _PendingScrollAnchor {
     this.leadingEdgeOffset,
     this.pixelsBefore,
     this.extentBefore,
+    this.scrollController,
   });
 
   /// Selected strategy for this snapshot. Determines which fields are
@@ -308,4 +309,13 @@ class _PendingScrollAnchor {
   /// `controller.position.maxScrollExtent` at capture time. Diagnostic /
   /// future-use field.
   final double? extentBefore;
+
+  /// The `ScrollController` attached to the scrollable at capture time.
+  /// Populated only for the `AnchorStrategy.offset` path (StaggeredGridView)
+  /// where no observer is attached; the cubit reads it in `_performOffsetRestore`
+  /// when neither `_listObserverController` nor `_gridObserverController` is
+  /// available. Null for all other view types.
+  ///
+  /// Spec 004-scroll-anchor-preservation §data-model §1.
+  final ScrollController? scrollController;
 }

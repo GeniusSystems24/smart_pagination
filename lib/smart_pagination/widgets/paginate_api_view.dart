@@ -72,6 +72,8 @@ class PaginateApiView<T, R extends PaginationRequest> extends StatefulWidget {
     this.insertItemAnimationBuilder,
     this.removeItemAnimationBuilder,
     this.animationDuration = const Duration(milliseconds: 300),
+    // Spec 004-scroll-anchor-preservation
+    this.preserveScrollAnchorOnAppend = true,
   });
 
   final SmartPaginationLoaded<T> loadedState;
@@ -185,6 +187,23 @@ class PaginateApiView<T, R extends PaginationRequest> extends StatefulWidget {
   /// Duration of insert/remove animations. Defaults to 300ms.
   final Duration animationDuration;
 
+  /// Whether the package should preserve the user's scroll position when new
+  /// items are appended via load-more (Spec 004-scroll-anchor-preservation).
+  ///
+  /// When `true` (default), the package captures a viewport anchor before
+  /// the load-more fetch and jumps the scroll back to it after the new
+  /// items are laid out. It also suppresses chain-triggered automatic
+  /// load-more calls until the user initiates a new drag-scroll gesture.
+  ///
+  /// When `false`, anchor capture, restore, and the suppression flag are
+  /// disabled — behavior reverts to pre-3.5.0 (the framework's default
+  /// "stick to the bottom" maintainExtent behavior).
+  ///
+  /// This flag has no effect on out-of-scope view types (`reverse: true`,
+  /// `pageView`, `reorderableListView`, `custom`) — those views never run
+  /// anchor preservation regardless of this setting.
+  final bool preserveScrollAnchorOnAppend;
+
   @override
   State<PaginateApiView<T, R>> createState() => _PaginateApiViewState<T, R>();
 }
@@ -231,6 +250,22 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
     super.initState();
     _previousItems = List<T>.from(_items);
     _initializeObserver();
+    _syncLoadMoreSuppression();
+  }
+
+  /// Spec 004 §FR-007 (T040/T041): tells the cubit at attach time whether
+  /// post-append suppression should be armed for this view. Out-of-scope view
+  /// types (`PageView`, `ReorderableListView`, custom) and `reverse: true`
+  /// disable suppression entirely so chain-triggered triggers fire freely.
+  void _syncLoadMoreSuppression() {
+    final cubit = widget.cubit;
+    if (cubit == null) return;
+    final outOfScope = !widget.preserveScrollAnchorOnAppend ||
+        widget.reverse ||
+        widget.itemBuilderType == PaginateBuilderType.pageView ||
+        widget.itemBuilderType == PaginateBuilderType.reorderableListView ||
+        widget.itemBuilderType == PaginateBuilderType.custom;
+    cubit.setLoadMoreSuppressionEnabled(!outOfScope);
   }
 
   void _initializeObserver() {
@@ -340,6 +375,114 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
     );
   }
 
+  /// Called by [GridViewObserver.onObserve] on every scroll frame.
+  ///
+  /// Mirrors [_handleListObserve] for the GridView path: selects the best
+  /// anchor item from [model.displayingChildModelList] and writes it to
+  /// [_lastObservedSnapshot]. The snapshot is then read at each grid
+  /// load-more trigger site (spec 004 §4.2 / T037).
+  void _handleGridObserve(GridViewObserveModel model) {
+    if (widget.cubit == null) return;
+
+    final displayingItems = model.displayingChildModelList;
+    final scrollController = _effectiveScrollController;
+    final double? pixelsBefore =
+        scrollController.hasClients ? scrollController.position.pixels : null;
+    final double? extentBefore = scrollController.hasClients
+        ? scrollController.position.maxScrollExtent
+        : null;
+
+    if (displayingItems.isEmpty) {
+      return;
+    }
+
+    // Select the last fully-visible item (highest index, displayPercentage >= 1.0).
+    GridViewObserveDisplayingChildModel? anchorItem;
+    for (final item in displayingItems.reversed) {
+      if (item.index < _items.length && item.displayPercentage >= 1.0) {
+        anchorItem = item;
+        break;
+      }
+    }
+
+    // Fallback: topmost partially-visible item.
+    if (anchorItem == null) {
+      for (final item in displayingItems) {
+        if (item.index < _items.length && item.displayPercentage > 0.0) {
+          anchorItem = item;
+          break;
+        }
+      }
+    }
+
+    if (anchorItem == null) {
+      if (pixelsBefore != null) {
+        _lastObservedSnapshot = _PendingScrollAnchor(
+          strategy: AnchorStrategy.offset,
+          viewType: _AnchorViewType.gridView,
+          reverse: widget.reverse,
+          generation: widget.cubit!.currentGeneration,
+          pixelsBefore: pixelsBefore,
+          extentBefore: extentBefore,
+        );
+      }
+      return;
+    }
+
+    final anchorIndex = anchorItem.index;
+    final AnchorStrategy strategy;
+    final Object? key;
+    if (widget.itemKeyBuilder != null) {
+      strategy = AnchorStrategy.key;
+      key = widget.itemKeyBuilder!(_items[anchorIndex], anchorIndex);
+    } else {
+      strategy = AnchorStrategy.itemIndex;
+      key = null;
+    }
+
+    _lastObservedSnapshot = _PendingScrollAnchor(
+      strategy: strategy,
+      viewType: _AnchorViewType.gridView,
+      reverse: widget.reverse,
+      generation: widget.cubit!.currentGeneration,
+      key: key,
+      index: anchorIndex,
+      leadingEdgeOffset: anchorItem.leadingMarginToViewport,
+      pixelsBefore: pixelsBefore,
+      extentBefore: extentBefore,
+    );
+  }
+
+  /// Spec 004 §4.2 / FR-002 / T020 / R9: pushes the best-available anchor
+  /// snapshot to the cubit before a load-more fetch. Prefers the observer's
+  /// last reported snapshot; falls back to an offset-only snapshot built from
+  /// the active scroll controller when the observer hasn't fired yet (race
+  /// during a fast fling). No-op for reverse views or when no cubit is bound.
+  void _pushAnchorSnapshotForLoadMore(_AnchorViewType viewType) {
+    if (!widget.preserveScrollAnchorOnAppend) return;
+    if (widget.reverse) return;
+    final cubit = widget.cubit;
+    if (cubit == null) return;
+    final observed = _lastObservedSnapshot;
+    if (observed != null) {
+      cubit.captureAnchorBeforeLoadMore(observed);
+      return;
+    }
+    final ctrl = _effectiveScrollController;
+    if (!ctrl.hasClients) return;
+    cubit.captureAnchorBeforeLoadMore(
+      _PendingScrollAnchor(
+        strategy: AnchorStrategy.offset,
+        viewType: viewType,
+        reverse: widget.reverse,
+        generation: cubit.currentGeneration,
+        pixelsBefore: ctrl.position.pixels,
+        extentBefore: ctrl.position.maxScrollExtent,
+        scrollController: ctrl,
+      ),
+    );
+  }
+
   @override
   void didUpdateWidget(covariant PaginateApiView<T, R> oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -354,6 +497,16 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         oldWidget.cubit?.detachGridObserverController();
         widget.cubit?.attachGridObserverController(_gridObserverController!);
       }
+    }
+
+    // Spec 004 §FR-007 (T040/T041): re-sync the cubit's suppression master
+    // switch if the view scope or reverse setting changed.
+    if (oldWidget.itemBuilderType != widget.itemBuilderType ||
+        oldWidget.reverse != widget.reverse ||
+        oldWidget.cubit != widget.cubit ||
+        oldWidget.preserveScrollAnchorOnAppend !=
+            widget.preserveScrollAnchorOnAppend) {
+      _syncLoadMoreSuppression();
     }
 
     // A full reload (clear, setItems, refresh, fetch) invalidates the
@@ -534,12 +687,11 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         initialItemCount: _items.length,
         itemBuilder: (context, index, animation) {
           if (_shouldLoadMore(index)) {
-            // Spec 003-load-more-guard §5.1: schedule the fetch for after the
-            // current frame so multiple item builders triggering during the
-            // same build pass collapse to a single call. The cubit's
-            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
-            // still slip through; this is defense in depth.
+            // Spec 003-load-more-guard §5.1 / 004 §4.2: schedule post-frame so
+            // duplicate builders in the same pass collapse to one call; push the
+            // observer anchor snapshot to the cubit BEFORE triggering the fetch.
             SchedulerBinding.instance.addPostFrameCallback((_) {
+              _pushAnchorSnapshotForLoadMore(_AnchorViewType.gridView);
               widget.fetchPaginatedList?.call();
             });
           }
@@ -565,14 +717,13 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             if (_shouldLoadMore(index)) {
-              // Spec 003-load-more-guard §5.1: schedule the fetch for after the
-            // current frame so multiple item builders triggering during the
-            // same build pass collapse to a single call. The cubit's
-            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
-            // still slip through; this is defense in depth.
-            SchedulerBinding.instance.addPostFrameCallback((_) {
-              widget.fetchPaginatedList?.call();
-            });
+              // Spec 003-load-more-guard §5.1 / 004 §4.2: schedule post-frame so
+              // duplicate builders in the same pass collapse to one call; push the
+              // observer anchor snapshot to the cubit BEFORE triggering the fetch.
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                _pushAnchorSnapshotForLoadMore(_AnchorViewType.gridView);
+                widget.fetchPaginatedList?.call();
+              });
             }
 
             final child = widget.itemBuilder(context, _items, index);
@@ -617,14 +768,32 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
     );
 
     // Wrap with GridViewObserver if enabled
+    final Widget observedView;
     if (widget.enableObserver && _gridObserverController != null) {
-      return GridViewObserver(
+      observedView = GridViewObserver(
         controller: _gridObserverController!,
+        onObserve: _handleGridObserve,
         child: scrollView,
       );
+    } else {
+      observedView = scrollView;
     }
 
-    return scrollView;
+    // Spec 004-scroll-anchor-preservation §6 / FR-004b:
+    // Outer NotificationListener detects user-initiated drag-scroll gestures
+    // and re-arms the cubit's post-append suppression flag via markUserScroll.
+    // `return false` is critical — MUST NOT consume the notification.
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollStartNotification &&
+            notification.dragDetails != null &&
+            widget.cubit != null) {
+          widget.cubit!.markUserScroll();
+        }
+        return false;
+      },
+      child: observedView,
+    );
   }
 
   /// Default insert animation: fade + size transition.
@@ -740,10 +909,7 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
             // duplicate builders in the same pass collapse to one call; push the
             // observer anchor snapshot to the cubit BEFORE triggering the fetch.
             SchedulerBinding.instance.addPostFrameCallback((_) {
-              final snap = _lastObservedSnapshot;
-              if (snap != null && widget.cubit != null) {
-                widget.cubit!.captureAnchorBeforeLoadMore(snap);
-              }
+              _pushAnchorSnapshotForLoadMore(_AnchorViewType.listView);
               widget.fetchPaginatedList?.call();
             });
           }
@@ -782,10 +948,7 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
                 // duplicate builders in the same pass collapse to one call; push the
                 // observer anchor snapshot to the cubit BEFORE triggering the fetch.
                 SchedulerBinding.instance.addPostFrameCallback((_) {
-                  final snap = _lastObservedSnapshot;
-                  if (snap != null && widget.cubit != null) {
-                    widget.cubit!.captureAnchorBeforeLoadMore(snap);
-                  }
+                  _pushAnchorSnapshotForLoadMore(_AnchorViewType.listView);
                   widget.fetchPaginatedList?.call();
                 });
               }
@@ -954,13 +1117,17 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
           (context, index) {
             if (index >= _items.length) {
               // Spec 003-load-more-guard §5.1: schedule the fetch for after the
-            // current frame so multiple item builders triggering during the
-            // same build pass collapse to a single call. The cubit's
-            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
-            // still slip through; this is defense in depth.
-            SchedulerBinding.instance.addPostFrameCallback((_) {
-              widget.fetchPaginatedList?.call();
-            });
+              // current frame so multiple item builders triggering during the
+              // same build pass collapse to a single call. The cubit's
+              // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates
+              // that still slip through; this is defense in depth.
+              // Spec 004 §FR-007 / T041: PageView is out of scope for anchor
+              // preservation. The cubit's master switch (set by
+              // _syncLoadMoreSuppression) already disables suppression for
+              // PageView, so no per-fetch opt-out is needed here.
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                widget.fetchPaginatedList?.call();
+              });
               return widget.bottomLoader ?? const SizedBox.shrink();
             }
             final child = widget.itemBuilder(context, _items, index);
@@ -984,32 +1151,59 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
     final crossAxisSpacing = delegate.crossAxisSpacing;
 
     return NotificationListener<ScrollNotification>(
-      // AUDIT 004 (insertion site): this listener will be extended to:
-      //   (a) capture an offset-only anchor snapshot
-      //       (strategy=AnchorStrategy.offset, pixelsBefore, extentBefore)
-      //       and push it via `cubit.captureAnchorBeforeLoadMore` immediately
-      //       before the existing `addPostFrameCallback(fetchPaginatedList)`,
-      //   (b) detect user-initiated scroll on
-      //       `notification is ScrollStartNotification && notification.dragDetails != null`
-      //       and call `cubit.markUserScroll()`.
-      // The package-internal observer is NOT attached to StaggeredGridView,
-      // so this listener is the only capture surface for that view type
-      // (per plan §5.1, §6.4, contracts/view-type-matrix.md).
+      // Spec 004-scroll-anchor-preservation §5.1, §6.4:
+      // (a) Detect user-initiated drag-scroll gestures and re-arm the cubit's
+      //     suppression flag via markUserScroll (ScrollStartNotification with
+      //     non-null dragDetails). The package-internal observer is NOT attached
+      //     to StaggeredGridView, so this listener is the only re-arm surface.
+      // (b) Capture an offset-only anchor snapshot (strategy=AnchorStrategy.offset,
+      //     pixelsBefore, extentBefore, scrollController) and push it via
+      //     `cubit.captureAnchorBeforeLoadMore` immediately before triggering
+      //     fetchPaginatedList. The snapshot embeds _effectiveScrollController so
+      //     `_performOffsetRestore` can restore without an attached observer.
       onNotification: (notification) {
-        // Check if we should load more when scrolling near the end
+        if (notification is ScrollStartNotification &&
+            notification.dragDetails != null &&
+            widget.cubit != null) {
+          widget.cubit!.markUserScroll();
+        }
         if (notification is ScrollUpdateNotification) {
           final pixels = notification.metrics.pixels;
           final maxScrollExtent = notification.metrics.maxScrollExtent;
-          // Trigger loading when near the end (80% scrolled)
-          if (pixels >= maxScrollExtent * 0.8 &&
+          // Trigger loading when near the end (80% scrolled).
+          // Guard `maxScrollExtent > 0` prevents an infinite-fetch loop when
+          // total content fits the viewport: in that case `pixels == 0` and
+          // `maxScrollExtent == 0`, so `pixels >= maxScrollExtent * 0.8`
+          // (i.e. `0 >= 0`) would be perpetually true on every layout-driven
+          // ScrollUpdateNotification.
+          if (maxScrollExtent > 0 &&
+              pixels >= maxScrollExtent * 0.8 &&
               !widget.loadedState.hasReachedEnd &&
               !widget.loadedState.isLoadingMore) {
-            // Spec 003-load-more-guard §5.1: schedule the fetch for after the
-            // current frame so multiple item builders triggering during the
-            // same build pass collapse to a single call. The cubit's
-            // `_isFetching`/`_activeLoadMoreKey` guard catches duplicates that
-            // still slip through; this is defense in depth.
+            // Capture pixel positions at notification time (before post-frame),
+            // then push the anchor snapshot and schedule the fetch together.
+            final capturedPixels = pixels;
+            final capturedExtent = maxScrollExtent;
+            // Spec 003-load-more-guard §5.1 / 004 §4.2: schedule post-frame so
+            // duplicate scroll events collapse to one call; push offset-delta
+            // anchor snapshot to the cubit BEFORE triggering the fetch.
             SchedulerBinding.instance.addPostFrameCallback((_) {
+              // T040: reverse StaggeredGridView is out of scope — capture is
+              // skipped. The cubit's master switch already disables
+              // suppression for reverse views via _syncLoadMoreSuppression.
+              if (!widget.reverse && widget.cubit != null) {
+                widget.cubit!.captureAnchorBeforeLoadMore(
+                  _PendingScrollAnchor(
+                    strategy: AnchorStrategy.offset,
+                    viewType: _AnchorViewType.staggeredGridView,
+                    reverse: widget.reverse,
+                    generation: widget.cubit!.currentGeneration,
+                    pixelsBefore: capturedPixels,
+                    extentBefore: capturedExtent,
+                    scrollController: _effectiveScrollController,
+                  ),
+                );
+              }
               widget.fetchPaginatedList?.call();
             });
           }
@@ -1028,17 +1222,22 @@ class _PaginateApiViewState<T, R extends PaginationRequest>
           mainAxisSpacing: mainAxisSpacing,
           crossAxisSpacing: crossAxisSpacing,
           children: [
+            // The consumer's itemBuilder must return a StaggeredGridTile that is
+            // placed directly into StaggeredGrid.count.children. Wrapping in
+            // RepaintBoundary / KeyedSubtree would violate StaggeredGridTile's
+            // ParentDataWidget contract (it must be a direct child of StaggeredGrid).
             for (var index = 0; index < _items.length; index++)
-              StaggeredGridTile.fit(
-                crossAxisCellCount: 1,
-                child: _wrapWithKey(
-                  widget.itemBuilder(context, _items, index),
-                  index,
-                ),
-              ),
-            // Add bottom widget for loading/error/end states
-            if (!widget.loadedState.hasReachedEnd ||
-                widget.loadMoreNoMoreItemsBuilder != null)
+              widget.itemBuilder(context, _items, index),
+            // Add bottom widget only when there's something to display:
+            // an active load-more, an error, or an end-of-list message.
+            // Avoids rendering a perpetually-animating CircularProgressIndicator
+            // (the default `BottomLoader`) at idle, which prevents
+            // `pumpAndSettle` from settling in widget tests and emits a
+            // misleading idle spinner in production.
+            if (widget.loadedState.isLoadingMore ||
+                widget.loadedState.loadMoreError != null ||
+                (widget.loadedState.hasReachedEnd &&
+                    widget.loadMoreNoMoreItemsBuilder != null))
               StaggeredGridTile.fit(
                 crossAxisCellCount: crossAxisCount, // Span full width
                 child: _buildBottomWidget(context),

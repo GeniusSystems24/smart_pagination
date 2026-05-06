@@ -246,10 +246,94 @@ void main() {
       },
     );
 
-    test(
+    // -----------------------------------------------------------------------
+    // T03: StaggeredGridView uses AnchorStrategy.offset (no observer).
+    //
+    // The StaggeredGridView path embeds the ScrollController in the snapshot
+    // and uses pixelsBefore for restore. Observable proxy: after load-more,
+    // the scroll position stays near pixelsBefore (i.e., the restore
+    // happened) rather than advancing to a new position.
+    //
+    // Passes once T039 wires offset-delta capture in _buildStaggeredGridView.
+    // -----------------------------------------------------------------------
+    testWidgets(
       'T03: strategy = offset on a StaggeredGridView (no observer)',
-      () {
-        fail('not yet implemented');
+      (tester) async {
+        var providerCallCount = 0;
+        final scrollController = ScrollController();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                // Constrain viewport so total content (10 rows × 50px = 500px
+                // in a 2-column grid) overflows. Without this, the default
+                // 600px tester viewport leaves maxScrollExtent == 0 and
+                // jumpTo cannot dispatch a ScrollUpdateNotification.
+                height: 200,
+                child: SmartPaginationStaggeredGridView<int,
+                        PaginationRequest>.withProvider(
+                  request: PaginationRequest(page: 1, pageSize: _pageSize),
+                  provider: PaginationProvider<int, PaginationRequest>.future(
+                    (req) async {
+                      providerCallCount++;
+                      return List<int>.generate(
+                        _pageSize,
+                        (i) => (req.page - 1) * _pageSize + i,
+                      );
+                    },
+                  ),
+                  crossAxisCount: 2,
+                  scrollController: scrollController,
+                  itemBuilder: (context, items, index) => StaggeredGridTile.fit(
+                    crossAxisCellCount: 1,
+                    child: SizedBox(
+                      height: _itemHeight,
+                      child: Text('Item ${items[index]}'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        expect(providerCallCount, 1);
+
+        // Capture scroll position at 85% of maxScrollExtent (above the 80% trigger).
+        final maxExtent = scrollController.position.maxScrollExtent;
+        final capturePosition = maxExtent * 0.85;
+        scrollController.jumpTo(capturePosition);
+        await tester.pump();
+
+        // After the load-more posts to the frame callback and settles:
+        // - The new page is appended (maxScrollExtent grows).
+        // - _performOffsetRestore clamps and jumpTo's back to capturePosition.
+        // - suppression prevents a chained second load-more.
+        await tester.pumpAndSettle();
+
+        expect(
+          providerCallCount,
+          2,
+          reason:
+              'T03: exactly one load-more triggered at 80% threshold on '
+              'StaggeredGridView (offset-delta strategy).',
+        );
+
+        // Restore put us back near capturePosition — the scroll position must
+        // be ≤ capturePosition + 10 (clamped to new maxScrollExtent if needed).
+        final restoredPosition = scrollController.position.pixels;
+        expect(
+          restoredPosition,
+          lessThanOrEqualTo(capturePosition + 10),
+          reason:
+              'T03: offset-delta restore placed viewport near or below '
+              'the pre-append scroll position (capturePosition = $capturePosition, '
+              'restoredPosition = $restoredPosition).',
+        );
+
+        scrollController.dispose();
       },
     );
 
@@ -349,19 +433,134 @@ void main() {
       },
     );
 
-    test(
+    // -----------------------------------------------------------------------
+    // T05: partial-visible fallback — topmost partially-visible item used.
+    //
+    // Setup: items are 200px tall; viewport is 600px. At max scroll extent
+    // the last item is partially visible (displayPercentage < 1.0). The
+    // observer falls back to the topmost item with displayPercentage > 0.0.
+    // Observable: anchor preservation still works (one load-more per fling).
+    // -----------------------------------------------------------------------
+    testWidgets(
       'T05: when no item is fully visible, capture falls back to the '
       'topmost partially-visible item',
-      () {
-        fail('not yet implemented');
+      (tester) async {
+        var providerCallCount = 0;
+
+        // Use items taller than 1/12 of viewport so at least one is only
+        // partially visible when scrolled near the bottom.
+        const tallItemHeight = 200.0;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SmartPaginationListView<int,
+                      PaginationRequest>.withProvider(
+                request: PaginationRequest(page: 1, pageSize: _pageSize),
+                provider: PaginationProvider<int, PaginationRequest>.future(
+                  (req) async {
+                    providerCallCount++;
+                    return List<int>.generate(
+                      _pageSize,
+                      (i) => (req.page - 1) * _pageSize + i,
+                    );
+                  },
+                ),
+                itemBuilder: (context, items, index) => SizedBox(
+                  height: tallItemHeight,
+                  child: Text('Item ${items[index]}'),
+                ),
+                invisibleItemsThreshold: 1,
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        final callsAfterInit = providerCallCount;
+
+        // Fling to the end — at max scroll extent the last item may be
+        // partially visible only. The fallback selects the topmost partial item.
+        await tester.fling(
+          find.byType(CustomScrollView).first,
+          const Offset(0, -3000),
+          8000,
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          providerCallCount,
+          callsAfterInit + 1,
+          reason:
+              'T05: one load-more per fling even when no fully-visible item '
+              'exists (fallback to topmost partially-visible item).',
+        );
       },
     );
 
-    test(
+    // -----------------------------------------------------------------------
+    // T06: no-item fallback — offset-only snapshot used.
+    //
+    // When the observer fires with displayingChildModelList empty or with
+    // all items having displayPercentage == 0 (e.g., in a fast fling before
+    // layout stabilises), _handleListObserve emits an offset-only snapshot.
+    // Observable: anchor preservation still works — one load-more per fling.
+    // -----------------------------------------------------------------------
+    testWidgets(
       'T06: when no item is identifiable at all, capture falls back to '
       'offset strategy',
-      () {
-        fail('not yet implemented');
+      (tester) async {
+        var providerCallCount = 0;
+        final scrollController = ScrollController();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SmartPaginationListView<int,
+                      PaginationRequest>.withProvider(
+                request: PaginationRequest(page: 1, pageSize: _pageSize),
+                provider: PaginationProvider<int, PaginationRequest>.future(
+                  (req) async {
+                    providerCallCount++;
+                    return List<int>.generate(
+                      _pageSize,
+                      (i) => (req.page - 1) * _pageSize + i,
+                    );
+                  },
+                ),
+                scrollController: scrollController,
+                itemBuilder: (context, items, index) => SizedBox(
+                  height: _itemHeight,
+                  child: Text('Item ${items[index]}'),
+                ),
+                invisibleItemsThreshold: 1,
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        expect(providerCallCount, 1);
+        final callsAfterInit = providerCallCount;
+
+        // Jump directly to maxScrollExtent — this is a programmatic move
+        // with no prior observer fire at intermediate positions. The snapshot
+        // may be null or stale; _handleListObserve fires on the settle and
+        // writes either an item-based or offset-only snapshot depending on
+        // what is visible. Either way, load-more fires exactly once.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(
+          providerCallCount,
+          callsAfterInit + 1,
+          reason:
+              'T06: load-more fires exactly once even when only an offset-only '
+              'snapshot is available (no identifiable anchor item).',
+        );
+
+        scrollController.dispose();
       },
     );
 
@@ -369,11 +568,86 @@ void main() {
     // Out-of-scope view types (Spec Q5 / FR-007)
     // -----------------------------------------------------------------------
 
-    test(
+    // -----------------------------------------------------------------------
+    // T07: capture is a no-op for reverse lists.
+    //
+    // Expected final behavior (after T040): for reverse:true, the
+    // _AnchorStrategySelector returns proceed:false, captureAnchorBeforeLoadMore
+    // is never called, and suppression is never armed. The observable proxy:
+    // a programmatic scroll to the trigger position (no drag gesture to clear
+    // suppression) can trigger a second load-more.
+    //
+    // For PageView and ReorderableListView, the anchor feature also doesn't
+    // apply (no observer, no capture call). PageView and ReorderableListView
+    // are covered by T27, T28, T37, T38.
+    //
+    // FAILS until T040 lands (currently capture IS called for reverse lists,
+    // suppression IS set, and the second programmatic trigger is blocked).
+    // -----------------------------------------------------------------------
+    testWidgets(
       'T07: capture is a no-op for reverse lists, PageView, and '
       'ReorderableListView',
-      () {
-        fail('not yet implemented');
+      (tester) async {
+        var providerCallCount = 0;
+        final scrollController = ScrollController();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SmartPaginationListView<int,
+                      PaginationRequest>.withProvider(
+                request: PaginationRequest(page: 1, pageSize: _pageSize),
+                provider: PaginationProvider<int, PaginationRequest>.future(
+                  (req) async {
+                    providerCallCount++;
+                    return List<int>.generate(
+                      _pageSize,
+                      (i) => (req.page - 1) * _pageSize + i,
+                    );
+                  },
+                ),
+                scrollController: scrollController,
+                reverse: true,
+                itemBuilder: (context, items, index) => SizedBox(
+                  height: _itemHeight,
+                  child: Text('Item ${items[index]}'),
+                ),
+                invisibleItemsThreshold: 1,
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        expect(providerCallCount, 1);
+        final callsAfterInit = providerCallCount;
+
+        // First trigger.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        await tester.pump();
+        await tester.pumpAndSettle();
+        expect(
+          providerCallCount,
+          callsAfterInit + 1,
+          reason: 'T07: first load-more on reverse list always fires.',
+        );
+
+        // Second programmatic trigger — must also fire (no suppression).
+        // FAILS until T040: capture is still called for reverse, suppression
+        // is set, second programmatic jump does not call markUserScroll.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        await tester.pump();
+        await tester.pumpAndSettle();
+        expect(
+          providerCallCount,
+          callsAfterInit + 2,
+          reason:
+              'T07: second programmatic load-more on reverse list must fire '
+              'without a drag gesture. Passes after T040 short-circuits '
+              'anchor capture for reverse lists.',
+        );
+
+        scrollController.dispose();
       },
     );
 

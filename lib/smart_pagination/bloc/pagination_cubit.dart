@@ -262,6 +262,23 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   /// `dragDetails` arriving during the restore (spec §5, R5).
   bool _anchorRestoreInFlight = false;
 
+  /// One-shot escape hatch: set by [skipLoadMoreSuppressionOnce] immediately
+  /// before [fetchPaginatedList] runs. When `true`, the cubit will NOT arm
+  /// [_suppressLoadMoreUntilUserScroll] for that single fetch. Consumed
+  /// (reset to `false`) inside the accept path. Used by transient out-of-
+  /// scope flows that don't have a long-lived widget to flip
+  /// [_loadMoreSuppressionEnabled].
+  bool _skipNextSuppressionArm = false;
+
+  /// Master switch: when `false`, the cubit never arms
+  /// [_suppressLoadMoreUntilUserScroll]. Set by the widget layer at attach
+  /// time for out-of-scope view types (`reverse: true`, PageView,
+  /// ReorderableListView, custom). Default `true` so direct cubit usage
+  /// (e.g. unit tests, in-scope views) keeps the spec's unconditional
+  /// arming behaviour required by the post-append suppression contract
+  /// (FR-004 / FR-004b).
+  bool _loadMoreSuppressionEnabled = true;
+
   /// Builds the per-page load-more key for [_activeLoadMoreKey].
   String _buildLoadMoreKey(R request) =>
       '${request.page}:${request.pageSize ?? 'null'}';
@@ -612,6 +629,7 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _pendingAnchor = null;
     _suppressLoadMoreUntilUserScroll = false;
     _anchorRestoreInFlight = false;
+    _skipNextSuppressionArm = false;
     emit(SmartPaginationInitial<T>());
   }
 
@@ -686,6 +704,7 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _pendingAnchor = null;
     _suppressLoadMoreUntilUserScroll = false;
     _anchorRestoreInFlight = false;
+    _skipNextSuppressionArm = false;
 
     final request = _buildRequest(
       reset: true,
@@ -878,10 +897,17 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
       _isFetching = true;
       _activeLoadMoreKey = loadMoreKey;
       // Spec 004-scroll-anchor-preservation §7.1 step 11 / FR-004b:
-      // Arm the post-append suppression flag before emitting isLoadingMore so
-      // any load-more call that arrives between emit and the next user scroll
-      // gesture is dropped. Cleared by markUserScroll, scope reset, or error.
-      _suppressLoadMoreUntilUserScroll = true;
+      // Arm the post-append suppression flag for every accepted load-more so
+      // chain-triggered automatic loads are dropped until a user drag-scroll
+      // gesture re-arms via [markUserScroll]. Out-of-scope view types are
+      // long-lived: their widgets flip [_loadMoreSuppressionEnabled] = false
+      // at attach time, so this branch is short-circuited. The one-shot
+      // [_skipNextSuppressionArm] handles transient out-of-scope flows.
+      // Cleared by markUserScroll, scope reset, or error.
+      if (_loadMoreSuppressionEnabled && !_skipNextSuppressionArm) {
+        _suppressLoadMoreUntilUserScroll = true;
+      }
+      _skipNextSuppressionArm = false;
       emit(
         currentState.copyWith(
           isLoadingMore: true,
@@ -1151,6 +1177,7 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         _suppressLoadMoreUntilUserScroll = false;
         _pendingAnchor = null;
         _anchorRestoreInFlight = false;
+        _skipNextSuppressionArm = false;
       }
     } catch (error, stackTrace) {
       final exception = Exception(error.toString());
@@ -1194,6 +1221,7 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
         _suppressLoadMoreUntilUserScroll = false;
         _pendingAnchor = null;
         _anchorRestoreInFlight = false;
+        _skipNextSuppressionArm = false;
       }
     } finally {
       // Spec 003-load-more-guard §4.1, §4.2: always clear both the in-flight
@@ -1546,6 +1574,32 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _pendingAnchor = snapshot;
   }
 
+  /// Internal — one-shot escape hatch. Disables post-append suppression for
+  /// the next accepted [fetchPaginatedList] call only. Useful for transient
+  /// out-of-scope situations where the long-lived
+  /// [setLoadMoreSuppressionEnabled] toggle is overkill.
+  ///
+  /// **Internal**: see [captureAnchorBeforeLoadMore].
+  void skipLoadMoreSuppressionOnce() {
+    _skipNextSuppressionArm = true;
+  }
+
+  /// Internal — long-lived master switch. Called by the widget layer at
+  /// attach time for out-of-scope view types (`reverse: true`, `PageView`,
+  /// `ReorderableListView`, `custom`). When set to `false`, the cubit will
+  /// never arm [_suppressLoadMoreUntilUserScroll], so repeated automatic
+  /// triggers fire freely. The default `true` preserves the spec's
+  /// unconditional post-append suppression for in-scope views and direct
+  /// cubit usage (e.g. unit tests).
+  ///
+  /// **Internal**: see [captureAnchorBeforeLoadMore].
+  void setLoadMoreSuppressionEnabled(bool enabled) {
+    _loadMoreSuppressionEnabled = enabled;
+    if (!enabled) {
+      _suppressLoadMoreUntilUserScroll = false;
+    }
+  }
+
   /// Internal — called by `PaginateApiView`'s outer
   /// `NotificationListener<ScrollNotification>` whenever a user-initiated
   /// drag-scroll starts. Clears the post-append load-more suppression flag
@@ -1628,11 +1682,12 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
   void _performOffsetRestore(_PendingScrollAnchor anchor) {
     final pixelsBefore = anchor.pixelsBefore;
     if (pixelsBefore == null) return;
-    // Prefer the list observer's attached controller; fall back to the grid
-    // observer's controller. Both point to the same scroll controller that
-    // the widget registered via attachListObserverController /
-    // attachGridObserverController.
+    // Prefer the snapshot-embedded controller (populated by the staggered-grid
+    // path where no observer is attached), then fall back to the list/grid
+    // observer controllers (which share the same underlying ScrollController
+    // registered via attachListObserverController / attachGridObserverController).
     final scrollController =
+        anchor.scrollController ??
         _listObserverController?.controller ??
         _gridObserverController?.controller;
     if (scrollController == null || !scrollController.hasClients) return;
@@ -1673,6 +1728,7 @@ class SmartPaginationCubit<T, R extends PaginationRequest>
     _pendingAnchor = null;
     _suppressLoadMoreUntilUserScroll = false;
     _anchorRestoreInFlight = false;
+    _skipNextSuppressionArm = false;
   }
 
   @override
